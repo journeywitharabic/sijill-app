@@ -24,14 +24,14 @@
 window.SIJILL = {
 
   // The https://....supabase.co address of your project
-  SUPABASE_URL: "http://127.0.0.1:8099",
+  SUPABASE_URL: "https://pcwxkwlpblyztugxvwnk.supabase.co",
 
   // The publishable / anon key — the public one
-  SUPABASE_KEY: "local-anon-key-for-testing-only",
+  SUPABASE_KEY: "sb_publishable_pNL06hdyJ4ZnBB6kCO1w5g_-Cyt4VAF",
 
   // The school's name, as it appears at the top of every screen
   SCHOOL_NAME: "Ommah Madrasah",
 
   // Set to true only while testing against the local dev server.
-  DEV: true
+  DEV: false
 };
