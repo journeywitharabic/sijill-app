@@ -1,0 +1,343 @@
+/* Sijill · سِجِلّ — shared stylesheet
+   Lifted unchanged from the signed-off mockup: same palette (validated for
+   colour-blind readability), same dark mode, same right-to-left handling.
+   If you change a colour here, re-check it against the attendance states —
+   they are the one place colour carries meaning. */
+:root{
+  --paper:#F2F3F6; --surface:#FFFFFF; --surface-2:#E9ECF3; --surface-3:#DFE3ED;
+  --ink:#161A24; --ink-2:#4B5264; --ink-3:#7A8194;
+  --line:#D5DAE5; --line-2:#C3CAD9;
+  --lapis:#2D3E73; --lapis-ink:#FFFFFF; --lapis-soft:#E3E8F5;
+  /* attendance states — validated palette. Flags reuse the state colour of
+     whatever caused them, so colour always means the same thing. */
+  --ok:#0F7A54;   --ok-soft:#DCEFE7;   --ok-ink:#FFFFFF;   /* present / solid  */
+  --late:#B07400; --late-fill:#D18F00; --late-soft:#FAEDD4;--late-ink:#FFFFFF;  /* late only */
+  --exc:#6A4BA8;  --exc-soft:#EAE4F7;  --exc-ink:#FFFFFF;  /* excused absence  */
+  --crit:#98122B; --crit-soft:#FADDE2; --crit-ink:#FFFFFF; /* unexplained      */
+  --rev:#B07400;  --rev-soft:#FAEDD4;                      /* needs review     */
+  --shadow:0 1px 2px rgba(22,26,36,.06), 0 8px 24px -14px rgba(22,26,36,.22);
+  /* Fonts the device already has. Nothing is downloaded from anywhere.
+     The Arabic stacks name each platform's own Qur'anic-style face first —
+     Geeza Pro on iPhone, Noto Naskh on Android, Traditional Arabic on
+     Windows — so the surah names render in naskh rather than in whatever the
+     sans-serif default happens to be. If a name is missing the browser simply
+     moves to the next one; nothing breaks. */
+  --sans:system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --mono:ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+  --serif:"Amiri", "Scheherazade New", "Noto Naskh Arabic", "Geeza Pro",
+          "Traditional Arabic", "Times New Roman", Georgia, serif;
+  --calig:"Aref Ruqaa", "Amiri", "Noto Naskh Arabic", "Geeza Pro",
+          "Traditional Arabic", Georgia, serif;
+}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
+  --paper:#0F131E; --surface:#171C2A; --surface-2:#1E2434; --surface-3:#262D41;
+  --ink:#E9ECF3; --ink-2:#A8B0C4; --ink-3:#757D92;
+  --line:#2A3145; --line-2:#3A4257;
+  --lapis:#93A7E4; --lapis-ink:#101420; --lapis-soft:#1D2540;
+  --ok:#4FC79B;   --ok-soft:#153229;   --ok-ink:#0C1A15;
+  --late:#EFB840; --late-fill:#EFB840; --late-soft:#38290E; --late-ink:#1E1407;
+  --exc:#A493F5;  --exc-soft:#241E42;  --exc-ink:#12102B;
+  --crit:#F2637A; --crit-soft:#3A1520; --crit-ink:#1B0910;
+  --rev:#EFB840;  --rev-soft:#38290E;
+  --shadow:0 1px 2px rgba(0,0,0,.4), 0 8px 24px -14px rgba(0,0,0,.7);
+}}
+:root[data-theme="dark"]{
+  --paper:#0F131E; --surface:#171C2A; --surface-2:#1E2434; --surface-3:#262D41;
+  --ink:#E9ECF3; --ink-2:#A8B0C4; --ink-3:#757D92;
+  --line:#2A3145; --line-2:#3A4257;
+  --lapis:#93A7E4; --lapis-ink:#101420; --lapis-soft:#1D2540;
+  --ok:#4FC79B;   --ok-soft:#153229;   --ok-ink:#0C1A15;
+  --late:#EFB840; --late-fill:#EFB840; --late-soft:#38290E; --late-ink:#1E1407;
+  --exc:#A493F5;  --exc-soft:#241E42;  --exc-ink:#12102B;
+  --crit:#F2637A; --crit-soft:#3A1520; --crit-ink:#1B0910;
+  --rev:#EFB840;  --rev-soft:#38290E;
+  --shadow:0 1px 2px rgba(0,0,0,.4), 0 8px 24px -14px rgba(0,0,0,.7);
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--sans);font-size:15px;line-height:1.45;-webkit-text-size-adjust:100%}
+button{font:inherit;color:inherit;cursor:pointer}
+:focus-visible{outline:2px solid var(--lapis);outline-offset:2px;border-radius:5px}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+
+.proto{position:sticky;top:0;z-index:60;background:var(--ink);color:var(--paper);
+  padding:calc(7px + env(safe-area-inset-top,0px)) 14px 7px;display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.proto .tag{font-size:9.5px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;opacity:.65;white-space:nowrap}
+.proto .sw{display:flex;gap:3px;flex-wrap:wrap;flex:1}
+.proto .sw button,.proto .rt button{background:rgba(255,255,255,.1);border:0;border-radius:7px;padding:5px 10px;font-size:12px;font-weight:600;color:inherit;white-space:nowrap}
+.proto .sw button[aria-current="true"]{background:var(--paper);color:var(--ink)}
+.proto .rt{display:flex;gap:4px}
+
+.wrap{max-width:900px;margin:0 auto;padding:0 0 70px}
+.wrap.wide{max-width:1240px}
+.view[hidden]{display:none!important}
+
+.bar{background:var(--surface);border-bottom:1px solid var(--line);padding:11px 16px;display:flex;align-items:center;gap:13px}
+.logo{display:flex;align-items:baseline;gap:9px;white-space:nowrap}
+.logo .ar{font-family:var(--calig);font-size:27px;font-weight:700;line-height:1;color:var(--lapis)}
+.logo .en{display:flex;flex-direction:column;gap:1px}
+.logo .en b{font-size:13.5px;font-weight:700;line-height:1}
+.logo .en span{font-size:8.5px;font-weight:600;letter-spacing:.13em;text-transform:uppercase;color:var(--ink-3)}
+.bar .sp{flex:1}
+.mini{background:var(--surface-2);border:1px solid var(--line);border-radius:8px;padding:5px 9px;font-size:12px;font-weight:600;color:var(--ink-2)}
+.back{background:var(--surface-2);border:1px solid var(--line);border-radius:8px;padding:6px 11px;font-size:12.5px;font-weight:600;color:var(--ink-2)}
+
+.ctx{padding:13px 16px 0}
+.ctx h1{margin:0;font-size:20px;font-weight:700;letter-spacing:-.01em}
+.ctx .sub{font-family:var(--mono);font-size:11.5px;color:var(--ink-3);margin-top:3px;font-variant-numeric:tabular-nums}
+.pad{padding:14px 16px}
+
+.pill{display:inline-flex;align-items:center;gap:5px;border-radius:99px;padding:2.5px 9px 2.5px 7px;
+  font-size:11px;font-weight:700;white-space:nowrap;border:1px solid transparent}
+.pill i{width:8px;height:8px;border-radius:50%;flex:none}
+.pill.ok{background:var(--ok-soft);color:var(--ok);border-color:color-mix(in srgb,var(--ok) 30%,transparent)}
+.pill.ok i{background:var(--ok)}
+.pill.late{background:var(--late-soft);color:var(--late);border-color:color-mix(in srgb,var(--late) 34%,transparent)}
+.pill.late i{background:var(--late-fill)}
+.pill.exc{background:var(--exc-soft);color:var(--exc);border-color:color-mix(in srgb,var(--exc) 34%,transparent)}
+.pill.exc i{background:var(--exc)}
+.pill.crit{background:var(--crit-soft);color:var(--crit);border-color:color-mix(in srgb,var(--crit) 34%,transparent)}
+.pill.crit i{background:var(--crit)}
+.pill.mute{background:var(--surface-2);color:var(--ink-3);border-color:var(--line)}
+.pill.mute i{background:var(--ink-3)}
+
+.banner{display:flex;gap:10px;align-items:flex-start;border-radius:11px;padding:11px 13px;font-size:13px;line-height:1.5;margin-bottom:12px}
+.banner .ic{font-size:14px;flex:none;font-weight:700}
+.banner.exc{background:var(--exc-soft);border:1px solid color-mix(in srgb,var(--exc) 34%,transparent)}
+.banner.crit{background:var(--crit-soft);border:1px solid color-mix(in srgb,var(--crit) 36%,transparent)}
+
+.actionrow{display:flex;gap:9px;flex-wrap:wrap;margin-bottom:13px}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:7px;background:var(--lapis);color:var(--lapis-ink);
+  border:1px solid transparent;border-radius:9px;padding:10px 15px;font-size:14px;font-weight:600}
+.btn.ghost{background:var(--surface);color:var(--ink);border-color:var(--line)}
+.btn.sm{padding:7px 12px;font-size:13px}
+.tally{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:12px}
+
+.slist{background:var(--surface);border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.srow{display:flex;align-items:center;gap:10px;padding:10px 12px;border-bottom:1px solid var(--line)}
+.srow:last-child{border-bottom:0}
+.srow.absent{background:var(--surface-2)}
+.srow.absent .nm{color:var(--ink-2)}
+.donebar{display:flex;align-items:center;gap:10px;border-radius:11px;padding:11px 13px;margin-bottom:12px;font-size:14px;font-weight:600}
+.donebar.part{background:var(--late-soft);border:1px solid color-mix(in srgb,var(--late) 34%,transparent);color:var(--ink)}
+.donebar.all{background:var(--ok-soft);border:1px solid color-mix(in srgb,var(--ok) 34%,transparent);color:var(--ink)}
+.donebar .big{font-family:var(--mono);font-size:19px;font-weight:600}
+.mtabs{display:flex;gap:3px;background:var(--surface-2);border:1px solid var(--line);border-radius:9px;padding:2px;margin-bottom:14px;flex-wrap:wrap}
+.mtabs button{background:none;border:0;border-radius:7px;padding:7px 14px;font-size:13px;font-weight:600;color:var(--ink-3)}
+.mtabs button[aria-pressed="true"]{background:var(--surface);color:var(--ink);box-shadow:var(--shadow)}
+.chk{display:flex;gap:10px;align-items:flex-start;padding:10px 0;border-bottom:1px solid var(--line);font-size:13.5px}
+.chk:last-child{border-bottom:0}
+.chk .w{font-family:var(--mono);font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3);flex:0 0 76px;padding-top:3px}
+.srow .nmb{flex:1;min-width:0;background:none;border:0;text-align:start;padding:0;display:flex;flex-direction:column;gap:3px;align-items:flex-start}
+[dir="rtl"] .srow .nmb{align-items:flex-end}
+.srow .nm{font-weight:600;font-size:14.5px;line-height:1.25}
+.srow .meta{display:flex;gap:6px;align-items:center;flex-wrap:wrap;font-family:var(--mono);font-size:10.5px;color:var(--ink-3)}
+[dir="rtl"] .srow .meta{justify-content:flex-end}
+.seg3{display:flex;gap:2px;background:var(--surface-2);border:1px solid var(--line);border-radius:9px;padding:2px;flex:none}
+.seg3 button{background:none;border:0;border-radius:7px;width:34px;height:30px;font-size:13px;font-weight:700;color:var(--ink-3);padding:0}
+.seg3 button[aria-pressed="true"].p{background:var(--ok);color:var(--ok-ink)}
+.seg3 button[aria-pressed="true"].l{background:var(--late-fill);color:var(--late-ink)}
+.seg3 button[aria-pressed="true"].a{background:var(--crit);color:var(--crit-ink)}
+.seg3 button[aria-pressed="true"].a.exc{background:var(--exc);color:var(--exc-ink)}
+.reasons{display:flex;gap:6px;flex-wrap:wrap;padding:0 12px 11px;border-bottom:1px solid var(--line)}
+.reasons[hidden]{display:none}
+.chip{background:var(--surface-2);border:1px solid var(--line);border-radius:99px;padding:5px 11px;font-size:12px;font-weight:600;color:var(--ink-2)}
+.chip.un[aria-pressed="true"]{background:var(--crit);color:var(--crit-ink);border-color:var(--crit)}
+.chip.ex[aria-pressed="true"]{background:var(--exc);color:var(--exc-ink);border-color:var(--exc)}
+
+.grp{margin-bottom:18px}
+.grph{display:flex;align-items:baseline;gap:8px;margin:0 0 7px}
+.grph h2{margin:0;font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-3)}
+.grph .n{font-family:var(--mono);font-size:11px;color:var(--ink-3)}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.irow{display:flex;align-items:center;gap:10px;padding:10px 12px;border-bottom:1px solid var(--line)}
+.irow:last-child{border-bottom:0}
+.irow .lab{flex:1;min-width:0;display:flex;flex-direction:column;gap:3px;align-items:flex-start}
+[dir="rtl"] .irow .lab{align-items:flex-end}
+.irow .ar{font-family:var(--serif);font-size:19px;font-weight:700;line-height:1.3}
+.irow .tr{font-size:13px;font-weight:600;color:var(--ink-2)}
+.irow .m{font-family:var(--mono);font-size:10.5px;color:var(--ink-3)}
+.irow .m.stale{color:var(--rev)}
+.gb{width:36px;height:34px;border-radius:9px;border:1px solid var(--line);background:var(--surface-2);color:var(--ink-3);
+  display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:700;padding:0;flex:none}
+.gb.on-ok{background:var(--ok);border-color:var(--ok);color:var(--ok-ink)}
+.gb.on-rev{background:var(--late-fill);border-color:var(--late-fill);color:var(--late-ink)}
+.gb.on-np{background:var(--exc);border-color:var(--exc);color:var(--exc-ink)}
+.gb.note{font-size:12px}
+.hwbox{background:var(--lapis-soft);border:1px solid color-mix(in srgb,var(--lapis) 24%,transparent);border-radius:11px;padding:12px 14px;font-size:13.5px;line-height:1.55}
+.hwbox h3{margin:0 0 5px;font-size:10.5px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-3)}
+
+/* undo toast */
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(18px + env(safe-area-inset-bottom,0px));z-index:70;
+  background:var(--ink);color:var(--paper);padding:10px 12px 10px 16px;border-radius:99px;font-size:13px;font-weight:600;
+  box-shadow:var(--shadow);display:flex;align-items:center;gap:12px;max-width:calc(100vw - 32px)}
+.toast[hidden]{display:none}
+.toast button{background:rgba(255,255,255,.16);border:0;border-radius:99px;padding:5px 13px;font-size:12.5px;font-weight:700;color:inherit}
+/* confirm sheet */
+.sheet{position:fixed;inset:0;z-index:80;background:rgba(10,12,18,.5);display:flex;align-items:flex-end;justify-content:center}
+.sheet[hidden]{display:none}
+.sheet .in{background:var(--surface);border-radius:16px 16px 0 0;padding:20px 18px calc(20px + env(safe-area-inset-bottom,0px));max-width:520px;width:100%}
+.sheet h3{margin:0 0 7px;font-size:17px}
+.sheet p{margin:0 0 15px;font-size:13.5px;color:var(--ink-2);line-height:1.55}
+
+/* parent */
+.pcard{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:15px 16px;margin-bottom:12px}
+.pcard h2{margin:0 0 10px;font-size:10.5px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-3)}
+.hero{background:var(--lapis);color:var(--lapis-ink);border:0}
+.hero h2{color:rgba(255,255,255,.72)}
+:root[data-theme="dark"] .hero h2{color:rgba(16,20,32,.64)}
+.hero .line{display:flex;gap:9px;align-items:baseline;padding:6px 0;border-bottom:1px solid rgba(255,255,255,.18);font-size:15px}
+:root[data-theme="dark"] .hero .line{border-color:rgba(16,20,32,.18)}
+.hero .line:last-child{border-bottom:0}
+.hero .k{font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;opacity:.75;flex:none;width:78px}
+.hero .ar{font-family:var(--serif);font-size:19px;font-weight:700}
+.kids{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:13px}
+.kid{background:var(--surface);border:1px solid var(--line);border-radius:99px;padding:7px 14px;font-size:13.5px;font-weight:600;color:var(--ink-2)}
+.kid[aria-pressed="true"]{background:var(--lapis);border-color:var(--lapis);color:var(--lapis-ink)}
+.dots{display:flex;gap:5px;flex-wrap:wrap;margin-bottom:10px}
+.dot{display:flex;flex-direction:column;align-items:center;gap:4px;width:40px}
+.dot i{width:22px;height:22px;border-radius:7px;display:block;border:1px solid transparent}
+.dot i.p{background:var(--ok-soft);border-color:var(--ok)}
+.dot i.l{background:var(--late-soft);border-color:var(--late-fill)}
+.dot i.e{background:var(--exc-soft);border-color:var(--exc)}
+.dot i.a{background:var(--crit-soft);border-color:var(--crit)}
+.dot i.c{background:var(--surface-2);border-color:var(--line-2);border-style:dashed}
+.dot span{font-family:var(--mono);font-size:8.5px;color:var(--ink-3);white-space:nowrap}
+.kv{display:flex;justify-content:space-between;gap:12px;padding:6px 0;border-bottom:1px solid var(--line);font-size:13.5px}
+.kv:last-child{border-bottom:0}
+.kv b{font-family:var(--mono);font-variant-numeric:tabular-nums}
+.rlist{display:flex;flex-direction:column;gap:7px}
+.rlist .r{display:flex;justify-content:space-between;align-items:baseline;gap:10px}
+.rlist .r .ar{font-family:var(--serif);font-size:18px;font-weight:700}
+.rlist .r .tr{font-size:12px;color:var(--ink-3)}
+.sess{border-inline-start:2px solid var(--line);padding-inline-start:12px;margin-inline-start:3px}
+.sess .s{padding-bottom:11px}
+.sess .s:last-child{padding-bottom:0}
+.sess .d{font-family:var(--mono);font-size:10.5px;color:var(--ink-3)}
+.sess .w{font-size:13.5px;margin-top:2px}
+.sess .n{font-size:12.5px;color:var(--ink-2);font-style:italic;margin-top:2px}
+
+/* dashboard */
+.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:14px}
+.tile{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:13px 14px}
+.tile .k{font-size:10px;font-weight:700;letter-spacing:.11em;text-transform:uppercase;color:var(--ink-3)}
+.tile .v{font-family:var(--mono);font-size:26px;font-weight:600;margin-top:5px;font-variant-numeric:tabular-nums}
+.tile .f{font-size:11.5px;color:var(--ink-3);margin-top:3px}
+.tile.alert .v{color:var(--crit)}
+.filters{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:12px}
+select,input[type=search],input[type=date]{background:var(--surface);color:var(--ink);border:1px solid var(--line);border-radius:9px;padding:8px 10px;font:inherit;font-size:13.5px}
+.tw{overflow-x:auto;border:1px solid var(--line);border-radius:12px;background:var(--surface)}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th,td{text-align:left;padding:9px 11px;border-bottom:1px solid var(--line);white-space:nowrap;vertical-align:middle}
+th{font-size:10px;letter-spacing:.09em;text-transform:uppercase;color:var(--ink-3);font-weight:700;position:sticky;top:0;background:var(--surface-2);z-index:1}
+td.n{font-family:var(--mono);font-variant-numeric:tabular-nums}
+tbody tr{cursor:pointer}
+tbody tr:hover{background:var(--surface-2)}
+tbody tr[aria-selected="true"]{background:var(--lapis-soft)}
+.jz{display:flex;flex-direction:column;gap:3px;min-width:132px}
+.jz .t{font-size:11px;color:var(--ink-3);font-family:var(--mono);display:flex;justify-content:space-between;gap:8px}
+.bar2{display:flex;height:8px;border-radius:99px;overflow:hidden;background:var(--surface-3);gap:2px}
+.bar2 i{display:block;height:100%}
+.bar2 i.a{background:var(--ok)} .bar2 i.r{background:var(--rev)}
+.mo{display:flex;flex-direction:column;gap:2px;font-family:var(--mono);font-size:11.5px}
+.mo .up{color:var(--ok);font-weight:600}
+.mo .flat{color:var(--crit);font-weight:600}
+.drill{margin-top:12px;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:15px 16px}
+.drill h3{margin:0 0 3px;font-size:18px}
+.drill .sub{font-family:var(--mono);font-size:11.5px;color:var(--ink-3);margin-bottom:13px}
+.dtabs{display:flex;gap:3px;background:var(--surface-2);border:1px solid var(--line);border-radius:9px;padding:2px;margin-bottom:14px;flex-wrap:wrap}
+.dtabs button{background:none;border:0;border-radius:7px;padding:6px 13px;font-size:12.5px;font-weight:600;color:var(--ink-3)}
+.dtabs button[aria-pressed="true"]{background:var(--surface);color:var(--ink);box-shadow:var(--shadow)}
+.cols{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:18px}
+.cols h4{margin:0 0 7px;font-size:10px;letter-spacing:.11em;text-transform:uppercase;color:var(--ink-3)}
+.tree{border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.trow{display:flex;align-items:center;gap:9px;padding:7px 11px;border-bottom:1px solid var(--line);font-size:13px}
+.trow:last-child{border-bottom:0}
+.trow .st{flex:0 0 4px;height:20px;border-radius:2px;background:var(--surface-3)}
+.trow .st.ok{background:var(--ok)} .trow .st.rev{background:var(--rev)} .trow .st.mix{background:linear-gradient(var(--ok) 50%,var(--rev) 50%)}
+.trow .lbl{flex:1;display:flex;gap:9px;align-items:baseline}
+.trow .lbl .ar{font-family:var(--serif);font-size:16px;font-weight:700}
+.trow .dt{font-family:var(--mono);font-size:10.5px;color:var(--ink-3)}
+.note{background:var(--surface-2);border:1px solid var(--line);border-radius:10px;padding:10px 12px;font-size:12.5px;color:var(--ink-2)}
+.legendrow{display:flex;gap:7px;flex-wrap:wrap;margin-top:10px}
+@media (max-width:520px){ .ctx h1{font-size:18px} .irow .ar{font-size:17px} .seg3 button{width:31px} }
+
+/* ======================================================================
+   ARABIC TYPOGRAPHY
+   Applied only when the interface is switched to Arabic, so the English
+   screens are untouched.
+
+   Three separate problems, none of them about choosing a prettier font:
+
+   1. Monospace. A lot of the small print — "heard 18 Sept", "3 absences
+      this month", the date under every heading — was set in the mono stack.
+      Monospace faces have poor or no Arabic, so those lines fell through to
+      whatever the system had left, and the tashkeel came out smeared. In
+      Arabic they use the normal text face.
+
+   2. Letter-spacing. The little uppercase headings are tracked out by
+      .12em. Arabic letters JOIN; tracking them out fights the script and in
+      some renderers breaks the joins outright. Uppercase means nothing in
+      Arabic either. Both are switched off.
+
+   3. Size. Arabic at the same pixel size as English reads smaller — denser
+      letters, and the tashkeel needs vertical room above and below. Roughly
+      a 15% bump plus more line-height, which costs nothing and does more for
+      legibility than any font swap.
+
+   Surah names are deliberately NOT touched: they use --serif and --calig,
+   which stay naskh. Interface prose gets the screen-designed sans that every
+   phone already ships — SF Arabic on iPhone, Noto Sans Arabic on Android,
+   Segoe UI on Windows.
+   ====================================================================== */
+html[lang="ar"]{
+  --sans: system-ui, -apple-system, "SF Arabic", "Segoe UI", "Noto Sans Arabic",
+          Roboto, "Helvetica Neue", Arial, sans-serif;
+  --mono: system-ui, -apple-system, "SF Arabic", "Segoe UI", "Noto Sans Arabic",
+          Roboto, "Helvetica Neue", Arial, sans-serif;
+}
+html[lang="ar"] body{ font-size:15.5px; line-height:1.7 }
+
+/* the small print, which was the worst of it */
+html[lang="ar"] .ctx .sub,
+html[lang="ar"] .srow .meta,
+html[lang="ar"] .irow .m,
+html[lang="ar"] .sess .d,
+html[lang="ar"] .sess .n,
+html[lang="ar"] .trow .dt,
+html[lang="ar"] .drill .sub,
+html[lang="ar"] .jz .t,
+html[lang="ar"] .mo{ font-size:12.5px; line-height:1.75 }
+
+html[lang="ar"] .note{ font-size:13.5px; line-height:1.85 }
+html[lang="ar"] .srow .nm{ font-size:16px; line-height:1.4 }
+html[lang="ar"] .irow .tr{ font-size:14px }
+html[lang="ar"] .kv, html[lang="ar"] .chk{ font-size:14.5px; line-height:1.7 }
+html[lang="ar"] .hero .line{ font-size:16px; line-height:1.75 }
+html[lang="ar"] .btn{ font-size:15px }
+html[lang="ar"] .pill{ font-size:12px; padding:4px 10px 4px 8px }
+html[lang="ar"] .dot span{ font-size:10px }
+html[lang="ar"] .banner{ font-size:14px; line-height:1.75 }
+html[lang="ar"] th, html[lang="ar"] td{ font-size:14px }
+
+/* Arabic has no capitals, and its letters join — so no tracking, no caps. */
+html[lang="ar"] .grph h2,
+html[lang="ar"] .pcard h2,
+html[lang="ar"] .tile .k,
+html[lang="ar"] .chk .w,
+html[lang="ar"] .hero .k,
+html[lang="ar"] .cols h4,
+html[lang="ar"] th,
+html[lang="ar"] .logo .en span,
+html[lang="ar"] .proto .tag{
+  letter-spacing:normal; text-transform:none; font-size:12.5px;
+}
+
+/* The class names are written in Latin ("Hizb 54 - Surat Ar-Rahman"), so in
+   a right-to-left layout the dropdown truncates from the wrong end and shows
+   "...at Ar-Rahman" instead of "Hizb 54...". Lay the control itself out
+   left-to-right; it still sits in the right place in the bar. */
+html[lang="ar"] #classPick{ direction:ltr; text-align:left; max-width:52vw }
+
+/* numbers still line up in columns */
+html[lang="ar"] td.n, html[lang="ar"] .kv b,
+html[lang="ar"] .tile .v, html[lang="ar"] .donebar .big{ font-variant-numeric:tabular-nums }

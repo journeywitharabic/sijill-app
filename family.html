@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#2D3E73">
+<meta name="robots" content="noindex,nofollow">
+<title>Sijill · Ommah Madrasah</title>
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="stylesheet" href="sijill.css">
+<style>
+  html,body{max-width:100%;overflow-x:hidden}
+  .wrap{max-width:560px}
+  .loading{padding:40px;text-align:center;color:var(--ink-3)}
+  .spin{display:inline-block;width:16px;height:16px;border:2px solid var(--line-2);
+    border-top-color:var(--lapis);border-radius:50%;animation:sp .7s linear infinite}
+  @keyframes sp{to{transform:rotate(360deg)}}
+  .oops{max-width:440px;margin:40px auto;padding:0 18px;text-align:center}
+  .oops h1{font-size:19px;margin:0 0 10px}
+  .oops p{font-size:14px;color:var(--ink-2);line-height:1.6}
+  .proto .rt button{min-height:34px;min-width:44px}
+  /* The language/theme bar is pinned to the bottom, so the page needs room
+     underneath it or the last card sits behind it and cannot be read. */
+  body{padding-bottom:calc(64px + env(safe-area-inset-bottom,0px))}
+  /* see the note in index.html — Latin names inside Arabic sentences */
+  .ctx h1, .kid, .rlist .tr{ unicode-bidi:plaintext; text-align:start; }
+  .ctx .sub, .sess .d, .sess .w, .hero span{ unicode-bidi:isolate; }
+</style>
+</head>
+<body>
+
+<section class="view wrap" id="v-family" hidden>
+  <div class="bar"><div class="logo"><span class="ar">سِجِلّ</span>
+    <span class="en"><b>Sijill</b><span id="school">Ommah Madrasah</span></span></div></div>
+  <div class="pad">
+    <div class="kids" id="kidRow"></div>
+    <div id="body"></div>
+  </div>
+</section>
+
+<section class="view" id="v-loading">
+  <div class="loading"><span class="spin"></span></div>
+</section>
+
+<section class="view" id="v-oops" hidden>
+  <div class="oops">
+    <div class="logo" style="justify-content:center;margin-bottom:20px">
+      <span class="ar">سِجِلّ</span><span class="en"><b>Sijill</b><span>Ommah Madrasah</span></span></div>
+    <h1 id="oopsTitle">This link doesn't work</h1>
+    <p id="oopsBody">Ask the madrasah to send you a new one. Links stop working when they are replaced,
+       or when a child leaves the school.</p>
+  </div>
+</section>
+
+<div class="proto" style="position:fixed;bottom:0;left:0;right:0;top:auto;padding:6px 12px;z-index:50">
+  <span class="tag">SIJILL</span><span class="sw" style="flex:1"></span>
+  <div class="rt"><button id="lang">العربية</button><button id="theme">◐</button></div>
+</div>
+
+<script src="config.js"></script>
+<script src="api.js"></script>
+<script src="i18n.js"></script>
+<script src="family.js"></script>
+</body>
+</html>

@@ -1,0 +1,175 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#2D3E73">
+<title>Sijill · Ommah Madrasah</title>
+<!-- No web fonts, on purpose. Loading them would mean every phone that opens
+     this page asks Google for a file before it can draw the screen: a third
+     party told who is using the madrasah's tool and when, a delay on a weak
+     classroom signal, and a page that renders wrong if that request fails.
+     The stacks in sijill.css use what the phone already has. -->
+<link rel="stylesheet" href="sijill.css">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="manifest" href="manifest.json">
+<style>
+  /* screens that only exist in the real app, not in the mockup */
+  .gate{max-width:420px;margin:0 auto;padding:28px 18px}
+  .gate .logo{justify-content:center;margin-bottom:22px}
+  .gate h1{font-size:19px;margin:0 0 6px;text-align:center}
+  .gate p{font-size:13.5px;color:var(--ink-2);text-align:center;margin:0 0 20px;line-height:1.55}
+  .gate input[type=password],.gate input[type=text]{width:100%;padding:13px 14px;font-size:16px;
+    border:1px solid var(--line);border-radius:10px;background:var(--surface);color:var(--ink)}
+  .gate .btn{width:100%;margin-top:12px;padding:13px}
+  .err{background:var(--crit-soft);border:1px solid var(--crit);color:var(--crit);
+    border-radius:10px;padding:10px 12px;font-size:13px;font-weight:600;margin-top:12px}
+  .err[hidden]{display:none}
+  .pick{display:flex;flex-direction:column;gap:7px;margin-top:6px}
+  .pick button{background:var(--surface);border:1px solid var(--line);border-radius:10px;
+    padding:13px 15px;font-size:15px;font-weight:600;text-align:start;color:var(--ink)}
+  .pick button:hover{background:var(--surface-2)}
+  .spin{display:inline-block;width:14px;height:14px;border:2px solid var(--line-2);
+    border-top-color:var(--lapis);border-radius:50%;animation:sp .7s linear infinite;vertical-align:-2px}
+  @keyframes sp{to{transform:rotate(360deg)}}
+  .loading{padding:26px;text-align:center;color:var(--ink-3);font-size:13.5px}
+
+  /* Phones. A teacher holding a phone one-handed in a classroom must never
+     have to scroll sideways to find a button, so nothing is allowed to push
+     the page wider than the screen. */
+  .bar{flex-wrap:wrap;row-gap:8px}
+  #whoAmI{max-width:38vw;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  #classPick{max-width:44vw}
+  html,body{max-width:100%;overflow-x:hidden}
+  .wrap,.pad,.ctx{max-width:100%}
+  .srow .nm{overflow-wrap:anywhere}
+  /* Comfortable tap targets — Apple and Google both say 44px. */
+  .seg3 button{min-width:42px;height:38px}
+  .gb{min-width:38px;height:36px}
+  .chip{padding:8px 13px}
+  .mini,#whoAmI{min-height:34px}
+  /* The language/theme bar is pinned to the bottom, so the page needs room
+     underneath it or the last card sits behind it and cannot be read. */
+  body{padding-bottom:calc(64px + env(safe-area-inset-bottom,0px))}
+
+  /* Students' names are written in Latin letters and they appear inside
+     Arabic sentences. Without isolating them, the browser's bidirectional
+     rules drag the full stop to the wrong end and "Jad H." comes out as
+     ".Jad H". Isolation tells it to lay each name out on its own terms. */
+  /* `plaintext` reads the first real letter and lays the whole run out in
+     that direction — the CSS equivalent of dir="auto". `isolate` alone was
+     not enough: the box was still right-to-left, so "Jad H." kept coming out
+     as ".Jad H". This also does the right thing if a name IS Arabic, which
+     `direction: ltr` would not. */
+  .srow .nm, #stuName, #clsTitle, #whoAmI, #coordWho, .pick button, .kid,
+  .irow .tr, td, .lbl{
+    unicode-bidi:plaintext; text-align:start;
+  }
+  /* Lines that genuinely mix both scripts only need the parts kept apart. */
+  #clsDate, #stuSub, .sess .d, .dt, .irow .m{ unicode-bidi:isolate; }
+  .proto .rt button{min-height:34px;min-width:44px}
+  .empty{padding:22px;text-align:center;color:var(--ink-3);font-size:13.5px}
+</style>
+</head>
+<body>
+
+<!-- ===================== SIGN IN ===================== -->
+<section class="view" id="v-gate">
+  <div class="gate">
+    <div class="logo"><span class="ar">سِجِلّ</span><span class="en"><b>Sijill</b><span id="gateSchool">Ommah Madrasah</span></span></div>
+    <h1 data-t="gateTitle">Sign in</h1>
+    <p data-t="gateHelp">Type the madrasah passphrase. You only do this once on this phone — it will remember you.</p>
+    <form id="gateForm" autocomplete="off">
+      <input type="password" id="gatePass" placeholder="Passphrase" autocomplete="current-password" enterkeyhint="go">
+      <button class="btn" type="submit" id="gateGo" data-t="gateGo">Sign in</button>
+    </form>
+    <div class="err" id="gateErr" hidden></div>
+  </div>
+</section>
+
+<!-- ===================== PICK YOUR NAME ===================== -->
+<section class="view" id="v-who" hidden>
+  <div class="gate">
+    <div class="logo"><span class="ar">سِجِلّ</span><span class="en"><b>Sijill</b><span>Ommah Madrasah</span></span></div>
+    <h1 data-t="whoTitle">Who is teaching?</h1>
+    <p data-t="whoHelp">Pick your name. Everything you record today is signed with it, so a mistake can always be traced back and corrected.</p>
+    <div class="pick" id="whoList"></div>
+    <div style="height:14px"></div>
+    <button class="btn ghost sm" id="whoAdd" data-t="whoAdd">My name is not on the list</button>
+    <div class="err" id="whoErr" hidden></div>
+  </div>
+</section>
+
+<!-- ===================== TEACHER · CLASS ===================== -->
+<section class="view wrap" id="v-class" hidden>
+  <div class="bar">
+    <div class="logo"><span class="ar">سِجِلّ</span><span class="en"><b>Sijill</b><span>Ommah Madrasah</span></span></div>
+    <span class="sp"></span>
+    <select id="classPick" class="mini" style="padding:6px 8px;max-width:140px"></select>
+    <button class="mini" id="whoAmI">—</button>
+  </div>
+  <div class="ctx"><h1 id="clsTitle">—</h1><div class="sub" id="clsDate">—</div></div>
+  <div class="pad">
+    <div id="saveBar"></div>
+    <div id="doneBar"></div>
+    <div class="actionrow">
+      <button class="btn" id="allPresent" data-t="markAll">Mark all present</button>
+      <button class="btn ghost sm" id="bulkHw" data-t="bulkHw">+ Homework for the whole class</button>
+      <button class="btn ghost sm" id="undoBtn" data-t="undo" disabled>↶ Undo last change</button>
+    </div>
+    <div class="tally" id="tally"></div>
+    <div class="slist" id="slist"><div class="loading"><span class="spin"></span></div></div>
+    <div style="height:14px"></div>
+    <div class="note" data-t="clsHint">Tap a name to record recitation. Everything saves as you tap.</div>
+    <div style="height:10px"></div>
+    <div class="actionrow">
+      <button class="btn ghost sm" id="goCoord" data-t="coordMode">Coordinator tools</button>
+      <button class="btn ghost sm" id="signOut" data-t="signOut">Sign out</button>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== TEACHER · STUDENT ===================== -->
+<section class="view wrap" id="v-student" hidden>
+  <div class="bar">
+    <button class="back" id="backCls" data-t="back">‹ Back to class</button>
+    <span class="sp"></span>
+    <button class="mini" id="openTree" data-t="fullMushaf">☰ Full mushaf</button>
+  </div>
+  <div class="ctx"><h1 id="stuName">—</h1><div class="sub" id="stuSub">—</div></div>
+  <div class="pad" id="stuBody"><div class="loading"><span class="spin"></span></div></div>
+</section>
+
+<!-- ===================== COORDINATOR ===================== -->
+<section class="view wrap wide" id="v-coord" hidden>
+  <div class="bar">
+    <button class="back" id="backCls2" data-t="back">‹ Back to class</button>
+    <span class="sp"></span><span class="mini" id="coordWho">Coordinator</span>
+  </div>
+  <div class="pad">
+    <div class="mtabs" id="ctabs"></div>
+    <div id="cbody"><div class="loading"><span class="spin"></span></div></div>
+  </div>
+</section>
+
+<div class="toast" id="toast" hidden><span id="toastMsg"></span><button id="toastUndo">Undo</button></div>
+<div class="sheet" id="sheet" hidden><div class="in">
+  <h3 id="shTitle"></h3><div id="shBody"></div>
+  <div class="actionrow" style="margin-top:14px">
+    <button class="btn" id="shOk">OK</button><button class="btn ghost" id="shNo">Cancel</button></div>
+</div></div>
+
+<div class="proto" style="position:fixed;bottom:0;left:0;right:0;top:auto;padding:6px 12px;z-index:50" id="footer">
+  <span class="tag" id="envTag">SIJILL</span>
+  <span class="sw" style="flex:1"></span>
+  <div class="rt"><button id="lang">العربية</button><button id="theme">◐</button></div>
+</div>
+
+<script src="config.js"></script>
+<script src="api.js"></script>
+<script src="i18n.js"></script>
+<script src="app.js"></script>
+<script src="coord.js"></script>
+</body>
+</html>

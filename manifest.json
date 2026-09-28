@@ -1,0 +1,13 @@
+{
+  "name": "Sijill · Ommah Madrasah",
+  "short_name": "Sijill",
+  "description": "Qur'an memorization register for Ommah Madrasah",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#F2F3F6",
+  "theme_color": "#2D3E73",
+  "icons": [
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png" }
+  ]
+}
