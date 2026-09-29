@@ -31,7 +31,9 @@ window.SIJILL = {
 
   // The school's name, as it appears at the top of every screen
   SCHOOL_NAME: "Ommah Madrasah",
-
+   
+  SITE_HOST: "sijill-app.pages.dev",
+   
   // Set to true only while testing against the local dev server.
   DEV: false
 };
