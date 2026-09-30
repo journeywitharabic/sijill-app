@@ -405,7 +405,7 @@
 
   /* Leaving is not deleting. */
   function removeStudent(id, name) {
-    window.SijillSheet("Remove " + name + " from the madrasah?",
+    window.SijillSheet("Remove " + name + " from the school?",
       '<div class="banner exc"><span class="ic">●</span><div>This closes their enrolment and stops every ' +
       'link that covered them. <b>It does not delete anything.</b> Their attendance, marks and notes stay, ' +
       'so if they come back in September they pick up exactly where they left off.</div></div>' +

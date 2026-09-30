@@ -1183,9 +1183,19 @@
   });
   window.SijillReturnChrome = returnChrome;
 
+  /* The school's name is a proper noun that still has an Arabic form, so it
+     follows the language like every other string. config.SCHOOL_NAME
+     overrides it for anyone running this for a different school. */
+  function setSchoolName() {
+    var n = (api.config && api.config.SCHOOL_NAME) || i18n.t("schoolName");
+    Array.prototype.forEach.call(document.querySelectorAll(".schoolname"),
+      function (el) { el.textContent = n; });
+  }
+
   /* ------------------------------------------------------------ start up */
   function startup() {
-    document.getElementById("gateSchool").textContent = api.config.SCHOOL_NAME || "";
+    setSchoolName();
+    window.addEventListener("sijill:lang", setSchoolName);
     $("envTag").textContent = api.config.DEV ? "SIJILL · LOCAL TEST" : "SIJILL";
     try {
       var th = localStorage.getItem("sijill.theme");

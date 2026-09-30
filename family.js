@@ -45,7 +45,7 @@
       scope:"Counted within juz {j}, the section {n} is working through. Pages are a fairer measure than surahs, because surah lengths vary enormously.",
       helpHome:"Needs review — help at home", recent:"Recent classes",
       nothingYet:"Nothing set for this week yet.", noClasses:"No classes recorded yet.",
-      contact:"Any question about homework or attendance — message the madrasah on ClassDojo.",
+      contact:"Any question about homework or attendance — message the school on ClassDojo.",
       wholeSurah:"whole surah", ayat:"ayat", notMarked:"not marked",
       notAssessed:"We haven't done this year's review with your child yet. Once their teacher has been through it — usually in the first few weeks — their progress appears here." 
     },
@@ -82,7 +82,10 @@
   function render() {
     if (!DATA) return;
     var kids = DATA.children || [];
-    $("school").textContent = (DATA.school && DATA.school.name) || "";
+    // The name follows the reader's language. It used to come from the
+    // database, which meant renaming the school needed a migration.
+    $("school").textContent = (window.SIJILL && window.SIJILL.SCHOOL_NAME)
+                              || T("schoolName") || (DATA.school && DATA.school.name) || "";
 
     $("kidRow").innerHTML = kids.length > 1 ? kids.map(function (c, i) {
       return '<button class="kid" data-i="' + i + '" aria-pressed="' + (i === WHICH) + '">' +
@@ -227,19 +230,19 @@
     var code = linkCode();
     if (!code) {
       return oops("This page needs your personal link",
-        "Open the link the madrasah sent you rather than typing the address by hand — the part after the # is what identifies your child.");
+        "Open the link the school sent you rather than typing the address by hand — the part after the # is what identifies your child.");
     }
     show("v-loading");
     api.rpc("api_family", { p_link: code }).then(function (d) {
       if (!d || d.ok === false) {
         return oops("This link doesn't work",
-          (d && d.error) || "Ask the madrasah to send you a new one.");
+          (d && d.error) || "Ask the school to send you a new one.");
       }
       DATA = d; WHICH = 0;
       show("v-family"); render();
     }).catch(function (e) {
       oops("Could not load the page", e.message ||
-        "Check your connection and try again. If it keeps happening, tell the madrasah.");
+        "Check your connection and try again. If it keeps happening, tell the school.");
     });
   })();
 })();

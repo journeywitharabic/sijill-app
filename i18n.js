@@ -7,8 +7,9 @@
   "use strict";
 
   var EN = {
+    schoolName:"Qur’an School",
     gateTitle:"Sign in",
-    gateHelp:"Type the madrasah passphrase. You only do this once on this phone — it will remember you.",
+    gateHelp:"Type the school passphrase. You only do this once on this phone — it will remember you.",
     gateGo:"Sign in",
     whoTitle:"Who is teaching?",
     whoHelp:"Pick your name. Everything you record today is signed with it, so a mistake can always be traced back and corrected.",
@@ -85,6 +86,7 @@
   };
 
   var AR = {
+    schoolName:"مَدْرَسَةُ القُرْآنِ",
     gateTitle:"تَسْجِيلُ الدُّخُول",
     gateHelp:"اُكْتُبْ كَلِمَةَ مُرُورِ المَدْرَسَة. تَفْعَلُ ذَلِكَ مَرَّةً وَاحِدَةً عَلَى هَذَا الهَاتِفِ فَقَط.",
     gateGo:"دُخُول",

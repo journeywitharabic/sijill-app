@@ -5,16 +5,16 @@
    they are the one place colour carries meaning. */
 :root{
   --paper:#F2F3F6; --surface:#FFFFFF; --surface-2:#E9ECF3; --surface-3:#DFE3ED;
-  --ink:#161A24; --ink-2:#4B5264; --ink-3:#7A8194;
+  --ink:#161A24; --ink-2:#4B5264; --ink-3:#5D6374;
   --line:#D5DAE5; --line-2:#C3CAD9;
   --lapis:#2D3E73; --lapis-ink:#FFFFFF; --lapis-soft:#E3E8F5;
   /* attendance states — validated palette. Flags reuse the state colour of
      whatever caused them, so colour always means the same thing. */
-  --ok:#0F7A54;   --ok-soft:#DCEFE7;   --ok-ink:#FFFFFF;   /* present / solid  */
-  --late:#B07400; --late-fill:#D18F00; --late-soft:#FAEDD4;--late-ink:#FFFFFF;  /* late only */
+  --ok:#0E7551;   --ok-soft:#DCEFE7;   --ok-ink:#FFFFFF;   /* present / solid  */
+  --late:#916000; --late-fill:#D18F00; --late-soft:#FAEDD4;--late-ink:#2A1B00;  /* late only */
   --exc:#6A4BA8;  --exc-soft:#EAE4F7;  --exc-ink:#FFFFFF;  /* excused absence  */
   --crit:#98122B; --crit-soft:#FADDE2; --crit-ink:#FFFFFF; /* unexplained      */
-  --rev:#B07400;  --rev-soft:#FAEDD4;                      /* needs review     */
+  --rev:#916000;  --rev-soft:#FAEDD4;                      /* needs review     */
   --shadow:0 1px 2px rgba(22,26,36,.06), 0 8px 24px -14px rgba(22,26,36,.22);
   /* Fonts the device already has. Nothing is downloaded from anywhere.
      The Arabic stacks name each platform's own Qur'anic-style face first —
@@ -31,7 +31,7 @@
 }
 @media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
   --paper:#0F131E; --surface:#171C2A; --surface-2:#1E2434; --surface-3:#262D41;
-  --ink:#E9ECF3; --ink-2:#A8B0C4; --ink-3:#757D92;
+  --ink:#E9ECF3; --ink-2:#A8B0C4; --ink-3:#9096A7;
   --line:#2A3145; --line-2:#3A4257;
   --lapis:#93A7E4; --lapis-ink:#101420; --lapis-soft:#1D2540;
   --ok:#4FC79B;   --ok-soft:#153229;   --ok-ink:#0C1A15;
@@ -43,7 +43,7 @@
 }}
 :root[data-theme="dark"]{
   --paper:#0F131E; --surface:#171C2A; --surface-2:#1E2434; --surface-3:#262D41;
-  --ink:#E9ECF3; --ink-2:#A8B0C4; --ink-3:#757D92;
+  --ink:#E9ECF3; --ink-2:#A8B0C4; --ink-3:#9096A7;
   --line:#2A3145; --line-2:#3A4257;
   --lapis:#93A7E4; --lapis-ink:#101420; --lapis-soft:#1D2540;
   --ok:#4FC79B;   --ok-soft:#153229;   --ok-ink:#0C1A15;
@@ -657,3 +657,62 @@ tr.opens:hover .rowgo{color:var(--lapis)}
    the same look and the same tap target as its neighbours. */
 .setrow a.mini{display:inline-flex;align-items:center;justify-content:center;
   min-height:36px;padding:7px 13px;text-decoration:none}
+
+/* ==========================================================================
+   Qur’an School's own mark
+   The school's, not the app's — so it is quiet. Sijill is the tool; the
+   school is whose it is. One SVG, filled with currentColor, which is why
+   it can be navy on paper and gold on a dark screen without shipping a
+   second file.
+   ========================================================================== */
+.crest, .school{
+  /* Brand navy on light, brand gold on dark. Gold on white is too faint to
+     read and navy on a dark screen disappears, so neither works for both.
+     These are <svg><use> rather than <img>, because currentColor does not
+     reach inside an <img>-loaded SVG — see the comment in index.html. */
+  color:var(--lapis);
+  fill:currentColor;
+  display:block;
+  flex:none;
+}
+:root[data-theme="dark"] .crest, :root[data-theme="dark"] .school{ color:#D9B44A }
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]) .crest,
+  :root:not([data-theme="light"]) .school{ color:#D9B44A }
+}
+
+/* In a top bar: small, and given a hairline to separate it from the Sijill
+   wordmark beside it so the two do not read as one logo.
+   content-box on purpose: the app sets box-sizing:border-box globally, which
+   made width:15px mean "15px including the 12px of padding" — three pixels of
+   actual mark, rendered as a gold sliver. Here the width IS the drawing. */
+.bar .crest{
+  box-sizing:content-box;
+  height:28px; width:16px;
+  padding-inline-end:12px;
+  border-inline-end:1px solid var(--line);
+}
+
+/* On the sign-in screen and the parent masthead it is the first thing you
+   see, at a size where the wordmark inside the artwork is actually legible. */
+.crown{display:flex;justify-content:center;margin-bottom:14px}
+.crown .school{box-sizing:content-box;height:86px;width:48px}
+@media (max-width:360px){ .crown .school{height:72px;width:40px} }
+
+/* The crest added 41px to a bar that was already 387px of content in a 390px
+   phone, so the gear wrapped to a second row — and that row costs the register
+   40px of the vertical space that matters most on this screen.
+   Rather than hand-tuning three widths until it happens to fit, the class
+   picker is now the element that gives way: it may shrink and truncate, and
+   everything else keeps its size. A clipped class name is recoverable (it is
+   a dropdown, and the full name is in the heading right below); a wrapped bar
+   is not. */
+#v-class .bar #classPick{flex:0 1 auto;min-width:72px;max-width:140px}
+#v-class .bar #whoAmI{max-width:96px;overflow:hidden;text-overflow:ellipsis}
+.bar .crest{padding-inline-end:9px}
+#v-class .bar{gap:10px}
+/* Wrapping beats shrinking: a flex item moves to the next line rather than
+   compress, so max-width and min-width were never going to help while this
+   bar could wrap. With wrapping off, the picker actually gives way — and the
+   floors above guarantee the row still fits a 320px phone. */
+#v-class .bar{flex-wrap:nowrap}

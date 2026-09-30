@@ -1,7 +1,7 @@
 {
-  "name": "Sijill · Ommah Madrasah",
+  "name": "Sijill · Qur’an School",
   "short_name": "Sijill",
-  "description": "Qur'an memorization register for Ommah Madrasah",
+  "description": "Memorisation register for the Qur’an School, Ottawa",
   "start_url": "./index.html",
   "display": "standalone",
   "background_color": "#F2F3F6",
