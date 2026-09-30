@@ -134,7 +134,10 @@
          '</select>' +
          '<select id="dFlag"><option value="">' + (ar ? "كُلُّ الطُّلَّاب" : "All students") + '</option>' +
          '<option value="crit">' + (ar ? "أَحْمَر" : "Red flags only") + '</option>' +
-         '<option value="any">' + (ar ? "يَحْتَاجُ اِنْتِبَاهًا" : "Needs attention") + '</option></select>' +
+         '<option value="any">' + (ar ? "يَحْتَاجُ اِنْتِبَاهًا" : "Needs attention") + '</option>' +
+         '<option value="t-down">' + esc(T("tr_down")) + '</option>' +
+         '<option value="t-flat">' + esc(T("tr_flat")) + '</option>' +
+         '<option value="t-up">' + esc(T("tr_up")) + '</option></select>' +
          '<span style="flex:1"></span><button class="btn ghost sm" id="dCsv">' +
            (ar ? "تَصْدِيرُ CSV" : "Export CSV") + '</button></div>';
 
@@ -151,13 +154,21 @@
       '<span class="sep">·</span>' +
       '<span class="pill exc"><i></i>' + esc(ar ? "بَنَفْسَجِيّ" : "violet") + '</span> ' +
         esc(ar ? "غِيَابٌ بِعُذْرٍ مَعْرُوف" : "away, with a reason the school knows") +
+      '<span class="sep">·</span>' +
+      '<span class="trend tr-up"><span class="g">↑</span></span> ' + esc(T("tr_up")) +
+      '<span class="sep">·</span>' +
+      '<span class="trend tr-flat"><span class="g">→</span></span> ' + esc(T("tr_flat")) +
+      '<span class="sep">·</span>' +
+      '<span class="trend tr-down"><span class="g">↓</span></span> ' + esc(T("tr_down")) +
+      '<span class="sep">·</span>' +
+      '<span class="trend tr-away"><span class="g">–</span></span> ' + esc(T("tr_away")) +
       '</div>';
 
     /* U8 · "Needs attention" was the fourth of six columns, so on a phone it
        sat off the right-hand edge — the one column anybody opens this screen
        for. It now comes straight after the name. */
     h += '<div class="tw"><table><thead><tr>' +
-      [T("student"), T("flags"), T("classW"), T("attendance"), T("pages"), T("lastHeard")]
+      [T("student"), T("trend"), T("flags"), T("classW"), T("attendance"), T("pages"), T("lastHeard")]
         .map(function (c) { return "<th>" + esc(c) + "</th>"; }).join("") +
       '</tr></thead><tbody id="dRows"></tbody></table></div>';
     $("cbody").innerHTML = h;
@@ -182,6 +193,9 @@
       if (q && s.name.toLowerCase().indexOf(q) < 0) return false;
       if (fl === "crit" && (!s.flags || s.flags.kind !== "crit")) return false;
       if (fl === "any" && (!s.flags || !s.flags.kind)) return false;
+      // "Show me everyone standing still" is the question this table exists
+      // to answer on a Saturday morning.
+      if (fl.indexOf("t-") === 0 && (!s.trend || s.trend.dir !== fl.slice(2))) return false;
       return true;
     });
   }
@@ -192,6 +206,7 @@
       var f = s.flags || {};
       var ar2 = i18n.isAr();
       return '<tr data-id="' + esc(s.id) + '"><td><b>' + esc(s.name) + '</b></td>' +
+        '<td>' + (window.SijillTrend ? window.SijillTrend(s.trend, true) : "") + '</td>' +
         '<td>' + (f.kind ? '<span class="pill ' + f.kind + '"><i></i>' + esc(f.message) + '</span>'
                          : '<span style="color:var(--ink-3)">—</span>') + '</td>' +
         '<td>' + esc(s["class"] || "—") + '</td>' +
@@ -206,17 +221,18 @@
               '<span class="m">· ' + esc(ar2 ? "جُزْء " : "juz ") + s.pages.juz + '</span></span>'
             : "—") + '</td>' +
         '<td class="n">' + (s.last_heard ? i18n.fmtDate(s.last_heard) : "—") + '</td></tr>';
-    }).join("") : '<tr><td colspan="6" style="color:var(--ink-3);padding:18px">' +
+    }).join("") : '<tr><td colspan="7" style="color:var(--ink-3);padding:18px">' +
         esc(i18n.isAr() ? "لَا يُوجَدُ طَالِبٌ مُطَابِق." : "No students match.") + '</td></tr>';
   }
 
   function exportCsv() {
     var rows = visibleRows();
     // Same order as the table on screen, so the file and the page agree.
-    var head = ["Student","Needs attention","Class","Attendance %","Pages solid","Part done","Juz","Last heard"];
+    var head = ["Student","Trend","Why","Needs attention","Class","Attendance %","Pages solid","Part done","Juz","Last heard"];
     var lines = [head.join(",")].concat(rows.map(function (s) {
       var f = s.flags || {};
-      return [s.name, f.message || "", s["class"] || "", f.rate == null ? "" : f.rate,
+      return [s.name, (s.trend && s.trend.label) || "", (s.trend && s.trend.detail) || "",
+              f.message || "", s["class"] || "", f.rate == null ? "" : f.rate,
               s.pages ? s.pages.solid : "", s.pages ? s.pages.partial : "",
               s.pages ? s.pages.juz : "", s.last_heard || ""]
         .map(function (v) { return '"' + String(v).replace(/"/g, '""') + '"'; }).join(",");

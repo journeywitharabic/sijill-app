@@ -216,6 +216,7 @@
       var reasonIdx = Math.max(0, REASONS.findIndex(function (r) { return r[0] === s.state; }));
       var flag = s.flags && s.flags.kind
         ? '<span class="pill ' + s.flags.kind + '"><i></i>' + esc(s.flags.message) + '</span>' : "";
+      var tr = trendHtml(s.trend, false);
       // "Heard it, all fine" straight from the list. This is the whole point
       // of the row: the ordinary child has nothing to discuss, and making
       // that case cost a trip into their page and back is what turns a
@@ -228,7 +229,12 @@
         : "";
       return '' +
       '<div class="srow ' + (isAbsent(s.state) ? "absent" : "") + '" data-i="' + i + '">' +
-        '<button class="nmb"><span class="nm">' + esc(s.name) +
+        // The name gets its own element. With the trend arrow and the chevron
+        // living in the same box, "the text of .nm" stopped being the child's
+        // name — which broke the tests and would have broken anything else
+        // that needed it.
+        '<button class="nmb"><span class="nm">' + tr +
+          '<span class="nmtext">' + esc(s.name) + '</span>' +
           '<span class="chev" aria-hidden="true">›</span></span><span class="meta">' +
           (s.due ? s.due + " " + T("dueback") + " · " : "") +
           (s.last_heard ? T("heard") + " " + i18n.fmtDate(s.last_heard) : T("never")) +
@@ -401,6 +407,32 @@
     Promise.resolve(u.fn()).then(refreshDay);
   };
 
+  /* ---------------------------------------------------------- the trend */
+  /* One renderer for all three screens. The database decides the direction
+     (see _trend); this only draws it, so the student page, the register and
+     the coordinator's table can never disagree about the same child.
+
+     Tarek asked for a double arrow for stagnation. I have used a horizontal
+     one instead: a double arrow reads as "more, faster" in every other
+     interface a person has used, which is the opposite of what standing still
+     means. Easy to change back if the teachers read it differently. */
+  var TRENDS = {
+    up:   { glyph: "↑", cls: "tr-up" },
+    flat: { glyph: "→", cls: "tr-flat" },
+    down: { glyph: "↓", cls: "tr-down" },
+    away: { glyph: "–", cls: "tr-away" }
+  };
+  function trendHtml(t, withWords) {
+    if (!t || !t.dir) return "";
+    var k = TRENDS[t.dir] || TRENDS.away;
+    var label = T("tr_" + t.dir);
+    return '<span class="trend ' + k.cls + '" title="' + esc(label + (t.detail ? " — " + t.detail : "")) + '">' +
+      '<span class="g">' + k.glyph + '</span>' +
+      (withWords ? '<span class="t">' + esc(label) + '</span>' : "") +
+    '</span>';
+  }
+  window.SijillTrend = trendHtml;
+
   /* ------------------------------------------------------- student sheet */
   function openStudent(s) {
     S.student = s;
@@ -511,6 +543,11 @@
     ].filter(Boolean).join(" · ");
 
     var html = "";
+    if (d.trend && d.trend.dir) {
+      html += '<div class="trendbar ' + (TRENDS[d.trend.dir] || TRENDS.away).cls + '">' +
+        trendHtml(d.trend, true) +
+        '<span class="why">' + esc(d.trend.detail || "") + '</span></div>';
+    }
     if (f.kind) {
       html += '<div class="banner ' + f.kind + '"><span class="ic">●</span><div><b>' +
               esc(f.message) + '.</b></div></div>';
@@ -814,6 +851,11 @@
         '<button class="btn ghost sm" id="hwRemove" style="border-color:var(--crit);color:var(--crit)">' +
         esc(ar ? "حَذْفُ هَذَا الوَاجِب" : "Remove this homework") + '</button></div>';
 
+      // sheet() hides OK when it is created without a handler, and this one
+      // is wired up after the surah list arrives. Unhide it, or the editor
+      // offers Cancel and Remove and no way to say yes.
+      $("shOk").hidden = false;
+      $("shOk").textContent = T("save");
       $("shOk").onclick = function () {
         var newSurah = +$("hwSurah").value;
         var changedSurah = newSurah !== cur.surah;
@@ -892,6 +934,19 @@
         $("spList").querySelectorAll(".trow").forEach(function (r) {
           r.style.display = r.textContent.toLowerCase().indexOf(q) >= 0 ? "" : "none";
         });
+      };
+      /* Scrolling a list of 114 and tapping one leaves you unsure what you
+         picked by the time you reach the ayah boxes. Choosing a surah now
+         writes its name into the search box — which both confirms the choice
+         and collapses the list to it — and the row itself stays marked, so
+         clearing the box shows you where you are. */
+      $("spList").onchange = function (e) {
+        var r = e.target.closest(".trow");
+        if (!r) return;
+        $("spList").querySelectorAll(".trow").forEach(function (x) { x.classList.remove("on"); });
+        r.classList.add("on");
+        var name = r.querySelector(".lbl span:last-child");
+        if (name) { $("spFilter").value = name.textContent.trim(); $("spFilter").oninput(); }
       };
       $("shOk").onclick = function () {
         var sel = $("shBody").querySelector('input[name=sp]:checked');
