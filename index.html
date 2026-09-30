@@ -41,7 +41,12 @@
   .bar{flex-wrap:wrap;row-gap:8px}
   #whoAmI{max-width:38vw;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
   #classPick{max-width:44vw}
-  html,body{max-width:100%;overflow-x:hidden}
+  /* `clip`, not `hidden`. They look identical, but overflow-x:hidden makes the
+     element a scroll container, and that silently stopped position:sticky from
+     working for the "3 of 8 still to go" counter — it scrolled away exactly as
+     before while the CSS claimed otherwise. `overflow-x:clip` cuts off sideways
+     overflow without creating a scroll container. */
+  html,body{max-width:100%;overflow-x:clip}
   .wrap,.pad,.ctx{max-width:100%}
   .srow .nm{overflow-wrap:anywhere}
   /* Comfortable tap targets — Apple and Google both say 44px. */
@@ -107,14 +112,23 @@
     <div class="logo"><span class="ar">سِجِلّ</span><span class="en"><b>Sijill</b><span>Ommah Madrasah</span></span></div>
     <span class="sp"></span>
     <select id="classPick" class="mini" style="padding:6px 8px;max-width:140px"></select>
+    <!-- The caret is the whole point: without it this reads as a label and
+         nobody discovers that picking the wrong name is fixable. -->
     <button class="mini" id="whoAmI">—</button>
+    <button class="mini" id="gear" title="Settings" aria-label="Settings">⚙</button>
   </div>
   <div class="ctx"><h1 id="clsTitle">—</h1><div class="sub" id="clsDate">—</div></div>
   <div class="pad">
     <div id="saveBar"></div>
-    <div id="doneBar"></div>
+    <!-- "3 of 8 still to go" is the most useful thing on the screen and it
+         used to scroll away the moment you started working. It now sticks. -->
+    <div id="doneBar" class="sticky"></div>
+    <!-- Mark all present keeps the full width; the two occasional buttons
+         share a line, so the first student's name is above the fold. -->
     <div class="actionrow">
       <button class="btn" id="allPresent" data-t="markAll">Mark all present</button>
+    </div>
+    <div class="actionrow tight">
       <button class="btn ghost sm" id="bulkHw" data-t="bulkHw">+ Homework for the whole class</button>
       <button class="btn ghost sm" id="undoBtn" data-t="undo" disabled>↶ Undo last change</button>
     </div>
@@ -122,23 +136,39 @@
     <div class="slist" id="slist"><div class="loading"><span class="spin"></span></div></div>
     <div style="height:14px"></div>
     <div class="note" data-t="clsHint">Tap a name to record recitation. Everything saves as you tap.</div>
-    <div style="height:10px"></div>
-    <div class="actionrow">
-      <button class="btn ghost sm" id="goCoord" data-t="coordMode">Coordinator tools</button>
-      <button class="btn ghost sm" id="signOut" data-t="signOut">Sign out</button>
-    </div>
   </div>
 </section>
 
 <!-- ===================== TEACHER · STUDENT ===================== -->
 <section class="view wrap" id="v-student" hidden>
   <div class="bar">
-    <button class="back" id="backCls" data-t="back">‹ Back to class</button>
+    <button class="back" id="backCls" data-t="back">‹ Back</button>
     <span class="sp"></span>
+    <!-- Which child of how many, and a way to jump to a different one. The
+         next name in the list is often not the next child the teacher will
+         call, so "Next" alone would not be enough. -->
+    <button class="mini" id="stuPos" hidden>— ⌄</button>
     <button class="mini" id="openTree" data-t="fullMushaf">☰ Full mushaf</button>
+    <button class="mini" id="gearStu" title="Settings" aria-label="Settings">⚙</button>
   </div>
   <div class="ctx"><h1 id="stuName">—</h1><div class="sub" id="stuSub">—</div></div>
   <div class="pad" id="stuBody"><div class="loading"><span class="spin"></span></div></div>
+  <!-- The walk through the class. A teacher who has to go back to the list
+       between every child loses their place eight times a night. -->
+  <div class="pad" id="stuNav" hidden>
+    <button class="btn" id="nextStu">Next student ›</button>
+  </div>
+</section>
+
+<!-- ===================== FULL MUSHAF / LIVE AUDIT ===================== -->
+<section class="view wrap" id="v-mushaf" hidden>
+  <div class="bar">
+    <button class="back" id="mtBack" data-t="back">‹ Back</button>
+    <span class="sp"></span>
+    <span class="mini" id="mtWho">—</span>
+  </div>
+  <div class="ctx"><h1 id="mtTitle">—</h1><div class="sub" id="mtSub">—</div></div>
+  <div class="pad" id="mtBody"><div class="loading"><span class="spin"></span></div></div>
 </section>
 
 <!-- ===================== COORDINATOR ===================== -->
@@ -146,6 +176,7 @@
   <div class="bar">
     <button class="back" id="backCls2" data-t="back">‹ Back to class</button>
     <span class="sp"></span><span class="mini" id="coordWho">Coordinator</span>
+    <button class="mini" id="gearCoord" title="Settings" aria-label="Settings">⚙</button>
   </div>
   <div class="pad">
     <div class="mtabs" id="ctabs"></div>
@@ -160,10 +191,20 @@
     <button class="btn" id="shOk">OK</button><button class="btn ghost" id="shNo">Cancel</button></div>
 </div></div>
 
-<div class="proto" style="position:fixed;bottom:0;left:0;right:0;top:auto;padding:6px 12px;z-index:50" id="footer">
+<!-- Language and theme used to hold a permanent strip across the bottom of
+     every screen — two controls a teacher touches about twice a year, on the
+     screen where vertical space is scarcest. They now live behind the ⚙ in
+     the top bar, along with Sign out, which was previously one mis-tap away
+     from the register and cost a passphrase to recover from.
+
+     The buttons themselves stay in the page rather than being rebuilt inside
+     the sheet: i18n.js writes the current language onto #lang by id, and a
+     settings panel that rebuilt them would quietly stop showing the right
+     one. The sheet borrows these nodes and hands them back. -->
+<div class="proto" id="footer" hidden>
   <span class="tag" id="envTag">SIJILL</span>
   <span class="sw" style="flex:1"></span>
-  <div class="rt"><button id="lang">العربية</button><button id="theme">◐</button></div>
+  <div class="rt" id="footerBtns"><button id="lang">العربية</button><button id="theme">◐</button></div>
 </div>
 
 <script src="config.js"></script>
@@ -171,5 +212,6 @@
 <script src="i18n.js"></script>
 <script src="app.js"></script>
 <script src="coord.js"></script>
+<script src="mushaf.js"></script>
 </body>
 </html>

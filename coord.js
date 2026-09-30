@@ -9,7 +9,7 @@
   "use strict";
   var $ = function (id) { return document.getElementById(id); };
   var T = i18n.t;
-  var C = { tab: "dash", dash: null, stats: null, mtab: "students" };
+  var C = { tab: "dash", dash: null, stats: null, mtab: "students", dclass: "" };
 
   function esc(s) {
     return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) {
@@ -72,6 +72,21 @@
     return renderManage();
   }
 
+  /* B1 · the coordinator screens never re-translated.
+     The class and student screens redraw on a language change because app.js
+     listens for it; nothing here did, so these screens rendered once and
+     froze in whichever language was active when they were first opened —
+     which is worse than not offering the toggle at all. Cached data is
+     re-rendered rather than re-fetched: switching language should not cost a
+     round trip, and re-fetching would also throw away the search box. */
+  window.addEventListener("sijill:lang", function () {
+    if ($("v-coord").hidden) return;
+    renderTabs();
+    if (C.tab === "dash"  && C.dash)  return renderDash();
+    if (C.tab === "stats" && C.stats) return renderStats();
+    openTab(C.tab);
+  });
+
   /* ---------------------------------------------------------- 1. the school */
   function loadDash() {
     api.read("api_dashboard", { p_class: null, p_search: null }).then(function (d) {
@@ -89,21 +104,58 @@
       tile(ar ? "تَمَّ جَرْدُهُمْ" : "Assessed", d.tiles.assessed + "/" + d.tiles.students, ar ? "الجَرْدُ السَّنَوِيّ" : "annual audit") +
       '</div>';
 
+    /* B6 · a class filter. The list is filtered here rather than re-fetched
+       with p_class: the dashboard already holds every student, so filtering
+       in the browser is instant and one fewer thing to go wrong on a weak
+       signal. The class list is derived from the rows themselves, so it
+       cannot drift out of step with what is on screen. */
+    var classes = [];
+    d.students.forEach(function (s) {
+      if (s["class"] && classes.indexOf(s["class"]) < 0) classes.push(s["class"]);
+    });
+    classes.sort();
+
     h += '<div class="filters"><input type="search" id="dSearch" placeholder="' +
-         (ar ? "ابْحَثْ عَنْ طَالِب" : "Find a student") + '" style="flex:1;max-width:260px">' +
+         (ar ? "ابْحَثْ عَنْ طَالِب" : "Find a student") + '" style="flex:1;max-width:220px">' +
+         '<select id="dClass"><option value="">' +
+           (ar ? "كُلُّ الحَلْقَات" : "All classes") + '</option>' +
+           classes.map(function (c) {
+             return '<option value="' + esc(c) + '"' + (C.dclass === c ? " selected" : "") +
+                    '>' + esc(c) + '</option>'; }).join("") +
+         '</select>' +
          '<select id="dFlag"><option value="">' + (ar ? "كُلُّ الطُّلَّاب" : "All students") + '</option>' +
          '<option value="crit">' + (ar ? "أَحْمَر" : "Red flags only") + '</option>' +
          '<option value="any">' + (ar ? "يَحْتَاجُ اِنْتِبَاهًا" : "Needs attention") + '</option></select>' +
-         '<span style="flex:1"></span><button class="btn ghost sm" id="dCsv">Export CSV</button></div>';
+         '<span style="flex:1"></span><button class="btn ghost sm" id="dCsv">' +
+           (ar ? "تَصْدِيرُ CSV" : "Export CSV") + '</button></div>';
 
+    /* U7 · the colours had no key anywhere, and a tooltip is no use on a
+       phone. One line above the table, where it is read once and then
+       available whenever anyone forgets. */
+    h += '<div class="legend">' +
+      '<span class="pill crit"><i></i>' + esc(ar ? "أَحْمَر" : "red") + '</span> ' +
+        esc(ar ? "غِيَابٌ مُتَكَرِّرٌ بِلَا عُذْر، أَوْ بَنْدٌ أُعِيدَ ثَلَاثَ مَرَّاتٍ فَأَكْثَر"
+               : "repeated unexplained absence, or an item repeated three times or more") +
+      '<span class="sep">·</span>' +
+      '<span class="pill late"><i></i>' + esc(ar ? "بُرْتُقَالِيّ" : "amber") + '</span> ' +
+        esc(ar ? "تَعَثُّرٌ فِي التَّقَدُّمِ يَسْتَحِقُّ النَّظَر" : "slipping — worth a look, not yet a problem") +
+      '<span class="sep">·</span>' +
+      '<span class="pill exc"><i></i>' + esc(ar ? "بَنَفْسَجِيّ" : "violet") + '</span> ' +
+        esc(ar ? "غِيَابٌ بِعُذْرٍ مَعْرُوف" : "away, with a reason the school knows") +
+      '</div>';
+
+    /* U8 · "Needs attention" was the fourth of six columns, so on a phone it
+       sat off the right-hand edge — the one column anybody opens this screen
+       for. It now comes straight after the name. */
     h += '<div class="tw"><table><thead><tr>' +
-      ['', T("student"), T("classW"), T("attendance"), T("flags"), T("pages"), T("lastHeard")]
-        .slice(1).map(function (c) { return "<th>" + esc(c) + "</th>"; }).join("") +
+      [T("student"), T("flags"), T("classW"), T("attendance"), T("pages"), T("lastHeard")]
+        .map(function (c) { return "<th>" + esc(c) + "</th>"; }).join("") +
       '</tr></thead><tbody id="dRows"></tbody></table></div>';
     $("cbody").innerHTML = h;
     fillRows();
     $("dSearch").oninput = fillRows;
     $("dFlag").onchange = fillRows;
+    $("dClass").onchange = function () { C.dclass = this.value; fillRows(); };
     $("dCsv").onclick = exportCsv;
   }
 
@@ -115,7 +167,9 @@
   function visibleRows() {
     var q = ($("dSearch") && $("dSearch").value || "").toLowerCase();
     var fl = ($("dFlag") && $("dFlag").value) || "";
+    var cl = ($("dClass") && $("dClass").value) || "";
     return C.dash.students.filter(function (s) {
+      if (cl && s["class"] !== cl) return false;
       if (q && s.name.toLowerCase().indexOf(q) < 0) return false;
       if (fl === "crit" && (!s.flags || s.flags.kind !== "crit")) return false;
       if (fl === "any" && (!s.flags || !s.flags.kind)) return false;
@@ -127,24 +181,35 @@
     var rows = visibleRows();
     $("dRows").innerHTML = rows.length ? rows.map(function (s) {
       var f = s.flags || {};
+      var ar2 = i18n.isAr();
       return '<tr data-id="' + esc(s.id) + '"><td><b>' + esc(s.name) + '</b></td>' +
-        '<td>' + esc(s["class"] || "—") + '</td>' +
-        '<td class="n">' + (f.rate == null ? "—" : f.rate + "%") + '</td>' +
         '<td>' + (f.kind ? '<span class="pill ' + f.kind + '"><i></i>' + esc(f.message) + '</span>'
                          : '<span style="color:var(--ink-3)">—</span>') + '</td>' +
-        '<td class="n">' + (s.pages ? s.pages.solid + (s.pages.partial ? "+" + s.pages.partial : "") +
-            ' <span style="color:var(--ink-3)">juz ' + s.pages.juz + '</span>' : "—") + '</td>' +
+        '<td>' + esc(s["class"] || "—") + '</td>' +
+        '<td class="n">' + (f.rate == null ? "—" : f.rate + "%") + '</td>' +
+        /* U6 · this column used to read "11+3", which needed a tooltip nobody
+           on a phone can open. It now says what it means. */
+        '<td>' + (s.pages
+            ? '<span class="pgcell"><b>' + s.pages.solid + '</b> ' +
+                esc(ar2 ? "صَفْحَةً مُتْقَنَة" : (s.pages.solid === 1 ? "page solid" : "pages solid")) +
+              (s.pages.partial ? '<span class="m">· ' + s.pages.partial + " " +
+                 esc(ar2 ? "جُزْئِيَّة" : "part-done") + '</span>' : "") +
+              '<span class="m">· ' + esc(ar2 ? "جُزْء " : "juz ") + s.pages.juz + '</span></span>'
+            : "—") + '</td>' +
         '<td class="n">' + (s.last_heard ? i18n.fmtDate(s.last_heard) : "—") + '</td></tr>';
-    }).join("") : '<tr><td colspan="6" style="color:var(--ink-3);padding:18px">No students match.</td></tr>';
+    }).join("") : '<tr><td colspan="6" style="color:var(--ink-3);padding:18px">' +
+        esc(i18n.isAr() ? "لَا يُوجَدُ طَالِبٌ مُطَابِق." : "No students match.") + '</td></tr>';
   }
 
   function exportCsv() {
     var rows = visibleRows();
-    var head = ["Student","Class","Attendance %","Needs attention","Pages solid","Juz","Last heard"];
+    // Same order as the table on screen, so the file and the page agree.
+    var head = ["Student","Needs attention","Class","Attendance %","Pages solid","Part done","Juz","Last heard"];
     var lines = [head.join(",")].concat(rows.map(function (s) {
       var f = s.flags || {};
-      return [s.name, s["class"] || "", f.rate == null ? "" : f.rate, f.message || "",
-              s.pages ? s.pages.solid : "", s.pages ? s.pages.juz : "", s.last_heard || ""]
+      return [s.name, f.message || "", s["class"] || "", f.rate == null ? "" : f.rate,
+              s.pages ? s.pages.solid : "", s.pages ? s.pages.partial : "",
+              s.pages ? s.pages.juz : "", s.last_heard || ""]
         .map(function (v) { return '"' + String(v).replace(/"/g, '""') + '"'; }).join(",");
     }));
     var blob = new Blob(["﻿" + lines.join("\r\n")], { type: "text/csv;charset=utf-8" });
@@ -158,6 +223,7 @@
   function renderManage() {
     var ar = i18n.isAr();
     var tabs = [["students", ar ? "الطُّلَّاب" : "Students"],
+                ["staff",    ar ? "المُعَلِّمُونَ وَالحَلْقَات" : "Teachers & classes"],
                 ["links",    ar ? "الرَّوَابِط" : "Links"],
                 ["calendar", ar ? "التَّقْوِيم" : "Calendar"],
                 ["log",      ar ? "سِجِلُّ التَّغْيِيرَات" : "Change log"],
@@ -171,6 +237,7 @@
     });
     var body = $("mbody"); busy(body);
     if (C.mtab === "students") return manageStudents(body);
+    if (C.mtab === "staff")    return manageStaff(body);
     if (C.mtab === "links")    return manageLinks(body);
     if (C.mtab === "calendar") return manageCalendar(body);
     if (C.mtab === "log")      return manageLog(body);
@@ -284,8 +351,31 @@
      never be looked up again — only replaced. So the screen has to make
      copying it the obvious thing to do. */
   function showLinkOnce(token, who) {
-    var url = location.origin + location.pathname.replace(/[^/]*$/, "") + "family.html#c=" + encodeURIComponent(token);
+    /* Which address the link is built from.
+       Cloudflare gives every build its own address with a hash in front of
+       it — 128ef441.sijill-app.pages.dev — alongside the permanent one.
+       Both work, both look identical in the browser bar, and a link issued
+       from the hashed one carries that hash for ever and points at a frozen
+       copy of the app. A parent would never know; it would simply stop
+       showing new homework one day.
+
+       So the link is built from SITE_HOST when it is set, whatever page the
+       coordinator happens to be standing on, and they are told when those
+       two disagree. */
+    var wanted = (api.config.SITE_HOST || "").replace(/^https?:\/\//, "").replace(/\/$/, "");
+    var host = wanted || location.host;
+    var origin = wanted ? "https://" + wanted : location.origin;
+    var url = origin + location.pathname.replace(/[^/]*$/, "") + "family.html#c=" + encodeURIComponent(token);
+    var offSite = wanted && location.host !== wanted;
+
     window.SijillSheet("Send this now — it cannot be shown again",
+      (offSite
+        ? '<div class="banner crit hostwarn" style="margin-bottom:10px"><span class="ic">●</span><div>' +
+          '<b>You are on ' + esc(location.host) + ', not ' + esc(wanted) + '.</b> ' +
+          'That is a one-off address for a single build. The link below has been ' +
+          'written for the real address, so it is safe to send — but check it ' +
+          'starts with <b>' + esc(wanted) + '</b> before you do.</div></div>'
+        : "") +
       '<div class="note" style="margin-bottom:10px">Covers: <b>' + esc(who) + '</b></div>' +
       '<textarea id="lkUrl" readonly style="width:100%;min-height:92px;font-family:var(--mono);font-size:12px;' +
       'padding:10px;border:1px solid var(--line);border-radius:10px;background:var(--surface-2);color:var(--ink)">' +
@@ -305,16 +395,169 @@
     }, 50);
   }
 
+  /* Tarek asked for the channel dropdown to become a status that looks after
+     itself. It already could: every time a family opens their page the visit
+     is recorded, so "issued and never opened" is something the database knows
+     and the old dropdown only ever recorded an intention. Three states rather
+     than two, because "opened once in September" and "reads it every week"
+     are different problems and only one of them needs a phone call. */
+  function linkStatus(g) {
+    var ar = i18n.isAr();
+    if (!g.opens_all_time) {
+      return '<span class="pill crit"><i></i>' +
+        esc(ar ? "أُصْدِرَ وَلَمْ يُفْتَحْ" : "issued, never opened") + '</span>';
+    }
+    if (g.engagement === "regular") {
+      return '<span class="pill ok"><i></i>' +
+        esc(ar ? "تُتَابِعُ الأُسْرَة" : "reading it") + '</span>';
+    }
+    return '<span class="pill late"><i></i>' +
+      esc(ar ? "تَوَقَّفَتْ عَنِ المُتَابَعَة" : "stopped opening it") + '</span>';
+  }
+
+  /* F2 · teachers and classes.
+     The database has been able to do all of this since the beginning; there
+     was simply no screen for it, so the honest note in the deploy guide said
+     "do it in the SQL editor". Asking a volunteer coordinator to open a SQL
+     editor is the same as saying it cannot be done. */
+  function manageStaff(body) {
+    api.read("api_roster").then(function (r) {
+      var ar = i18n.isAr();
+      body.innerHTML =
+        '<div class="filters"><b style="font-size:12px;letter-spacing:.1em;text-transform:uppercase;' +
+          'color:var(--ink-3)">' + esc(ar ? "المُعَلِّمُون" : "Teachers") + '</b>' +
+          '<span style="flex:1"></span>' +
+          '<button class="btn sm" id="addTeacher">+ ' + esc(ar ? "مُعَلِّم" : "Teacher") + '</button></div>' +
+        '<div class="tw"><table><thead><tr>' +
+          '<th>' + esc(ar ? "الاِسْم" : "Name") + '</th>' +
+          '<th>' + esc(ar ? "سَجَّلَ" : "Marked") + '</th>' +
+          '<th>' + esc(ar ? "آخِرُ حِصَّة" : "Last class") + '</th>' +
+          '<th></th></tr></thead><tbody>' +
+        (r.teachers.length ? r.teachers.map(function (t) {
+          return '<tr' + (t.active ? "" : ' style="opacity:.55"') + '>' +
+            '<td><b>' + esc(t.name) + '</b>' +
+              (t.active ? "" : ' <span class="pill mute"><i></i>' +
+                 esc(ar ? "غَيْرُ نَشِط" : "switched off") + '</span>') + '</td>' +
+            '<td class="n">' + t.marked + '</td>' +
+            '<td class="n">' + (t.last_seen ? i18n.fmtDate(t.last_seen) : "—") + '</td>' +
+            '<td style="text-align:right"><button class="mini tg-act" data-id="' + esc(t.id) +
+              '" data-name="' + esc(t.name) + '" data-to="' + (t.active ? "0" : "1") + '">' +
+              esc(t.active ? (ar ? "أَوْقِفْ" : "Switch off") : (ar ? "أَعِدْ تَفْعِيلَه" : "Switch on")) +
+            '</button></td></tr>';
+        }).join("") : '<tr><td colspan="4" style="padding:18px;color:var(--ink-3)">—</td></tr>') +
+        '</tbody></table></div>' +
+
+        '<div class="note" style="margin:10px 0 20px">' +
+          esc(ar
+            ? "إِيقَافُ مُعَلِّمٍ يُخْرِجُهُ مِنْ قَائِمَةِ الدُّخُولِ وَيُنْهِي جَلَسَاتِه. كُلُّ مَا سَجَّلَهُ يَبْقَى كَمَا هُوَ وَمَنْسُوبًا إِلَيْه."
+            : "Switching a teacher off takes them off the sign-in list and ends their sessions. Everything they recorded stays exactly as it is, still in their name — nothing is deleted.") +
+        '</div>' +
+
+        '<div class="filters"><b style="font-size:12px;letter-spacing:.1em;text-transform:uppercase;' +
+          'color:var(--ink-3)">' + esc(ar ? "الحَلْقَات" : "Classes") + '</b>' +
+          '<span style="flex:1"></span>' +
+          '<button class="btn sm" id="addClass">+ ' + esc(ar ? "حَلْقَة" : "Class") + '</button></div>' +
+        '<div class="tw"><table><thead><tr>' +
+          '<th>' + esc(ar ? "الاِسْم" : "Name") + '</th>' +
+          '<th>' + esc(ar ? "تَجْتَمِع" : "Meets") + '</th>' +
+          '<th>' + esc(ar ? "طُلَّاب" : "Students") + '</th>' +
+          '<th>' + esc(ar ? "حِصَص" : "Sessions") + '</th></tr></thead><tbody>' +
+        (r.classes.length ? r.classes.map(function (c) {
+          return '<tr><td><b>' + esc(c.name) + '</b></td>' +
+            '<td>' + esc((c.meets || []).map(function (m) {
+                return ar ? (m === "friday" ? "الجُمُعَة" : "الأَحَد")
+                          : (m.charAt(0).toUpperCase() + m.slice(1));
+              }).join(" · ")) + '</td>' +
+            '<td class="n">' + c.students + '</td><td class="n">' + c.sessions + '</td></tr>';
+        }).join("") : '<tr><td colspan="4" style="padding:18px;color:var(--ink-3)">—</td></tr>') +
+        '</tbody></table></div>' +
+        '<div class="note" style="margin-top:10px">' +
+          esc(ar
+            ? "الحَلْقَاتُ الجَدِيدَةُ تَحْصُلُ عَلَى أَيَّامِهَا فِي التَّقْوِيمِ تِلْقَائِيًّا حَتَّى نِهَايَةِ العَام."
+            : "A new class gets its calendar days generated automatically to the end of the year. Moving students into it is done from the Students tab.") +
+        '</div>';
+
+      $("addTeacher").onclick = function () {
+        window.SijillSheet(ar ? "إِضَافَةُ مُعَلِّم" : "Add a teacher",
+          '<input id="tName" placeholder="' + (ar ? "الاِسْمُ الكَامِل" : "Full name") + '" ' +
+          'style="width:100%;padding:11px;font-size:16px;border:1px solid var(--line);' +
+          'border-radius:10px;background:var(--surface);color:var(--ink)">',
+          T("add"), function () {
+            var n = ($("tName").value || "").trim();
+            if (n.length < 3) return false;
+            api.write("api_teacher_add", { p_name: n }, n)
+              .then(function () { window.SijillCloseSheet(); renderManage(); }).catch(err);
+            return false;
+          });
+        setTimeout(function () { var f = $("tName"); if (f) f.focus(); }, 60);
+      };
+
+      body.querySelectorAll(".tg-act").forEach(function (b) {
+        b.onclick = function () {
+          var on = b.dataset.to === "1";
+          window.SijillSheet(
+            (on ? (ar ? "إِعَادَةُ تَفْعِيل" : "Switch back on") : (ar ? "إِيقَافُ مُعَلِّم" : "Switch off")) +
+              " — " + b.dataset.name,
+            '<div style="font-size:13.5px;line-height:1.55">' + esc(on
+              ? (ar ? "سَيَظْهَرُ اسْمُهُ فِي قَائِمَةِ الدُّخُولِ مِنْ جَدِيد."
+                    : "They will appear on the sign-in list again.")
+              : (ar ? "سَيَخْتَفِي مِنْ قَائِمَةِ الدُّخُولِ وَسَتَنْتَهِي جَلَسَاتُهُ فَوْرًا. لَنْ يُحْذَفَ شَيْءٌ مِمَّا سَجَّلَه."
+                    : "They disappear from the sign-in list and any phone they are signed in on is signed out. Nothing they recorded is deleted.")) +
+            '</div>',
+            on ? (ar ? "فَعِّلْ" : "Switch on") : (ar ? "أَوْقِفْ" : "Switch off"),
+            function () {
+              api.write("api_teacher_set_active",
+                        { p_teacher: b.dataset.id, p_active: on }, b.dataset.name)
+                .then(function () { window.SijillCloseSheet(); renderManage(); }).catch(err);
+              return false;
+            });
+        };
+      });
+
+      $("addClass").onclick = function () {
+        window.SijillSheet(ar ? "إِضَافَةُ حَلْقَة" : "Add a class",
+          '<input id="cName" placeholder="' + (ar ? "اسْمُ الحَلْقَة" : "Class name") + '" ' +
+          'style="width:100%;padding:11px;font-size:16px;border:1px solid var(--line);' +
+          'border-radius:10px;background:var(--surface);color:var(--ink);margin-bottom:10px">' +
+          '<div class="filters" style="margin:0"><label class="chip"><input type="checkbox" id="cFri" checked> ' +
+          (ar ? "الجُمُعَة" : "Friday") + '</label>' +
+          '<label class="chip"><input type="checkbox" id="cSun" checked> ' +
+          (ar ? "الأَحَد" : "Sunday") + '</label></div>',
+          T("add"), function () {
+            var n = ($("cName").value || "").trim();
+            if (n.length < 2) return false;
+            var meets = [];
+            if ($("cFri").checked) meets.push("friday");
+            if ($("cSun").checked) meets.push("sunday");
+            if (!meets.length) return false;
+            api.write("api_class_add", { p_name: n, p_meets: meets }, n)
+              .then(function (r) {
+                window.SijillCloseSheet();
+                // Say how many class days were created. Silence here would
+                // leave you guessing whether the new class actually has a
+                // year in front of it or is an empty shell.
+                window.SijillToast(ar
+                  ? n + " — أُنْشِئَ " + ((r && r.days_created) || 0) + " يَوْمَ دِرَاسَة"
+                  : n + " — " + ((r && r.days_created) || 0) + " class days created");
+                renderManage();
+              }).catch(err);
+            return false;
+          });
+        setTimeout(function () { var f = $("cName"); if (f) f.focus(); }, 60);
+      };
+    }).catch(err);
+  }
+
   function manageLinks(body) {
     Promise.all([api.read("api_links"), api.read("api_dashboard", {})]).then(function (r) {
       var links = r[0], students = r[1].students;
       body.innerHTML =
         '<div class="filters"><span style="flex:1"></span><button class="btn sm" id="newLink">+ Issue a link</button></div>' +
-        '<div class="tw"><table><thead><tr><th>Link covers</th><th>Whose</th><th>Sent on</th>' +
+        '<div class="tw"><table><thead><tr><th>Link covers</th><th>Whose</th><th>Status</th>' +
         '<th>Opens (30d)</th><th>Last opened</th><th></th></tr></thead><tbody>' +
         (links.length ? links.map(function (g) {
           return '<tr><td><b>' + esc(g.children || "—") + '</b></td><td>' + esc(g.label) + '</td>' +
-            '<td>' + esc(g.channel || "—") + '</td><td class="n">' + g.opens_30d + '</td>' +
+            '<td>' + linkStatus(g) + '</td><td class="n">' + g.opens_30d + '</td>' +
             '<td class="n">' + (g.last_opened ? i18n.fmtDate(g.last_opened.slice(0,10)) : "never") + '</td>' +
             '<td style="text-align:right;white-space:nowrap">' +
             '<button class="mini lk-rot" data-id="' + esc(g.guardian_id) + '" data-who="' + esc(g.children || "") + '">Replace</button> ' +
@@ -351,9 +594,7 @@
       'all of them. Give each parent their own link rather than sharing one.</div>' +
       '<div class="filters" style="margin:0 0 10px"><select id="nlLabel" class="mini">' +
       '<option>mother</option><option>father</option><option>grandmother</option>' +
-      '<option>grandfather</option><option>guardian</option></select>' +
-      '<select id="nlChan" class="mini"><option value="classdojo">ClassDojo</option>' +
-      '<option value="whatsapp">WhatsApp</option><option value="email">Email</option></select></div>' +
+      '<option>grandfather</option><option>guardian</option></select></div>' +
       '<input id="nlFind" type="search" placeholder="Find a child" style="width:100%;padding:10px;margin-bottom:8px;' +
       'border:1px solid var(--line);border-radius:10px;background:var(--surface);color:var(--ink)">' +
       '<div class="tree" style="max-height:260px;overflow:auto" id="nlList">' +
@@ -368,7 +609,7 @@
         if (!boxes.length) return false;
         api.write("api_issue_link", {
           p_students: boxes.map(function (b) { return b.value; }),
-          p_label: $("nlLabel").value, p_channel: $("nlChan").value
+          p_label: $("nlLabel").value
         }, "link").then(function (r) {
           showLinkOnce(r.token, boxes.map(function (b) { return b.dataset.name; }).join(" · "));
         }).catch(err);

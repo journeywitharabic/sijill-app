@@ -10,7 +10,12 @@
 <link rel="apple-touch-icon" href="icon-192.png">
 <link rel="stylesheet" href="sijill.css">
 <style>
-  html,body{max-width:100%;overflow-x:hidden}
+  /* `clip`, not `hidden`. They look identical, but overflow-x:hidden makes the
+     element a scroll container, and that silently stopped position:sticky from
+     working for the "3 of 8 still to go" counter — it scrolled away exactly as
+     before while the CSS claimed otherwise. `overflow-x:clip` cuts off sideways
+     overflow without creating a scroll container. */
+  html,body{max-width:100%;overflow-x:clip}
   .wrap{max-width:560px}
   .loading{padding:40px;text-align:center;color:var(--ink-3)}
   .spin{display:inline-block;width:16px;height:16px;border:2px solid var(--line-2);

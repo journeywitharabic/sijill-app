@@ -15,10 +15,10 @@
     whoAdd:"My name is not on the list",
     whoAddTitle:"Add your name",
     whoAddHelp:"You will be able to teach straight away. A coordinator confirms your name afterwards.",
-    markAll:"Mark all present", bulkHw:"+ Homework for the whole class",
-    undo:"↶ Undo last change", clsHint:"Tap a name to record recitation. Everything saves as you tap.",
+    markAll:"Mark all present", bulkHw:"+ Homework for the class",
+    undo:"↶ Undo last change", clsHint:"Tap <b>✓ heard</b> when a child recites everything they had open and there is nothing to add. Tap their <b>name</b> for anything else. Both attendance <b>and</b> recitation are needed before the day counts as complete. Everything saves as you tap.",
     coordMode:"Coordinator tools", signOut:"Sign out",
-    back:"‹ Back to class", fullMushaf:"☰ Full mushaf",
+    back:"‹ Back", fullMushaf:"☰ Mushaf",
     present:"present", late:"late", excused:"excused", noreason:"no reason",
     dueback:"due back", heard:"heard", recited:"recited", carries:"homework carries over",
     notMarked:"not marked yet",
@@ -44,7 +44,40 @@
     tabDash:"School", tabManage:"Manage", tabStats:"Statistics",
     student:"Student", classW:"Class", attendance:"Attendance", flags:"Needs attention",
     lastHeard:"Last heard", pages:"Pages", none:"—",
-    weeks:"weeks ago", never:"not yet heard", thisTerm:"this term"
+    weeks:"weeks ago", never:"not yet heard", thisTerm:"this term",
+
+    /* --- one tap from the class list, and the labels under the marks --- */
+    mHere:"here", mLate:"late", mAway:"away",
+    gGood:"good", gAgain:"again", gNotReady:"not ready",
+    gGoodTip:"Recited to standard — three mistakes a page or fewer",
+    gAgainTip:"More than three mistakes a page. It comes back next week by itself.",
+    gNotReadyTip:"Here, but had not worked on it. A conversation with the family, not a teaching problem.",
+    week1:"week ago",
+    mtSolid:"solid", mtReview:"review", mtClear:"clear",
+    mtClearTip:"Remove this from the child's record — use it to correct a mistake, not to mark forgetting",
+    mtClearAsk:"Clear this from the record?",
+    mtClearBody:"It stops counting as memorised. If the child has forgotten it, mark it review instead — that keeps the history and puts it back in the rotation.",
+    mtPagesSolid:"{n} pages solid across the mushaf",
+    mtHelp:"Tap a juz to open it. You can mark a whole juz, a hizb, a page or a few ayat — whichever matches what you actually know. Nothing here says the child recited today; it records what they already have.",
+    heardAll:"heard", heardAllTip:"Heard everything they had open, all good",
+    heardDone:"{name} — {n} marked good",
+    /* --- taking a mark back --- */
+    undoMark:"Take back", undoMarkTitle:"Take this mark back?",
+    undoMarkBody:"The recitation is kept and marked withdrawn. {who} memorization goes back to what it was, and any homework it cleared opens again.",
+    undoneOk:"Mark taken back",
+    undoTooLate:"This surah has been marked again since. Take the newer mark back first.",
+    /* --- notes --- */
+    gNotes:"Notes", noneNotes:"No notes yet.", noteAdd:"+ Add a note",
+    noteEdit:"Edit note", noteDelete:"Delete this note?",
+    noteDeleteBody:"It stays in the record and a coordinator can put it back.",
+    noteBy:"by", noteEdited:"edited",
+    /* --- next student --- */
+    nextStu:"Next student", pickStu:"Pick a student", ofN:"{i} of {n}",
+    allDone:"That was the last one",
+    /* --- duplicate homework --- */
+    dupTitle:"They already have this",
+    dupBody:"{n} of these students already have an overlapping passage open. Assign it again anyway?",
+    dupAnyway:"Assign anyway"
   };
 
   var AR = {
@@ -58,9 +91,9 @@
     whoAddHelp:"يُمْكِنُكَ التَّدْرِيسُ فَوْرًا. يُؤَكِّدُ المُنَسِّقُ اسْمَكَ لَاحِقًا.",
     markAll:"تَسْجِيلُ الجَمِيعِ حَاضِرِين", bulkHw:"+ وَاجِبٌ لِلْحَلْقَةِ كُلِّهَا",
     undo:"↶ تَرَاجُعٌ عَنْ آخِرِ تَغْيِير",
-    clsHint:"اُنْقُرْ عَلَى الاِسْمِ لِتَسْجِيلِ التِّلَاوَة. كُلُّ شَيْءٍ يُحْفَظُ تِلْقَائِيًّا.",
+    clsHint:"اُنْقُرْ <b>✓ سَمِعْتُهُ</b> إِذَا تَلَا الطَّالِبُ كُلَّ مَا كَانَ عَلَيْهِ وَلَا شَيْءَ يُضَاف. وَانْقُرْ عَلَى <b>الاِسْمِ</b> لِمَا سِوَى ذَلِك. يَلْزَمُ تَسْجِيلُ الحُضُورِ <b>وَ</b>التِّلَاوَةِ مَعًا حَتَّى يَكْتَمِلَ اليَوْم. كُلُّ شَيْءٍ يُحْفَظُ تِلْقَائِيًّا.",
     coordMode:"أَدَوَاتُ المُنَسِّق", signOut:"تَسْجِيلُ الخُرُوج",
-    back:"‹ العَوْدَةُ إِلَى الحَلْقَة", fullMushaf:"☰ المُصْحَفُ كَامِلًا",
+    back:"‹ رُجُوع", fullMushaf:"☰ المُصْحَف",
     present:"حَاضِر", late:"مُتَأَخِّر", excused:"بِعُذْر", noreason:"بِدُونِ عُذْر",
     dueback:"لِلْإِعَادَة", heard:"سُمِعَتْ", recited:"سُجِّلَ", carries:"الوَاجِبُ مُسْتَمِرّ",
     notMarked:"لَمْ يُسَجَّلْ بَعْد",
@@ -86,7 +119,35 @@
     tabDash:"المَدْرَسَة", tabManage:"الإِدَارَة", tabStats:"الإِحْصَاءَات",
     student:"الطَّالِب", classW:"الحَلْقَة", attendance:"الحُضُور", flags:"يَحْتَاجُ اِنْتِبَاهًا",
     lastHeard:"آخِرُ سَمَاع", pages:"صَفَحَات", none:"—",
-    weeks:"أَسَابِيعَ مَضَتْ", never:"لَمْ يُسْمَعْ بَعْد", thisTerm:"هَذَا الفَصْل"
+    weeks:"أَسَابِيعَ مَضَتْ", never:"لَمْ يُسْمَعْ بَعْدُ", thisTerm:"هَذَا الفَصْل",
+
+    mHere:"حَاضِر", mLate:"مُتَأَخِّر", mAway:"غَائِب",
+    gGood:"جَيِّد", gAgain:"أَعِدْ", gNotReady:"لَمْ يُحَضِّرْ",
+    gGoodTip:"تَلَا عَلَى المُسْتَوَى المَطْلُوب — ثَلَاثَةُ أَخْطَاءٍ فِي الصَّفْحَةِ أَوْ أَقَلّ",
+    gAgainTip:"أَكْثَرُ مِنْ ثَلَاثَةِ أَخْطَاءٍ فِي الصَّفْحَة. يَعُودُ الأُسْبُوعَ القَادِمَ تِلْقَائِيًّا.",
+    gNotReadyTip:"حَاضِرٌ لَكِنَّهُ لَمْ يَعْمَلْ عَلَيْه. هَذَا حَدِيثٌ مَعَ الأُسْرَة، لَا مُشْكِلَةٌ تَعْلِيمِيَّة.",
+    week1:"أُسْبُوعٌ مَضَى",
+    mtSolid:"مُتْقَن", mtReview:"مُرَاجَعَة", mtClear:"مَسْح",
+    mtClearTip:"يُزِيلُ هَذَا مِنْ سِجِلِّ الطَّالِب — لِتَصْحِيحِ خَطَإٍ، لَا لِتَسْجِيلِ النِّسْيَان",
+    mtClearAsk:"هَلْ تَمْسَحُ هَذَا مِنَ السِّجِلّ؟",
+    mtClearBody:"لَنْ يُحْسَبَ مَحْفُوظًا بَعْدَ الآن. إِنْ كَانَ الطَّالِبُ قَدْ نَسِيَهُ فَاخْتَرْ مُرَاجَعَة، فَذَلِكَ يَحْفَظُ التَّارِيخَ وَيُعِيدُهُ إِلَى دَوْرَةِ المُرَاجَعَة.",
+    mtPagesSolid:"{n} صَفْحَةً مُتْقَنَةً فِي المُصْحَفِ كُلِّهِ",
+    mtHelp:"اُنْقُرْ عَلَى جُزْءٍ لِفَتْحِه. يُمْكِنُكَ تَعْلِيمُ جُزْءٍ كَامِلٍ أَوْ حِزْبٍ أَوْ صَفْحَةٍ أَوْ بِضْعِ آيَاتٍ، بِحَسَبِ مَا تَعْرِفُهُ فِعْلًا. لَا شَيْءَ هُنَا يَقُولُ إِنَّ الطَّالِبَ تَلَا اليَوْم؛ هَذَا تَسْجِيلٌ لِمَا هُوَ حَافِظُهُ أَصْلًا.",
+    heardAll:"سَمِعْتُهُ", heardAllTip:"سَمِعْتُ كُلَّ مَا كَانَ عَلَيْهِ، وَكُلُّهُ جَيِّد",
+    heardDone:"{name} — سُجِّلَ {n} بِنَجَاح",
+    undoMark:"تَرَاجَعْ", undoMarkTitle:"هَلْ تَتَرَاجَعُ عَنْ هَذَا التَّسْجِيل؟",
+    undoMarkBody:"تَبْقَى التِّلَاوَةُ فِي السِّجِلِّ مَعَ عَلَامَةِ السَّحْب. يَعُودُ حِفْظُ {who} إِلَى مَا كَانَ عَلَيْهِ، وَيُفْتَحُ الوَاجِبُ الَّذِي أُغْلِقَ مِنْ جَدِيد.",
+    undoneOk:"تَمَّ التَّرَاجُع",
+    undoTooLate:"سُجِّلَتْ هَذِهِ السُّورَةُ مَرَّةً أُخْرَى بَعْدَ ذَلِك. تَرَاجَعْ عَنِ التَّسْجِيلِ الأَحْدَثِ أَوَّلًا.",
+    gNotes:"المُلَاحَظَات", noneNotes:"لَا تُوجَدُ مُلَاحَظَاتٌ بَعْدُ.", noteAdd:"+ أَضِفْ مُلَاحَظَة",
+    noteEdit:"تَعْدِيلُ المُلَاحَظَة", noteDelete:"هَلْ تَحْذِفُ هَذِهِ المُلَاحَظَة؟",
+    noteDeleteBody:"تَبْقَى فِي السِّجِلِّ وَيُمْكِنُ لِلْمُنَسِّقِ إِعَادَتُهَا.",
+    noteBy:"بِقَلَمِ", noteEdited:"مُعَدَّلَة",
+    nextStu:"الطَّالِبُ التَّالِي", pickStu:"اخْتَرْ طَالِبًا", ofN:"{i} مِنْ {n}",
+    allDone:"كَانَ ذَلِكَ الأَخِير",
+    dupTitle:"هَذَا مَوْجُودٌ لَدَيْهِمْ بِالفِعْل",
+    dupBody:"{n} مِنْ هَؤُلَاءِ الطُّلَّابِ لَدَيْهِمْ مَقْطَعٌ مُتَدَاخِلٌ مَفْتُوحٌ بِالفِعْل. هَلْ تُسْنِدُهُ مَرَّةً أُخْرَى رَغْمَ ذَلِك؟",
+    dupAnyway:"أَسْنِدْهُ رَغْمَ ذَلِك"
   };
 
   var lang = "en";

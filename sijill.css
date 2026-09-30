@@ -341,3 +341,186 @@ html[lang="ar"] #classPick{ direction:ltr; text-align:left; max-width:52vw }
 /* numbers still line up in columns */
 html[lang="ar"] td.n, html[lang="ar"] .kv b,
 html[lang="ar"] .tile .v, html[lang="ar"] .donebar .big{ font-variant-numeric:tabular-nums }
+
+/* ==========================================================================
+   Week-one changes. Everything here answers a specific complaint from the
+   first evening of real testing, and the comment says which.
+   ========================================================================== */
+
+/* U9 · nothing said a student row was tappable, so the student page went
+   undiscovered. The chevron is the standard way of saying "there is more
+   behind this" and costs no vertical space. */
+.srow .chev{color:var(--ink-3);font-weight:400;margin-inline-start:6px;font-size:15px;line-height:1}
+.srow .nmb:hover .chev{color:var(--ink-2)}
+
+/* U4 · ✓ / L / ✗ were unlabelled, and "L" for late is meaningless in Arabic.
+   The icon keeps the colour coding; the word underneath removes the guessing.
+   Taller as well, which fixes the small tap targets at the same time. */
+.seg3 button{width:auto;min-width:44px;height:42px;padding:3px 6px;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;line-height:1}
+.seg3 button .ic{font-size:13px;font-weight:700}
+.seg3 button small{font-size:8.5px;font-weight:600;letter-spacing:.02em;opacity:.85;white-space:nowrap}
+html[lang="ar"] .seg3 button small{font-size:9px;letter-spacing:0}
+html[lang="ar"] .seg3 button{min-width:50px}
+
+/* The workflow fix · the ordinary child, heard and marked without leaving
+   the list. Deliberately green and deliberately not part of the attendance
+   group, because it answers a different question. */
+.heard{flex:none;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;
+  min-width:42px;height:42px;padding:3px 7px;border-radius:9px;line-height:1;
+  background:var(--ok-soft);border:1px solid color-mix(in srgb,var(--ok) 40%,transparent);color:var(--ok)}
+.heard .ic{font-size:14px;font-weight:700}
+.heard small{font-size:8.5px;font-weight:700;white-space:nowrap}
+.heard:disabled{opacity:.45}
+html[lang="ar"] .heard small{font-size:9px}
+
+/* U2 · "3 of 8 still to go" is the most useful thing on the screen and it
+   used to scroll out of sight the moment you started working. */
+#doneBar.sticky{position:sticky;top:0;z-index:20;background:var(--paper)}
+
+/* U1 · three stacked full-width buttons pushed the first student's name
+   below the fold on a 390px phone. The list IS the screen. */
+.actionrow.tight{gap:7px;margin-top:-6px}
+.actionrow.tight .btn{flex:1 1 0;min-width:0;font-size:12.5px;padding:8px 10px}
+
+/* U3 + U11 · Sign out used to sit beside Coordinator tools at the foot of the
+   register, one mis-tap from a passphrase re-entry mid-class; language and
+   theme held a permanent strip across the bottom of every screen. Both now
+   live behind the ⚙ in the top bar. */
+.setrow{display:flex;align-items:center;justify-content:space-between;gap:12px;
+  padding:11px 0;border-bottom:1px solid var(--line);font-size:14px;font-weight:600}
+.setrow:last-of-type{border-bottom:0}
+.setrow .rt,.setrow button{flex:none}
+.mini.danger{color:var(--crit);border-color:color-mix(in srgb,var(--crit) 40%,transparent)}
+#footer[hidden]{display:none}
+
+/* The gear came out at 31px wide, under the 32px floor the rest of the app
+   holds to. A settings button that needs aiming at is a settings button
+   people mis-tap on the way to something else. */
+#gear,#gearStu,#gearCoord{min-width:36px;text-align:center;font-size:14px}
+
+/* U1, second pass · the class title and date block was costing 70px above a
+   list that IS the screen. Same information, one line, half the height. */
+#v-class .ctx{padding-top:8px;padding-bottom:8px}
+#v-class .ctx h1{font-size:16px;margin:0}
+#v-class .ctx .sub{font-size:11.5px;margin-top:2px}
+#doneBar.sticky .donebar{padding:8px 11px;font-size:13px;margin-bottom:9px}
+#doneBar.sticky .donebar .big{font-size:16px}
+
+/* U1, third pass · measured, not guessed. The top bar was 101px because the
+   full wordmark plus the school name plus the class picker plus the teacher
+   name would not fit one line on a 390px phone, so it wrapped. On the
+   register the school name is the least useful thing on the screen — the
+   teacher knows which school they are standing in — and the Arabic mark
+   still says which app this is. 101px becomes about 50px. */
+@media (max-width: 480px) {
+  .bar .logo .en{display:none}
+  .bar .logo{flex:none}
+}
+/* With Undo hidden until it is needed, the remaining button stretched to the
+   full width and wrapped onto two lines for no reason. */
+.actionrow.tight .btn{flex:0 1 auto}
+#v-class .ctx{padding-top:6px;padding-bottom:6px}
+
+/* B4 · a recitation, with the way back beside it. */
+.rec{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:2px}
+.rec .w{font-family:var(--mono);font-size:10.5px;color:var(--ink-3)}
+.undoRec{background:none;border:0;padding:2px 6px;border-radius:6px;font-size:10.5px;font-weight:700;
+  color:var(--ink-3);border:1px solid var(--line);min-height:26px}
+.undoRec:hover{color:var(--crit);border-color:color-mix(in srgb,var(--crit) 40%,transparent)}
+
+/* B5 · notes are a list now, not a write-only box. */
+.noterow .lab{gap:4px}
+.noterow .gb{width:32px;height:30px;font-size:12px}
+
+/* Walking the class without going back to the list every time. */
+#stuNav{padding-top:0}
+#stuNav .btn{width:100%;padding:13px}
+#stuNav .btn:disabled{opacity:.5}
+.pick button.on{border-color:var(--lapis);background:var(--lapis-soft)}
+.pick button{display:flex;align-items:center;justify-content:space-between;gap:10px}
+
+/* U5 · the key to ✓ ↻ – used to live in a note underneath the list: read
+   once on the first evening, guessed at forever after. The word goes on the
+   button. Taller too, which takes these past the 44px both Apple and Google
+   ask for — they are the most-tapped controls in the app. */
+.gb.lab3{width:auto;min-width:46px;height:44px;padding:3px 5px;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;line-height:1}
+.gb.lab3 .ic{font-size:14px;font-weight:700}
+.gb.lab3 small{font-size:8.5px;font-weight:600;white-space:nowrap;opacity:.9}
+html[lang="ar"] .gb.lab3{min-width:52px}
+html[lang="ar"] .gb.lab3 small{font-size:9px}
+.irow{gap:6px}
+
+/* B2 · the dead Save button on the "here is your link" panel.
+   app.js had been setting `hidden` on it correctly all along. It stayed on
+   screen because `.btn{display:inline-flex}` is a class selector and the
+   browser's own `[hidden]{display:none}` is not — the class wins, and the
+   attribute silently does nothing. Every other element that needed hiding in
+   this file had already been given its own rule, one at a time; this makes it
+   true for anything with a display of its own, so the next one is not another
+   bug report. */
+[hidden]{display:none!important}
+
+/* ==========================================================================
+   F1 · the mushaf tree and the live audit
+   ========================================================================== */
+
+/* U6 · "11+3" needed a key and tooltips do not exist on a touchscreen.
+   The bar gives the shape at a glance, the words beside it say exactly what
+   it is. Both, as Tarek asked — neither on its own is enough. */
+.cbar{display:inline-flex;height:6px;width:100%;max-width:190px;border-radius:99px;
+  background:var(--line-2);overflow:hidden;flex:1 1 60px;min-width:44px}
+.cbar i{display:block;height:100%}
+.cbar i.s{background:var(--ok)}
+.cbar i.r{background:var(--late-fill)}
+
+.juzgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(104px,1fr));gap:8px}
+.juztile{display:flex;flex-direction:column;align-items:stretch;gap:6px;text-align:start;
+  background:var(--surface);border:1px solid var(--line);border-radius:11px;padding:10px 11px;min-height:74px}
+.juztile:hover{border-color:var(--lapis)}
+.juztile .jn{font-size:13.5px;font-weight:700;color:var(--ink)}
+.juztile .jw{font-family:var(--mono);font-size:10px;color:var(--ink-3)}
+
+.crumbs{display:flex;align-items:center;gap:8px;margin-bottom:12px;font-size:12.5px;color:var(--ink-3)}
+.crumbs button{background:none;border:0;color:var(--lapis);font-weight:700;font-size:12.5px;padding:4px 0;min-height:32px}
+
+.lvl{display:flex;align-items:center;gap:10px;flex-wrap:wrap;
+  background:var(--surface);border:1px solid var(--line);border-radius:11px;padding:10px 12px;margin-bottom:8px}
+.lvl.hizb{background:var(--surface-2);margin-top:14px}
+.lvlh{flex:1 1 180px;min-width:0;display:flex;align-items:center;gap:9px;flex-wrap:wrap}
+.lvlh b{font-size:13.5px;white-space:nowrap}
+.lvlh .w{font-family:var(--mono);font-size:10px;color:var(--ink-3);flex:1 1 100%}
+.setg{display:flex;gap:4px;flex:none}
+
+.prow{border:1px solid var(--line);border-top:0;background:var(--surface);
+  display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:8px 12px}
+.prow:first-of-type{border-top:1px solid var(--line);border-radius:11px 11px 0 0}
+.prow:last-of-type{border-radius:0 0 11px 11px}
+.prow.open{background:var(--surface-2)}
+.phead{flex:1 1 180px;min-width:0;display:flex;align-items:center;gap:9px;flex-wrap:wrap;
+  background:none;border:0;padding:0;text-align:start;min-height:34px}
+.phead .pn{font-family:var(--mono);font-size:11.5px;font-weight:700;color:var(--ink);white-space:nowrap}
+.phead .pw{font-size:11.5px;color:var(--ink-2);flex:1 1 100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-top:1px}
+.phead .chev{color:var(--ink-3);flex:none;font-size:15px}
+.segs{flex:1 1 100%;margin-top:6px;border-top:1px solid var(--line);padding-top:6px}
+.seg{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:7px 0;border-bottom:1px solid var(--line)}
+.seg:last-child{border-bottom:0}
+.seg .lab{flex:1 1 160px;min-width:0;display:flex;flex-direction:column;gap:2px;align-items:flex-start}
+[dir="rtl"] .seg .lab{align-items:flex-end}
+.seg .ar{font-family:var(--serif);font-size:17px;font-weight:700;line-height:1.25}
+.seg .tr{font-size:12.5px;font-weight:600;color:var(--ink-2)}
+.seg .m{font-family:var(--mono);font-size:10px;color:var(--ink-3)}
+
+/* U7 · the key to the flag colours, once, above the table. A tooltip would
+   have been the obvious answer and is useless on the device most of these
+   screens are read on. */
+.legend{display:flex;align-items:center;gap:6px;flex-wrap:wrap;font-size:11.5px;color:var(--ink-2);
+  background:var(--surface-2);border:1px solid var(--line);border-radius:10px;
+  padding:9px 12px;margin-bottom:12px;line-height:1.5}
+.legend .sep{color:var(--ink-3);margin:0 3px}
+
+/* U6 · the pages column used to read "11+3". */
+.pgcell{display:inline-flex;align-items:baseline;gap:5px;flex-wrap:wrap;font-size:12.5px}
+.pgcell b{font-family:var(--mono);font-size:13px}
+.pgcell .m{font-family:var(--mono);font-size:10.5px;color:var(--ink-3)}

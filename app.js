@@ -43,11 +43,17 @@
     $("shOk").hidden = !onOk;
     $("shNo").textContent = noLabel || T("cancel");
     s.hidden = false;
-    $("shOk").onclick = function () { if (onOk && onOk() !== false) s.hidden = true; };
-    $("shNo").onclick = function () { s.hidden = true; };
+    $("shOk").onclick = function () { if (onOk && onOk() !== false) closeSheet(); };
+    $("shNo").onclick = function () { closeSheet(); };
     return s;
   }
-  function closeSheet() { $("sheet").hidden = true; }
+  /* Every close goes through here, because the settings sheet borrows the
+     language and theme buttons out of the page and they must be put back
+     however the sheet is dismissed — OK, Cancel or anything added later. */
+  function closeSheet() {
+    if (window.SijillReturnChrome) window.SijillReturnChrome();
+    $("sheet").hidden = true;
+  }
 
   /* A failed write must be impossible to miss. This is the banner that makes
      it impossible to miss. */
@@ -133,8 +139,15 @@
   /* -------------------------------------------------------------- classes */
   function openClasses() {
     show("v-class");
-    $("whoAmI").textContent = (S.me && S.me.teacher) || "—";
-    $("goCoord").hidden = false;
+    // The caret says this is a button, not a caption. Picking the wrong name
+    // from the sign-in list is the commonest first-night mistake and this is
+    // the only way back from it.
+    // First name only. The bar was wrapping onto a second line on a 390px
+    // phone, which cost the register 40px of the space it needs most; the
+    // full name is one tap away on the picker this button opens.
+    var full = (S.me && S.me.teacher) || "—";
+    $("whoAmI").textContent = full.split(" ")[0] + " ⌄";
+    $("whoAmI").title = full;
     return api.read("api_classes").then(function (cs) {
       S.classes = cs || [];
       var sel = $("classPick");
@@ -194,9 +207,20 @@
       var reasonIdx = Math.max(0, REASONS.findIndex(function (r) { return r[0] === s.state; }));
       var flag = s.flags && s.flags.kind
         ? '<span class="pill ' + s.flags.kind + '"><i></i>' + esc(s.flags.message) + '</span>' : "";
+      // "Heard it, all fine" straight from the list. This is the whole point
+      // of the row: the ordinary child has nothing to discuss, and making
+      // that case cost a trip into their page and back is what turns a
+      // two-minute register into a twenty-minute one. It only appears when
+      // there is something open to hear and the child is actually here.
+      var canHear = s.due > 0 && !isAbsent(s.state) && s.state;
+      var heard = canHear
+        ? '<button class="heard" data-heard="' + i + '" title="' + esc(T("heardAllTip")) + '">' +
+            '<span class="ic">✓</span><small>' + esc(T("heardAll")) + '</small></button>'
+        : "";
       return '' +
       '<div class="srow ' + (isAbsent(s.state) ? "absent" : "") + '" data-i="' + i + '">' +
-        '<button class="nmb"><span class="nm">' + esc(s.name) + '</span><span class="meta">' +
+        '<button class="nmb"><span class="nm">' + esc(s.name) +
+          '<span class="chev" aria-hidden="true">›</span></span><span class="meta">' +
           (s.due ? s.due + " " + T("dueback") + " · " : "") +
           (s.last_heard ? T("heard") + " " + i18n.fmtDate(s.last_heard) : T("never")) +
           (isAbsent(s.state) ? ' <span class="pill ' + (isExcused(s.state) ? "exc" : "crit") + '"><i></i>' +
@@ -205,10 +229,16 @@
           (isAbsent(s.state) ? ' <span class="pill mute"><i></i>' + esc(T("carries")) + '</span>' : "") +
           (s.recited ? ' <span class="pill ok"><i></i>' + esc(T("recited")) + '</span>' : "") +
         '</span></button>' +
+        heard +
+        // Word labels under the icons. "L" meant nothing to anyone and meant
+        // less than nothing in Arabic.
         '<div class="seg3">' +
-          '<button class="p" data-a="present" aria-pressed="' + (s.state === "present") + '">✓</button>' +
-          '<button class="l" data-a="late" aria-pressed="' + (s.state === "late") + '">L</button>' +
-          '<button class="a' + (isExcused(s.state) ? " exc" : "") + '" data-a="absent" aria-pressed="' + isAbsent(s.state) + '">✗</button>' +
+          '<button class="p" data-a="present" aria-pressed="' + (s.state === "present") + '">' +
+            '<span class="ic">✓</span><small>' + esc(T("mHere")) + '</small></button>' +
+          '<button class="l" data-a="late" aria-pressed="' + (s.state === "late") + '">' +
+            '<span class="ic">L</span><small>' + esc(T("mLate")) + '</small></button>' +
+          '<button class="a' + (isExcused(s.state) ? " exc" : "") + '" data-a="absent" aria-pressed="' + isAbsent(s.state) + '">' +
+            '<span class="ic">✗</span><small>' + esc(T("mAway")) + '</small></button>' +
         '</div>' +
       '</div>' +
       '<div class="reasons" data-r="' + i + '"' + (isAbsent(s.state) ? "" : " hidden") + '>' +
@@ -222,12 +252,15 @@
     // "3 of 8 not yet marked" — Tarek asked for this up top and very visible
     var done = d.students.filter(function (s) { return s.state && s.recited > 0; }).length;
     var tot = d.students.length;
+    // One line, not two. The explanatory sentence underneath was read once on
+    // the first evening and then cost 22px of the register every week after.
+    // It moved to the hint under the list, where it is still there to be
+    // found and is not in the way.
     $("doneBar").innerHTML = (tot && done >= tot)
-      ? '<div class="donebar all"><span class="big">✓</span><div><div>' + esc(T("doneAll")) + '</div>' +
-        '<div style="font-weight:400;font-size:12.5px;color:var(--ink-2)">' + T("doneAllSub", { n: tot }) + '</div></div></div>'
-      : '<div class="donebar part"><span class="big">' + (tot - done) + '</span><div><div>' +
-        T("donePart", { n: tot }) + '</div>' +
-        '<div style="font-weight:400;font-size:12.5px;color:var(--ink-2)">' + T("donePartSub") + '</div></div></div>';
+      ? '<div class="donebar all"><span class="big">✓</span><div>' + esc(T("doneAll")) +
+        ' <span style="font-weight:400;color:var(--ink-2)">· ' + T("doneAllSub", { n: tot }) + '</span></div></div>'
+      : '<div class="donebar part"><span class="big">' + (tot - done) + '</span><div>' +
+        T("donePart", { n: tot }) + '</div></div>';
 
     var c = { present: 0, late: 0, exc: 0, crit: 0 };
     d.students.forEach(function (s) {
@@ -257,15 +290,47 @@
       var s2 = S.dayData.students[+chip.closest(".reasons").dataset.r];
       return mark(s2, REASONS[+chip.dataset.j][0]);
     }
+    var hb = e.target.closest("[data-heard]");
+    if (hb) {
+      var sh = S.dayData.students[+hb.dataset.heard];
+      hb.disabled = true;
+      return markAllGood(sh);
+    }
     var nm = e.target.closest(".nmb");
     if (nm) openStudent(S.dayData.students[+nm.closest(".srow").dataset.i]);
   });
+
+  /* One tap on the class row: everything this child had open, recited well.
+     The database does it in a single call so a dropped signal can never leave
+     a child credited with two of their three items. */
+  function markAllGood(s) {
+    return api.write("api_mark_all_good",
+      { p_session: S.dayData.session.id, p_student: s.id }, s.name
+    ).then(function (r) {
+      var ids = (r && r.ids) || [];
+      S.undo = {
+        label: s.name,
+        fn: function () {
+          // Newest first — the same order a teacher would undo them by hand,
+          // and the order the undo check expects.
+          return ids.slice().reverse().reduce(function (p, id) {
+            return p.then(function () {
+              return api.write("api_undo_record", { p_record: id }, s.name);
+            });
+          }, Promise.resolve());
+        }
+      };
+      showUndo();
+      toast(T("heardDone", { name: s.name, n: (r && r.marked) || 0 }), S.undo.fn);
+      return refreshDay();
+    }).catch(function (e) { refreshDay(); fail(e); });
+  }
 
   function mark(s, state) {
     var was = s.state, wasReason = s.reason;
     s.state = state; renderDay();
     S.undo = { label: s.name, fn: function () { return mark(s, was); } };
-    $("undoBtn").disabled = false;
+    showUndo();
     return api.write("api_mark_attendance",
       { p_session: S.dayData.session.id, p_student: s.id, p_state: state, p_reason: null },
       s.name
@@ -287,14 +352,22 @@
         }));
       }
     };
-    $("undoBtn").disabled = false;
+    showUndo();
     api.write("api_mark_all_present", { p_session: S.dayData.session.id }, T("markAll"))
       .then(refreshDay).catch(fail);
   };
 
+  /* The undo button used to sit there disabled from the moment the screen
+     opened, holding a third of a button row above the register for something
+     that cannot happen yet. It now appears the first time there is something
+     to undo. */
+  function showUndo() { $("undoBtn").disabled = false; $("undoBtn").hidden = false; }
+  function hideUndo() { $("undoBtn").disabled = true;  $("undoBtn").hidden = true; }
+  hideUndo();
+
   $("undoBtn").onclick = function () {
     if (!S.undo) return;
-    var u = S.undo; S.undo = null; $("undoBtn").disabled = true;
+    var u = S.undo; S.undo = null; hideUndo();
     Promise.resolve(u.fn()).then(refreshDay);
   };
 
@@ -302,12 +375,84 @@
   function openStudent(s) {
     S.student = s;
     show("v-student");
+    window.scrollTo(0, 0);
     $("stuName").textContent = s.name;
     $("stuSub").textContent = "—";
     $("stuBody").innerHTML = '<div class="loading"><span class="spin"></span></div>';
-    api.read("api_student", { p_student: s.id, p_history: 4 })
-      .then(function (d) { S.studentData = d; renderStudent(); }).catch(fail);
+    renderNav();
+    // The notes come back alongside the rest rather than on a second screen.
+    // The database has been able to list, edit and delete them since day one;
+    // the app simply never asked, which is why Tarek could not find them.
+    return Promise.all([
+      api.read("api_student", { p_student: s.id, p_history: 4 }),
+      api.read("api_notes", { p_student: s.id }).catch(function () { return []; })
+    ]).then(function (r) {
+      S.studentData = r[0];
+      S.notes = r[1] || [];
+      renderStudent();
+    }).catch(fail);
   }
+
+  /* ------------------------------------------------- walking the class */
+  function classList() {
+    return (S.dayData && S.dayData.students) || [];
+  }
+  function stuIndex() {
+    var l = classList(), id = S.student && S.student.id;
+    for (var i = 0; i < l.length; i++) if (l[i].id === id) return i;
+    return -1;
+  }
+  function renderNav() {
+    var l = classList(), i = stuIndex(), ar = i18n.isAr();
+    var can = !S.readOnly && i >= 0 && l.length > 1;
+    $("stuPos").hidden = !can;
+    $("stuNav").hidden = !can;
+    if (!can) return;
+    $("stuPos").textContent = T("ofN", { i: i + 1, n: l.length }) + " ⌄";
+    var next = nextUnfinished(i);
+    $("nextStu").textContent = next < 0
+      ? T("allDone")
+      : T("nextStu") + " · " + l[next].name + " ›";
+    $("nextStu").disabled = next < 0;
+  }
+  /* Where "next" goes. Walking straight down the list is right until the end
+     of it, at which point wrapping round to whoever is still unmarked is more
+     useful than stopping — a teacher rarely hears the class in list order and
+     the ones left over are exactly the ones they still need. */
+  function nextUnfinished(from) {
+    var l = classList();
+    if (!l.length) return -1;
+    for (var k = 1; k <= l.length; k++) {
+      var j = (from + k) % l.length;
+      if (j === from) break;
+      if (!isAbsent(l[j].state) && !(l[j].state && l[j].recited > 0)) return j;
+    }
+    // everyone is done: just offer the literal next one, unless we are at the end
+    return (from + 1 < l.length) ? from + 1 : -1;
+  }
+  $("nextStu").onclick = function () {
+    var i = stuIndex(), j = nextUnfinished(i);
+    if (j >= 0) openStudent(classList()[j]);
+  };
+  $("stuPos").onclick = function () {
+    var l = classList(), ar = i18n.isAr(), cur = S.student && S.student.id;
+    sheet(T("pickStu"),
+      '<div class="pick" id="stuPickList">' + l.map(function (s, i) {
+        var done = s.state && s.recited > 0;
+        return '<button data-i="' + i + '"' + (s.id === cur ? ' class="on"' : '') + '>' +
+          '<span>' + esc(s.name) + '</span>' +
+          '<span class="pill ' + (done ? "ok" : isAbsent(s.state) ? "exc" : "mute") + '"><i></i>' +
+            esc(done ? T("recited") : isAbsent(s.state) ? (ar ? "غَائِب" : "away") : T("notMarked")) +
+          '</span></button>';
+      }).join("") + '</div>', null, null, T("cancel"));
+    $("stuPickList").onclick = function (e) {
+      var b = e.target.closest("button[data-i]");
+      if (!b) return;
+      closeSheet();
+      openStudent(l[+b.dataset.i]);
+    };
+  };
+
   $("backCls").onclick = function () {
     if (S.readOnly) { S.readOnly = false; return window.SijillCoord.open(); }
     show("v-class"); refreshDay();
@@ -372,10 +517,22 @@
     html += '<div class="grp"><div class="grph"><h2>' + esc(T("recentCls")) + '</h2>' +
             '<span class="n">' + (d.history || []).length + '</span></div><div class="card">' +
             ((d.history || []).length ? d.history.map(function (h) {
+              /* Each recitation is now its own line with a way back.
+                 Marking something good clears the homework and the item
+                 leaves the list, so a mis-tap used to be unrecoverable
+                 without the coordinator digging through the change log —
+                 which in practice meant it was never recovered. */
               var recited = (h.recited || []).map(function (r) {
-                return esc(r.name_en) + (r.ayah_from ? " " + r.ayah_from + "–" + r.ayah_to : "") +
-                       (r.outcome === "repeat" ? " ↻" : r.outcome === "not_prepared" ? " –" : " ✓");
-              }).join(" · ");
+                return '<span class="rec">' +
+                  '<span class="w">' + esc(r.name_en) +
+                    (r.ayah_from ? " " + r.ayah_from + "–" + r.ayah_to : "") +
+                    (r.outcome === "repeat" ? " ↻" : r.outcome === "not_prepared" ? " –" : " ✓") +
+                  '</span>' +
+                  (S.readOnly || !r.id ? "" :
+                    '<button class="undoRec" data-rec="' + esc(r.id) + '" data-what="' +
+                    esc(r.name_en) + '">↶ ' + esc(T("undoMark")) + '</button>') +
+                '</span>';
+              }).join("");
               var notes = (h.notes || []).map(function (n) {
                 return '<span style="font-size:12.5px;color:var(--ink-2);font-style:italic">“' +
                   esc(n.body) + '”' + (n.by ? ' <span style="font-style:normal;color:var(--ink-3)">— ' + esc(n.by) + '</span>' : '') + '</span>';
@@ -392,6 +549,31 @@
                 '</div></div>';
             }).join("") : '<div class="empty">' + esc(T("noneHist")) + '</div>') + '</div></div>';
 
+    // notes — readable, editable and removable, which they have never been
+    html += '<div class="grp"><div class="grph"><h2>' + esc(T("gNotes")) + '</h2>' +
+            '<span class="n">' + (S.notes || []).length + '</span></div><div class="card">' +
+            ((S.notes || []).length ? S.notes.map(function (n) {
+              return '<div class="irow noterow" style="align-items:flex-start">' +
+                '<div class="lab">' +
+                  '<span class="tr" style="font-weight:400;font-style:italic">“' + esc(n.body) + '”</span>' +
+                  '<span class="m">' +
+                    (n.name_en ? esc(n.name_en) + " · " : "") +
+                    i18n.fmtDate(n.created_at ? String(n.created_at).slice(0, 10) : null) +
+                    (n.by ? " · " + T("noteBy") + " " + esc(n.by) : "") +
+                    (n.edited_at ? " · " + T("noteEdited") : "") +
+                  '</span>' +
+                '</div>' +
+                (S.readOnly ? "" :
+                  '<button class="gb note" data-nedit="' + esc(n.id) + '" title="' + esc(T("edit")) + '">✎</button>' +
+                  '<button class="gb note" data-ndel="' + esc(n.id) + '" title="' + esc(T("remove")) + '">🗑</button>') +
+              '</div>';
+            }).join("") : '<div class="empty">' + esc(T("noneNotes")) + '</div>') +
+            '</div>' +
+            (S.readOnly ? "" :
+              '<div class="actionrow" style="margin-top:8px">' +
+              '<button class="btn ghost sm" id="noteAdd">' + esc(T("noteAdd")) + '</button></div>') +
+            '</div>';
+
     // rotation, oldest first
     html += '<div class="grp"><div class="grph"><h2>' + esc(T("gRot")) + '</h2>' +
             '<span class="n">' + (d.rotation || []).length + '</span></div><div class="card">' +
@@ -400,6 +582,7 @@
             }).join("") : '<div class="empty">—</div>') + '</div></div>';
 
     $("stuBody").innerHTML = html;
+    renderNav();
     wireStudent();
   }
 
@@ -415,7 +598,8 @@
     var meta = "";
     if (kind === "rot") {
       meta = x.last_heard
-        ? T("heard") + " " + i18n.fmtDate(x.last_heard) + (x.weeks != null ? " · " + x.weeks + " " + T("weeks") : "")
+        ? T("heard") + " " + i18n.fmtDate(x.last_heard) +
+          (x.weeks != null ? " · " + x.weeks + " " + T(x.weeks === 1 ? "week1" : "weeks") : "")
         : T("never");
     } else {
       meta = (x.set_on ? i18n.fmtDate(x.set_on) : "") + (x.source === "auto" ? " · ↻" : "");
@@ -432,10 +616,13 @@
       '<span class="tr">' + esc(x.name_en) + rangeLabel(x) + '</span>' +
       '<span class="m' + stale + '">' + esc(meta) + '</span></div>' +
       (S.readOnly ? '' :
-        '<button class="gb note" data-note="1" title="Note">✎</button>' +
-        '<button class="gb g" data-g="good" title="Recited well">✓</button>' +
-        '<button class="gb g" data-g="repeat" title="More than 3 mistakes">↻</button>' +
-        '<button class="gb g" data-g="not_prepared" title="Had not prepared it">–</button>') +
+        '<button class="gb note" data-note="1" title="' + esc(T("noteAdd")) + '">✎</button>' +
+        '<button class="gb g lab3" data-g="good" title="' + esc(T("gGoodTip")) + '">' +
+          '<span class="ic">✓</span><small>' + esc(T("gGood")) + '</small></button>' +
+        '<button class="gb g lab3" data-g="repeat" title="' + esc(T("gAgainTip")) + '">' +
+          '<span class="ic">↻</span><small>' + esc(T("gAgain")) + '</small></button>' +
+        '<button class="gb g lab3" data-g="not_prepared" title="' + esc(T("gNotReadyTip")) + '">' +
+          '<span class="ic">–</span><small>' + esc(T("gNotReady")) + '</small></button>') +
       '</div>';
   }
 
@@ -478,6 +665,66 @@
     var an = $("assignNew"), ad = $("addReview");
     if (an) an.onclick = function () { pickSurah("memorise"); };
     if (ad) ad.onclick = function () { pickSurah("review"); };
+
+    /* Taking a recitation back. */
+    $("stuBody").querySelectorAll(".undoRec").forEach(function (b) {
+      b.onclick = function () {
+        var ar = i18n.isAr();
+        sheet(T("undoMarkTitle"),
+          '<div style="font-size:13.5px;line-height:1.6">' +
+            '<b>' + esc(b.dataset.what) + '</b><br>' +
+            T("undoMarkBody", { who: ar ? "الطَّالِب" : "the student's" }) + '</div>',
+          T("undoMark"), function () {
+            closeSheet();
+            api.write("api_undo_record", { p_record: b.dataset.rec }, S.student.name)
+              .then(function (r) {
+                // The database refuses rather than guessing when the same
+                // surah has moved on since. That answer arrives as ok:false,
+                // not as an error, so it has to be checked for.
+                if (r && r.ok === false) { toast(T("undoTooLate")); return; }
+                toast(T("undoneOk"));
+                return reloadStudent();
+              }).catch(fail);
+            return false;
+          });
+      };
+    });
+
+    /* Notes: read, change, remove. */
+    var na = $("noteAdd");
+    if (na) na.onclick = function () { noteSheet(null); };
+    $("stuBody").querySelectorAll("[data-nedit]").forEach(function (b) {
+      b.onclick = function () {
+        var n = (S.notes || []).filter(function (x) { return x.id === b.dataset.nedit; })[0];
+        if (!n) return;
+        sheet(T("noteEdit"),
+          '<textarea id="nBody" rows="3" style="width:100%;padding:11px;font-size:15px;' +
+          'border:1px solid var(--line);border-radius:10px;background:var(--surface);' +
+          'color:var(--ink);font-family:inherit"></textarea>',
+          T("save"), function () {
+            var v = ($("nBody").value || "").trim();
+            if (!v) return false;
+            closeSheet();
+            api.write("api_note_edit", { p_id: n.id, p_body: v }, S.student.name)
+              .then(reloadStudent).catch(fail);
+            return false;
+          });
+        $("nBody").value = n.body || "";
+        $("nBody").focus();
+      };
+    });
+    $("stuBody").querySelectorAll("[data-ndel]").forEach(function (b) {
+      b.onclick = function () {
+        sheet(T("noteDelete"),
+          '<div style="font-size:13.5px;line-height:1.55">' + esc(T("noteDeleteBody")) + '</div>',
+          T("remove"), function () {
+            closeSheet();
+            api.write("api_note_delete", { p_id: b.dataset.ndel }, S.student.name)
+              .then(reloadStudent).catch(fail);
+            return false;
+          });
+      };
+    });
   }
 
   function editHomework(id) {
@@ -514,8 +761,10 @@
   }
 
   function reloadStudent() {
-    return api.read("api_student", { p_student: S.student.id, p_history: 4 })
-      .then(function (d) { S.studentData = d; renderStudent(); });
+    return Promise.all([
+      api.read("api_student", { p_student: S.student.id, p_history: 4 }),
+      api.read("api_notes", { p_student: S.student.id }).catch(function () { return S.notes || []; })
+    ]).then(function (r) { S.studentData = r[0]; S.notes = r[1] || []; renderStudent(); });
   }
 
   function noteSheet(surah) {
@@ -532,7 +781,7 @@
         if (!body) return false;
         api.write("api_note_add", { p_student: S.student.id, p_body: body, p_surah: surah || null },
                   S.student.name)
-          .then(function () { closeSheet(); toast(T("savedAll")); })
+          .then(function () { closeSheet(); toast(T("savedAll")); return reloadStudent(); })
           .catch(fail);
         return false;
       });
@@ -569,18 +818,69 @@
         if (!sel) { toast("Pick a surah first."); return; }
         var from = $("spFrom").value ? +$("spFrom").value : null;
         var to   = $("spTo").value   ? +$("spTo").value   : null;
-        api.write("api_assign_homework", {
+        assignHomework({
           p_students: [S.student.id], p_kind: kind, p_surah: +sel.value,
           p_from: from, p_to: to, p_note: null
-        }, S.student.name).then(function () {
+        }, S.student.name, function () {
           closeSheet();
-          return api.read("api_student", { p_student: S.student.id, p_history: 4 });
-        }).then(function (d) { S.studentData = d; renderStudent(); }).catch(fail);
+          reloadStudent().catch(fail);
+        }).catch(fail);
       };
     }).catch(fail);
   }
 
-  $("openTree").onclick = function () { if (S.student && !S.readOnly) pickSurah("review"); };
+  /* F3 · setting the same passage twice.
+     The database refuses the first attempt and hands back exactly who already
+     has an overlapping passage open. That comes back as ok:false, not as an
+     error, so it needs checking for rather than catching — and the second
+     attempt carries p_confirm, which is the only difference between them.
+     Sometimes assigning it again IS the point, so this warns and never
+     blocks. */
+  function assignHomework(args, label, onDone) {
+    return api.write("api_assign_homework", args, label).then(function (r) {
+      if (r && r.ok === false && r.error === "duplicate") {
+        var d = r.duplicates || [];
+        sheet(T("dupTitle"),
+          '<div style="font-size:13.5px;line-height:1.6;margin-bottom:10px">' +
+            T("dupBody", { n: d.length }) + '</div>' +
+          '<div class="card">' + d.map(function (x) {
+            return '<div class="irow"><div class="lab">' +
+              '<span class="tr">' + esc(x.name) + '</span>' +
+              '<span class="m">' + esc(x.kind === "memorise" ? T("gNew") : T("gDue")) +
+                " · " + x.from + "–" + x.to +
+                (x.set_on ? " · " + i18n.fmtDate(x.set_on) : "") + '</span>' +
+              '</div></div>';
+          }).join("") + '</div>',
+          T("dupAnyway"), function () {
+            closeSheet();
+            var again = {};
+            for (var k in args) if (args.hasOwnProperty(k)) again[k] = args[k];
+            again.p_confirm = true;
+            api.write("api_assign_homework", again, label)
+              .then(function () { if (onDone) onDone(); }).catch(fail);
+            return false;
+          });
+        return null;
+      }
+      if (onDone) onDone();
+      return r;
+    });
+  }
+
+  /* B3 · "Full mushaf" used to open the same surah picker as "Add old
+     memorization" — a button that lied about what it did, which is worse
+     than one that is missing. It now opens the thing it always named. */
+  $("openTree").onclick = function () {
+    if (!S.student) return;
+    window.SijillMushaf.open(S.student.id, S.studentData && S.studentData.student
+      ? S.studentData.student.name : S.student.name);
+  };
+  $("mtBack").onclick = function () {
+    show("v-student");
+    // Coming back from the audit, the child's page is out of date by
+    // definition — that is what the audit just changed.
+    reloadStudent().catch(function () {});
+  };
 
   /* ------------------------------------------------------------ whole class */
   $("bulkHw").onclick = function () {
@@ -618,25 +918,23 @@
       $("shOk").onclick = function () {
         var sel = $("shBody").querySelector('input[name=bk]:checked');
         if (!sel) { toast("Pick a surah first."); return; }
-        api.write("api_assign_homework", {
+        assignHomework({
           p_students: ids, p_kind: $("bkKind").value, p_surah: +sel.value,
           p_from: $("bkFrom").value ? +$("bkFrom").value : null,
           p_to: $("bkTo").value ? +$("bkTo").value : null, p_note: null
-        }, T("bulkHw")).then(function () { closeSheet(); toast(T("savedAll")); refreshDay(); }).catch(fail);
+        }, T("bulkHw"), function () { closeSheet(); toast(T("savedAll")); refreshDay(); })
+          .catch(fail);
       };
     }).catch(fail);
   };
 
   /* ------------------------------------------------------------ chrome */
-  $("goCoord").onclick = function () {
-    if (window.SijillCoord) window.SijillCoord.enter();
-  };
   $("backCls2").onclick = function () { S.readOnly = false; openClasses(); };
 
-  $("signOut").onclick = function () {
+  function doSignOut() {
     api.rpc("api_sign_out", { p_token: api.getToken() }).catch(function () {});
     api.setToken(null); S.me = null; show("v-gate");
-  };
+  }
   $("whoAmI").onclick = function () {
     api.read("api_whoami").then(function (me) { S.me = me; pickWho(me.teachers || []); }).catch(fail);
   };
@@ -654,6 +952,61 @@
     r.setAttribute("data-theme", dark ? "light" : "dark");
     try { localStorage.setItem("sijill.theme", dark ? "light" : "dark"); } catch (e) {}
   };
+
+  /* ----------------------------------------------------- settings sheet */
+  /* Sign out used to sit at the foot of the register next to Coordinator
+     tools. A mis-tap there means re-typing the school passphrase with a child
+     standing in front of you, so it now lives behind the ⚙ and asks first.
+     Language and theme come with it, which gives the register back the strip
+     of screen the old bottom bar was holding. */
+  function openSettings() {
+    var ar = i18n.isAr();
+    var body = document.createElement("div");
+    body.innerHTML =
+      '<div class="setrow"><span>' + (ar ? "اللُّغَة" : "Language") + '</span>' +
+        '<span id="slotLang"></span></div>' +
+      '<div class="setrow"><span>' + (ar ? "المَظْهَر" : "Appearance") + '</span>' +
+        '<span id="slotTheme"></span></div>' +
+      '<div class="setrow"><span>' + (ar ? "أَدَوَاتُ المُنَسِّق" : "Coordinator tools") + '</span>' +
+        '<button class="mini" id="setCoord">' + (ar ? "افْتَحْ" : "Open") + ' ›</button></div>' +
+      '<div class="setrow"><span>' + (ar ? "الخُرُوج" : "Sign out") + '</span>' +
+        '<button class="mini danger" id="setOut">' + (ar ? "اخْرُجْ" : "Sign out") + '</button></div>' +
+      '<div class="note" style="margin-top:12px">' +
+        (ar ? "الخُرُوجُ يَعْنِي إِدْخَالَ كَلِمَةِ المَدْرَسَةِ مِنْ جَدِيد."
+            : "Signing out means typing the school passphrase again.") + '</div>';
+
+    sheet(ar ? "الإِعْدَادَات" : "Settings", "", null, null, ar ? "تَمَّ" : "Done");
+    var host = $("shBody");
+    host.innerHTML = ""; host.appendChild(body);
+    // Borrow the real buttons rather than drawing new ones — see index.html.
+    body.querySelector("#slotLang").appendChild($("lang"));
+    body.querySelector("#slotTheme").appendChild($("theme"));
+    body.querySelector("#setCoord").onclick = function () {
+      returnChrome(); closeSheet();
+      if (window.SijillCoord) window.SijillCoord.enter();
+    };
+    body.querySelector("#setOut").onclick = function () {
+      returnChrome(); closeSheet();
+      sheet(ar ? "الخُرُوجُ مِنَ الحِسَاب؟" : "Sign out?",
+        '<div style="font-size:13.5px;line-height:1.55">' +
+        (ar ? "سَتَحْتَاجُ إِلَى كَلِمَةِ المَدْرَسَةِ لِلدُّخُولِ مَرَّةً أُخْرَى."
+            : "You will need the school passphrase to get back in.") + '</div>',
+        ar ? "اخْرُجْ" : "Sign out", function () { closeSheet(); doSignOut(); });
+    };
+  }
+  /* The borrowed buttons have to go home, or the next setLang() writes the
+     language onto a node that is no longer in the page. */
+  function returnChrome() {
+    var f = $("footerBtns");
+    if (!f) return;
+    var l = $("lang"), t2 = $("theme");
+    if (l && l.parentNode !== f) f.appendChild(l);
+    if (t2 && t2.parentNode !== f) f.appendChild(t2);
+  }
+  $("gear").onclick = openSettings;
+  $("gearStu").onclick = openSettings;
+  $("gearCoord").onclick = openSettings;
+  window.SijillReturnChrome = returnChrome;
 
   /* ------------------------------------------------------------ start up */
   function startup() {
