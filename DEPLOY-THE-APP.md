@@ -61,34 +61,39 @@ the free plan, and this is how every Supabase app in the world works.
 **Add file → Upload files**, drag in everything from the `sijill-app` folder
 **except** the three testing files:
 
-**Upload these ten:**
+**Upload these thirteen:**
 
 `index.html` · `family.html` · `config.js` · `api.js` · `app.js` · `coord.js` ·
-`family.js` · `i18n.js` · `sijill.css` · `manifest.json` ·
+`mushaf.js` · `family.js` · `i18n.js` · `sijill.css` · `manifest.json` ·
 `icon-192.png` · `icon-512.png`
 
 **Do NOT upload these** — they are my testing tools and belong nowhere near
 your live site:
 
-`devserver.py` · `test.js` · `test-coord.js` · `test-family.js`
+`devserver.py` · `test.js` · `test-coord.js` · `test-family.js` ·
+`test-week1.js` · `repro.js` · `run-tests.sh`
 
 Commit.
 
 ---
 
-## Step 3 · Turn on GitHub Pages
+## Step 3 · Put it online — Cloudflare Pages
 
-1. In the repo: **Settings → Pages**
-2. Under **Source**, choose **Deploy from a branch**
-3. Branch: **main**, folder: **/ (root)**. **Save**
-4. Wait about a minute, then reload the page. It will show your address:
+**Superseded by `THIS-WEEK-STEP-1.md`, part A.** Follow that instead: it gives
+you `sijill.pages.dev` rather than an address with GitHub and your own brand
+name in it, it serves private repositories, and it costs nothing.
 
-```
-https://journeywitharabic.github.io/sijill-app/
-```
+The short version: dash.cloudflare.com → **Workers & Pages** → **Create
+application** → **Pages** → **Connect to Git** → pick `sijill-app` → set the
+**project name** (that becomes the address) → leave **build command** and
+**build output directory** completely empty → **Save and Deploy**.
 
-Open it. **You should see the Sijill sign-in screen** — and typing anything
-into it should fail, because it isn't pointed at your database yet. That's Step 4.
+Then turn GitHub Pages **off** (repo → Settings → Pages → Source: *None*), so
+there is exactly one address for people to bookmark.
+
+Open your new address. **You should see the Sijill sign-in screen** — and
+typing anything into it should fail, because it isn't pointed at your database
+yet. That's Step 4.
 
 ---
 
@@ -127,8 +132,8 @@ GitHub secrets.
 
 ## Step 5 · Sign in for the first time
 
-Open `https://journeywitharabic.github.io/sijill-app/` on your **phone**, since
-that's where teachers will use it.
+Open your new `*.pages.dev` address on your **phone**, since that's where
+teachers will use it.
 
 1. Type the **school passphrase** → you should see the list of ten teachers
 2. Pick your own name → you should see a class register with real students
@@ -179,13 +184,16 @@ Send one link per adult, not one per family. Two parents get two links.
 
 ## Step 8 · Tell the teachers
 
-Send them the address and the school passphrase, on two separate messages if
-you're being careful. Something like:
+Send them **TEACHER-ONE-PAGER.md** first — it is two minutes long and answers
+the questions you would otherwise get ten times on Friday night.
+
+Then the address and the school passphrase, on two separate messages if you're
+being careful. Something like:
 
 > Assalamu alaykum. From Friday we're recording the register and recitation on
 > the phone instead of paper.
 >
-> Link: https://journeywitharabic.github.io/sijill-app/
+> Link: (your pages.dev address)
 > Passphrase: (the school one)
 >
 > Open it once before Friday, add it to your home screen, and pick your name
@@ -208,7 +216,8 @@ handbook — the questions you'll get are the ones it answers.
 ## Changing something later
 
 Everything is plain files in the repo. Edit a file on GitHub, commit, wait a
-minute, reload. There is no build step and nothing to install.
+minute, reload — Cloudflare redeploys by itself every time you push. There is
+no build step and nothing to install.
 
 If you break something, GitHub keeps every version: open the file → **History**
 → pick the last good version → **Revert**.
@@ -225,11 +234,15 @@ Honest list, so nothing is a surprise on Friday:
   red banner with a Retry button. Nothing is lost, but nothing saves until the
   connection is back.
 - **No push notifications** to parents. They open the link when they choose.
-- **Adding teachers and classes** from the app isn't built yet. Students are —
-  add, move between classes, and remove. Teachers and classes can be done in
-  the Supabase SQL editor meanwhile, and a teacher who isn't on the list can
-  add themselves from the sign-in screen.
-- **The full mushaf tree** opens as a searchable list of all 114 surahs rather
-  than the juz-by-juz tree from the audit tool. It works; it is just plainer.
+  On iPhone these only work if the parent has first added the page to their
+  home screen, so a good share of families would silently never get them —
+  which is worse than none, because you would believe they had been told.
+- **No progress trend** (the green / amber / red arrow per student) yet. It
+  reads data we already have, so it is safe to add once a few real weeks have
+  gone by and the thresholds can be set from what actually happens rather than
+  guessed now.
 
-None of these stops Friday working. Tell me which matter and I'll build them next.
+Everything else from the first round of testing is in: taking a mark back,
+reading and editing notes, the real mushaf tree, teachers and classes managed
+from the app, the duplicate-homework warning, the one-tap tick on the register,
+and the layout and labelling fixes.
