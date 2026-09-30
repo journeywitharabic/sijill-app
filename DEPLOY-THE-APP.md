@@ -61,17 +61,21 @@ the free plan, and this is how every Supabase app in the world works.
 **Add file → Upload files**, drag in everything from the `sijill-app` folder
 **except** the three testing files:
 
-**Upload these thirteen:**
+**Upload these fourteen:**
 
-`index.html` · `family.html` · `config.js` · `api.js` · `app.js` · `coord.js` ·
-`mushaf.js` · `family.js` · `i18n.js` · `sijill.css` · `manifest.json` ·
-`icon-192.png` · `icon-512.png`
+`index.html` · `family.html` · `guide.html` · `config.js` · `api.js` ·
+`app.js` · `coord.js` · `mushaf.js` · `family.js` · `i18n.js` ·
+`sijill.css` · `manifest.json` · `icon-192.png` · `icon-512.png`
+
+`guide.html` is the teacher's guide. It is a page in the app, linked from the
+⚙ settings sheet, so a teacher who needs it mid-class is one tap away rather
+than scrolling back through WhatsApp.
 
 **Do NOT upload these** — they are my testing tools and belong nowhere near
 your live site:
 
 `devserver.py` · `test.js` · `test-coord.js` · `test-family.js` ·
-`test-week1.js` · `repro.js` · `run-tests.sh`
+`test-week1.js` · `test-round2.js` · `test-round3.js` · `repro.js` · `run-tests.sh`
 
 Commit.
 
@@ -184,7 +188,7 @@ Send one link per adult, not one per family. Two parents get two links.
 
 ## Step 8 · Tell the teachers
 
-Send them **TEACHER-ONE-PAGER.md** first — it is two minutes long and answers
+Send them **TEACHER-GUIDE.md** first — it is two minutes long and answers
 the questions you would otherwise get ten times on Friday night.
 
 Then the address and the school passphrase, on two separate messages if you're

@@ -1,0 +1,369 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#2D3E73">
+<meta name="robots" content="noindex,nofollow">
+<title>Sijill — the teacher's guide</title>
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<style>
+/* Self-contained on purpose: this page has to render identically whether it is
+   opened from the app, saved to a phone, or printed to PDF, so it carries its
+   own copy of the palette rather than depending on sijill.css. */
+:root{
+  --paper:#F2F3F6; --surface:#FFFFFF; --surface-2:#E9ECF3;
+  --ink:#161A24; --ink-2:#4B5264; --ink-3:#7A8194;
+  --line:#D5DAE5; --line-2:#C2C9D8;
+  --lapis:#2D3E73; --lapis-soft:#E4E8F4;
+  --ok:#0F7A54;   --ok-soft:#DCEFE7;
+  --late:#B07400; --late-soft:#FAEDD4; --late-fill:#D18F00;
+  --crit:#98122B; --crit-soft:#F8DFE3;
+  --exc:#6A4BA8;  --exc-soft:#EAE4F7;
+  --sans:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  --mono:ui-monospace,Menlo,Consolas,monospace;
+  --serif:"Noto Naskh Arabic","Times New Roman",serif;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0;background:var(--paper);color:var(--ink);
+  font-family:var(--sans);font-size:16px;line-height:1.6;
+  -webkit-text-size-adjust:100%}
+.wrap{max-width:660px;margin:0 auto;padding:0 18px 60px}
+
+/* ---- masthead ---- */
+header{background:var(--lapis);color:#fff;margin:0 -18px 26px;padding:26px 18px 22px}
+.wrap>header{border-radius:0 0 16px 16px}
+header .mark{font-family:var(--serif);font-size:30px;line-height:1;margin-bottom:6px}
+header h1{margin:0;font-size:21px;line-height:1.25;font-weight:700}
+header p{margin:6px 0 0;font-size:13.5px;opacity:.85;line-height:1.5}
+
+/* ---- rhythm ---- */
+h2{margin:34px 0 12px;font-size:19px;line-height:1.3;font-weight:700;
+  padding-bottom:8px;border-bottom:2px solid var(--line)}
+h3{margin:22px 0 8px;font-size:15.5px;font-weight:700}
+p{margin:0 0 12px}
+ol,ul{margin:0 0 14px;padding-inline-start:22px}
+li{margin-bottom:7px}
+strong{font-weight:700}
+a{color:var(--lapis)}
+hr{border:0;border-top:1px solid var(--line);margin:30px 0}
+
+/* ---- the real controls, shown rather than described ---- */
+.btn{display:inline-flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:1px;min-width:46px;padding:5px 9px;border-radius:9px;border:1px solid var(--line);
+  background:var(--surface-2);font-size:13px;font-weight:700;line-height:1;
+  vertical-align:middle;color:var(--ink-2)}
+.btn small{font-size:8.5px;font-weight:600;opacity:.9}
+.btn.ok  {background:var(--ok-soft);  border-color:color-mix(in srgb,var(--ok) 34%,transparent);  color:var(--ok)}
+.btn.rev {background:var(--late-soft);border-color:color-mix(in srgb,var(--late) 40%,transparent);color:var(--late)}
+.btn.np  {background:var(--exc-soft); border-color:color-mix(in srgb,var(--exc) 34%,transparent); color:var(--exc)}
+.btn.crit{background:var(--crit-soft);border-color:color-mix(in srgb,var(--crit) 34%,transparent);color:var(--crit)}
+
+/* ---- cards ---- */
+.card{background:var(--surface);border:1px solid var(--line);border-radius:12px;
+  padding:14px 16px;margin:0 0 14px}
+.card h3{margin-top:0}
+.card.q{background:var(--lapis-soft);border-color:color-mix(in srgb,var(--lapis) 22%,transparent)}
+.card.warn{background:var(--crit-soft);border-color:color-mix(in srgb,var(--crit) 26%,transparent)}
+.card.note{background:var(--late-soft);border-color:color-mix(in srgb,var(--late) 30%,transparent)}
+.card p:last-child{margin-bottom:0}
+
+/* ---- the control table ---- */
+.rows{border:1px solid var(--line);border-radius:12px;overflow:hidden;background:var(--surface);margin-bottom:16px}
+.row{display:flex;gap:13px;padding:13px 15px;border-bottom:1px solid var(--line);align-items:flex-start}
+.row:last-child{border-bottom:0}
+.row .k{flex:0 0 74px}
+.row .v{flex:1;min-width:0;font-size:14.5px;line-height:1.5}
+.row .v b{display:block;margin-bottom:1px}
+
+/* ---- trend arrows ---- */
+.tr{display:inline-flex;align-items:center;gap:7px;font-weight:700;font-size:14px}
+.tr svg{flex:none}
+.tr.up{color:var(--ok)} .tr.flat{color:var(--late)}
+.tr.down{color:var(--crit)} .tr.away{color:var(--ink-3)}
+
+/* ---- misc ---- */
+.ar{font-family:var(--serif);direction:rtl;unicode-bidi:isolate}
+code{font-family:var(--mono);font-size:.88em;background:var(--surface-2);
+  padding:2px 5px;border-radius:5px}
+.lede{font-size:15px;color:var(--ink-2)}
+footer{margin-top:40px;padding-top:18px;border-top:1px solid var(--line);
+  font-size:13px;color:var(--ink-3);text-align:center}
+footer .ar{font-size:17px;display:block;margin-bottom:6px;color:var(--ink-2)}
+
+/* ---- dark, for anyone reading in the masjid car park at 9pm ---- */
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --paper:#0F131C; --surface:#161C28; --surface-2:#1E2434;
+    --ink:#E9ECF3; --ink-2:#AEB6C7; --ink-3:#7F8798;
+    --line:#2A3244; --line-2:#3A4356;
+    --lapis:#8FA4E8; --lapis-soft:#1B2540;
+    --ok:#4FC79B;   --ok-soft:#153229;
+    --late:#EFB840; --late-soft:#38290E; --late-fill:#EFB840;
+    --crit:#F2879B; --crit-soft:#3A1520;
+    --exc:#A493F5;  --exc-soft:#241E42;
+  }
+  :root:not([data-theme="light"]) header{background:#1B2540}
+}
+
+/* ---- print / PDF ---- */
+@media print{
+  html,body{background:#fff;font-size:11.5pt}
+  .wrap{max-width:none;padding:0}
+  header{margin:0 0 18px;border-radius:0;background:#2D3E73 !important;
+    -webkit-print-color-adjust:exact;print-color-adjust:exact}
+  h2{page-break-after:avoid;break-after:avoid}
+  h3{page-break-after:avoid;break-after:avoid}
+  /* A whole table kept together pushed the next section to a fresh page and
+     left a third of a page blank. A single ROW must not split across a page —
+     a button orphaned from its explanation is useless — but the table itself
+     may break between rows. */
+  .card{page-break-inside:avoid;break-inside:avoid}
+  .rows{break-inside:auto}
+  .row{page-break-inside:avoid;break-inside:avoid}
+  a{text-decoration:none}
+  footer{page-break-before:avoid}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <div class="mark">سِجِلّ</div>
+  <h1>Sijill — the teacher's guide</h1>
+  <p>Ommah Madrasah · five minutes to read, once. Keep it on your phone.</p>
+</header>
+
+<h2>Before your first class</h2>
+<ol>
+  <li>Open <strong>sijill-app.pages.dev</strong></li>
+  <li>Type the <strong>school passphrase</strong>. Once on this phone — it remembers you.</li>
+  <li>Pick <strong>your name</strong>. If it isn't there, tap <em>My name is not on the list</em>
+      and add it; you can teach straight away and a coordinator confirms it later.</li>
+  <li><strong>Add it to your home screen</strong> so it opens like an app.<br>
+      iPhone → Share → <em>Add to Home Screen</em>. Android → ⋮ → <em>Add to home screen</em>.</li>
+</ol>
+<p>No account and no password beyond the school one. Everything you record is
+signed with your name, so a mistake can always be traced back and corrected —
+by you.</p>
+
+<div class="card q">
+  <h3>Know this before you record anything</h3>
+  <p>Every family has a <strong>read-only page of their own child</strong>, reached by a
+  private link. What you mark, and any note you write, is what they see. Not
+  instantly — but by the time they next open it.</p>
+  <p><strong>Write what you would be comfortable reading aloud to that child's mother.</strong></p>
+</div>
+
+<h2>Friday and Sunday — the register</h2>
+<p><strong>Mark all present</strong> first, then fix the exceptions. Most children are
+there most weeks, so that is one tap instead of thirty.</p>
+
+<div class="rows">
+  <div class="row">
+    <span class="k">
+      <span class="btn ok">✓<small>here</small></span>
+    </span>
+    <span class="v"><b>here · late · away</b>
+      Attendance. <em>Away</em> opens the reasons — pick one.</span>
+  </div>
+  <div class="row">
+    <span class="k"><span class="btn ok">✓<small>heard</small></span></span>
+    <span class="v"><b>✓ heard</b>
+      They recited everything they had open and it was all fine. One tap and that
+      child is done. It only appears when the child is marked present <em>and</em> has
+      homework open.</span>
+  </div>
+  <div class="row">
+    <span class="k"><span class="btn">Jad H. ›</span></span>
+    <span class="v"><b>The name</b>
+      Their page, for anything that isn't the simple case.</span>
+  </div>
+</div>
+
+<p>The bar at the top says <strong>how many children are still incomplete</strong> and
+stays on screen while you scroll. A child counts as complete with <strong>both</strong> an
+attendance mark <strong>and</strong> a recitation. Green means you are finished.</p>
+
+<h3>The arrow in front of each name</h3>
+<p>That child's direction. There is a key underneath the list in the app too.</p>
+<div class="rows">
+  <div class="row"><span class="k"><span class="tr up">
+    <svg viewBox="0 0 16 16" width="17" height="17" fill="none" stroke="currentColor"
+      stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M3 13 L13 3"/><path d="M13 3 L8 3 M13 3 L13 8"/></svg></span></span>
+    <span class="v"><b>moving forward</b>New ground, or review recited well.</span></div>
+  <div class="row"><span class="k"><span class="tr flat">
+    <svg viewBox="0 0 16 16" width="17" height="17" fill="none" stroke="currentColor"
+      stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M3 8 L13 8"/><path d="M13 8 L9 5 M13 8 L9 11"/></svg></span></span>
+    <span class="v"><b>standing still</b>Present, but nothing passed.</span></div>
+  <div class="row"><span class="k"><span class="tr down">
+    <svg viewBox="0 0 16 16" width="17" height="17" fill="none" stroke="currentColor"
+      stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M3 3 L13 13"/><path d="M13 13 L8 13 M13 13 L13 8"/></svg></span></span>
+    <span class="v"><b>going backwards</b>Unprepared, absent without reason, or stuck repeating.</span></div>
+  <div class="row"><span class="k"><span class="tr away">
+    <svg viewBox="0 0 16 16" width="17" height="17" fill="none" stroke="currentColor"
+      stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M3.5 8 L12.5 8"/></svg></span></span>
+    <span class="v"><b>not enough to say</b>Away, or nothing recorded yet. This is what
+      you will see in the first week, and it is correct.</span></div>
+</div>
+
+<h2>The child's page</h2>
+
+<h3>The three marks</h3>
+<div class="rows">
+  <div class="row"><span class="k"><span class="btn ok">✓<small>good</small></span></span>
+    <span class="v"><b>good</b>Recited to standard. Three mistakes a page or fewer.</span></div>
+  <div class="row"><span class="k"><span class="btn rev">↻<small>again</small></span></span>
+    <span class="v"><b>again</b>More than three mistakes. It comes back next week
+      <strong>by itself</strong> — you do not have to set it.</span></div>
+  <div class="row"><span class="k"><span class="btn np">–<small>not ready</small></span></span>
+    <span class="v"><b>not ready</b>Here, but hadn't worked on it. A conversation with
+      the family, not a teaching problem, and it deliberately changes nothing.</span></div>
+</div>
+
+<h3>Getting through the class</h3>
+<p><strong>Next student ›</strong> at the bottom walks you through without going back to
+the list. If the next name isn't the next child you'll hear, tap
+<strong>1 of 8 ⌄</strong> at the top and pick whoever you want.</p>
+
+<h3>Setting homework</h3>
+<p><strong>+ Assign new memorization</strong> or <strong>+ Add old memorization to review</strong>.
+Search by name <em>or by surah number</em>. Leave the ayah boxes empty for the whole
+surah.</p>
+<p>If you set something the child already has open, the app stops and shows you —
+you can still assign it again if that is the point.</p>
+<p>To fix one you got wrong, tap the <strong>✎</strong> on the homework line. You can change
+the surah, the ayat, whether it is new or review, and the note. Change the surah
+and leave the ayat empty and it becomes the whole of the new surah.</p>
+
+<h3>Notes</h3>
+<p>At the bottom of the page. You can read, change and delete them.
+<strong>Parents see notes.</strong></p>
+
+<h2>Recording what a child already knows — the audit</h2>
+<p class="lede">This is the part that replaces the paper sheet, and it is worth
+ten minutes of your attention.</p>
+
+<p>Tap <strong>☰ Mushaf</strong> on any child's page. You get the whole Qur'an as thirty
+juz, each labelled with where it starts and ends — <em>Al-Faatiha 1 → Al-Baqara
+141</em> — and how many of its pages that child has solid.</p>
+
+<p>Tap a juz and you get, in this order:</p>
+<ol>
+  <li><strong>The whole juz</strong>, with its own three marks.</li>
+  <li><strong>The surahs in that juz</strong>, each with its number and its own three marks.</li>
+  <li><strong>Hizb by hizb, page by page.</strong> Tap a page open to mark just part of a surah.</li>
+</ol>
+
+<p>At every level:</p>
+<div class="rows">
+  <div class="row"><span class="k"><span class="btn ok">✓<small>solid</small></span></span>
+    <span class="v"><b>solid</b>They have it.</span></div>
+  <div class="row"><span class="k"><span class="btn rev">↻<small>review</small></span></span>
+    <span class="v"><b>review</b>They had it and it needs work. Use this — not
+      <em>clear</em> — when a child has forgotten something: it keeps the history and
+      puts the passage back into the review rotation.</span></div>
+  <div class="row"><span class="k"><span class="btn np">–<small>clear</small></span></span>
+    <span class="v"><b>clear</b>Remove it from the record. For correcting a mistake
+      you just made, not for recording that a child forgot. It asks first.</span></div>
+</div>
+
+<h3>When to use it</h3>
+<ul>
+  <li><strong>A child joins mid-year.</strong> Sit with them, work down juz 30, mark what
+      they have. A whole juz is one tap — do not tap 37 surahs.</li>
+  <li><strong>You discover they know more than the record says.</strong> Mark it and move on.</li>
+  <li><strong>The September re-audit.</strong> This is how it is done now, instead of on paper.</li>
+</ul>
+
+<div class="card note">
+  <h3>What the audit does not do</h3>
+  <p><strong>It does not record that the child recited today.</strong> It records what they
+  already have, and leaves their place in the review rotation untouched — which
+  is deliberate. A child whose state you entered from last year's paper has not
+  been heard this week, and pretending otherwise would hide them from the
+  rotation for a month.</p>
+  <p>Use the three marks on the child's page for what happened in class today.
+  Use the mushaf for what was already true.</p>
+</div>
+
+<h2>The children's names — please leave them short</h2>
+<p>You will notice the register says <strong>Jad H.</strong>, not Jad El Haiba. That is
+deliberate, and it is the one thing in here I would ask you not to "fix".</p>
+<p><strong>Every child is stored as their first name and the initial of their
+surname.</strong> Nothing else. No date of birth, no address, no school, no photograph.
+Their parents' names, phone numbers and email addresses are not in the system at
+all — there is nowhere in the database to put them. We find the adult by looking
+the child up in ClassDojo, which the madrasah already uses.</p>
+<p>This matters because the app lives on the internet. A child's full name plus
+their mosque plus their schedule is enough to identify a family; a first name and
+an initial is not.</p>
+<p><strong>Names can be corrected, and sometimes need to be.</strong> The import got
+compound first names wrong — "Abu Bakr Sangirov" came out as "Abu S." when it
+should read "Abu Bakr S.". If a child's name is wrong, tell Tarek. When you see it
+corrected it should still be <strong>first name plus one initial</strong>. Please don't type
+a full surname in, even to be helpful.</p>
+<p>If a name is so short it is ambiguous — two children called Anas in one class —
+tell Tarek. There are better answers than a full surname.</p>
+
+<h2>Older students can have their own link</h2>
+<p>A parent link covers one adult and the children they are responsible for. But a
+student old enough to have their own phone can have <strong>their own link</strong>,
+separate from their parents' — the same page, showing only them, and without the
+attendance warning, which is a message for adults.</p>
+<p>Ask Tarek if one of your older students wants one.</p>
+
+<h2>Two things that will happen</h2>
+
+<div class="card">
+  <h3>You tapped the wrong thing</h3>
+  <p>Everything is reversible.</p>
+  <ul>
+    <li>Attendance, or a ✓ heard → <strong>↶ Undo last change</strong> at the top of the register.</li>
+    <li>A recitation already marked → the child's page → <strong>Recent classes</strong> →
+        <strong>↶ Take back</strong>. Their memorisation returns to what it was and the
+        homework opens again.</li>
+  </ul>
+  <p>The line stays in the record marked as withdrawn, because when two people
+  remember an evening differently, the fact that someone corrected themselves is
+  exactly what you want to be able to see.</p>
+</div>
+
+<div class="card warn">
+  <h3>It won't save</h3>
+  <p>A red banner appears with <strong>Retry</strong>. Nothing is lost while it is showing.</p>
+  <p>If retrying keeps failing: <strong>write the marks on paper and tell Tarek.</strong>
+  Do not spend the class fighting a phone instead of teaching.</p>
+</div>
+
+<h2>What you cannot do, on purpose</h2>
+<ul>
+  <li><strong>Close a class day</strong> (snow, Eid, no teacher). Coordinator only — message
+      Tarek. On a closed day every child is automatically excused with the reason,
+      so it counts against nobody. You can still set homework for next week; only
+      recitation is blocked, because none happened.</li>
+  <li><strong>See parents' names, numbers or emails.</strong> They are not in the system at
+      all.</li>
+  <li><strong>See another family's link.</strong> Several teachers here are also parents.</li>
+</ul>
+
+<h2>Settings</h2>
+<p>The <strong>⚙</strong> top right: <span class="ar">العربية</span> switches the whole app
+to Arabic and back, light or dark, coordinator tools, and sign out.</p>
+<p>Everything saves as you tap. There is no Save button anywhere, and closing the
+app loses nothing.</p>
+
+<footer>
+  <span class="ar">جَزَاكُمُ اللهُ خَيْرًا</span>
+  Ommah Madrasah · Assalam Mosque, Ottawa
+</footer>
+
+</div>
+</body>
+</html>
