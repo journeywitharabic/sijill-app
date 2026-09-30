@@ -603,28 +603,52 @@ html[lang="ar"] .gb.lab3 small{font-size:9px}
 /* ==========================================================================
    The progress trend
    Four answers and only four, because this is read out of the corner of the
-   eye while a child stands waiting. Colour does the work; the word is there
-   for anyone who does not trust the colour, and for anyone who cannot see it.
+   eye while a child stands waiting.
    ========================================================================== */
-.trend{display:inline-flex;align-items:center;gap:5px;vertical-align:-1px}
-.trend .g{font-size:14px;font-weight:700;line-height:1;width:16px;text-align:center}
-.trend .t{font-size:11px;font-weight:600;white-space:nowrap}
+.trend{display:inline-flex;align-items:center;gap:5px;vertical-align:-3px}
+.trend .t{font-size:11.5px;font-weight:700;white-space:nowrap}
+/* Drawn rather than typed: the text arrows came out of the system font as
+   hairlines and simply vanished at 14px beside a name. */
+.tarrow{flex:none;display:block}
 .trend.tr-up   { color:var(--ok) }
 .trend.tr-flat { color:var(--late) }
 .trend.tr-down { color:var(--crit) }
 .trend.tr-away { color:var(--ink-3) }
-/* On the register the arrow sits in front of the name, so it needs a little
-   air and must not drag the name's baseline around. */
-.srow .nm .trend{margin-inline-end:6px}
-.srow .nm .trend .g{font-size:15px}
+
+/* On the register the arrow sits in front of the name, so it gets a tinted
+   disc of its own — at that size, on a busy row, colour alone was not
+   carrying it. */
+.srow .nm .trend{margin-inline-end:7px;padding:3px;border-radius:7px;vertical-align:-4px}
+.srow .nm .trend.tr-up   { background:var(--ok-soft) }
+.srow .nm .trend.tr-flat { background:var(--late-soft) }
+.srow .nm .trend.tr-down { background:var(--crit-soft) }
+.srow .nm .trend.tr-away { background:var(--surface-2) }
+
+/* The key. Wherever a bare arrow appears with no words beside it, this goes
+   underneath — an arrow nobody can decode is decoration. */
+.trlegend{display:flex;align-items:center;gap:14px;flex-wrap:wrap;
+  background:var(--surface-2);border:1px solid var(--line);border-radius:10px;
+  padding:8px 12px;margin-bottom:10px}
+.trlegend .trend .t{font-size:11px;font-weight:600;color:var(--ink-2)}
 
 /* On the child's own page it gets a line, with the reason spelled out —
-   this is the one place where there is room to say WHY. */
+   the one place with room to say WHY, so it does. */
 .trendbar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;
-  border:1px solid var(--line);border-radius:11px;padding:10px 13px;margin-bottom:14px;
+  border:1px solid var(--line);border-radius:11px;padding:11px 13px;margin-bottom:14px;
   background:var(--surface)}
 .trendbar .why{font-size:12px;color:var(--ink-2)}
+.trendbar .trend .t{font-size:13px}
+.trendbar .tarrow{width:19px;height:19px;stroke-width:3}
 .trendbar.tr-up   { background:var(--ok-soft);   border-color:color-mix(in srgb,var(--ok) 30%,transparent) }
 .trendbar.tr-flat { background:var(--late-soft); border-color:color-mix(in srgb,var(--late) 34%,transparent) }
 .trendbar.tr-down { background:var(--crit-soft); border-color:color-mix(in srgb,var(--crit) 30%,transparent) }
 .trendbar.tr-away { background:var(--surface-2) }
+
+/* A row in the school table opens the child. It carried an id from the first
+   version and nothing listened to it, which is the worst of both worlds — it
+   looked clickable and was not. */
+tr.opens{cursor:pointer}
+tr.opens:hover{background:var(--surface-2)}
+tr.opens td:first-child{position:relative}
+tr.opens .rowgo{color:var(--ink-3);font-weight:400;margin-inline-start:6px}
+tr.opens:hover .rowgo{color:var(--lapis)}

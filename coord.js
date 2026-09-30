@@ -154,15 +154,8 @@
       '<span class="sep">·</span>' +
       '<span class="pill exc"><i></i>' + esc(ar ? "بَنَفْسَجِيّ" : "violet") + '</span> ' +
         esc(ar ? "غِيَابٌ بِعُذْرٍ مَعْرُوف" : "away, with a reason the school knows") +
-      '<span class="sep">·</span>' +
-      '<span class="trend tr-up"><span class="g">↑</span></span> ' + esc(T("tr_up")) +
-      '<span class="sep">·</span>' +
-      '<span class="trend tr-flat"><span class="g">→</span></span> ' + esc(T("tr_flat")) +
-      '<span class="sep">·</span>' +
-      '<span class="trend tr-down"><span class="g">↓</span></span> ' + esc(T("tr_down")) +
-      '<span class="sep">·</span>' +
-      '<span class="trend tr-away"><span class="g">–</span></span> ' + esc(T("tr_away")) +
-      '</div>';
+      '</div>' +
+      (window.SijillTrendLegend ? window.SijillTrendLegend() : "");
 
     /* U8 · "Needs attention" was the fourth of six columns, so on a phone it
        sat off the right-hand edge — the one column anybody opens this screen
@@ -173,6 +166,16 @@
       '</tr></thead><tbody id="dRows"></tbody></table></div>';
     $("cbody").innerHTML = h;
     fillRows();
+    /* The rows have carried a data-id since the first version and nothing ever
+       listened to it, so the only way into a child from the school table was
+       to go to Manage, find them again, and press Open. The buttons at the
+       end of the row are the ones that need a deliberate tap; the row itself
+       just opens the child. */
+    $("dRows").onclick = function (e) {
+      if (e.target.closest("button, a, input, select")) return;
+      var tr = e.target.closest("tr[data-id]");
+      if (tr) window.SijillOpenStudentById(tr.dataset.id);
+    };
     $("dSearch").oninput = fillRows;
     $("dFlag").onchange = fillRows;
     $("dClass").onchange = function () { C.dclass = this.value; fillRows(); };
@@ -205,7 +208,10 @@
     $("dRows").innerHTML = rows.length ? rows.map(function (s) {
       var f = s.flags || {};
       var ar2 = i18n.isAr();
-      return '<tr data-id="' + esc(s.id) + '"><td><b>' + esc(s.name) + '</b></td>' +
+      return '<tr class="opens" data-id="' + esc(s.id) + '" title="' +
+        esc(i18n.isAr() ? "افْتَحْ صَفْحَةَ الطَّالِب" : "Open this student") + '">' +
+        '<td><b>' + esc(s.name) + '</b>' +
+        '<span class="rowgo" aria-hidden="true">›</span></td>' +
         '<td>' + (window.SijillTrend ? window.SijillTrend(s.trend, true) : "") + '</td>' +
         '<td>' + (f.kind ? '<span class="pill ' + f.kind + '"><i></i>' + esc(f.message) + '</span>'
                          : '<span style="color:var(--ink-3)">—</span>') + '</td>' +
@@ -320,11 +326,15 @@
       body.innerHTML =
         '<div class="filters"><span style="flex:1"></span>' +
         '<button class="btn sm" id="addStu">+ Add student</button></div>' +
+        (window.SijillTrendLegend ? window.SijillTrendLegend() : "") +
         scrollHint() +
-        '<div class="tw"><table><thead><tr><th>Student</th><th>Class</th><th>Open homework</th>' +
+        '<div class="tw"><table><thead><tr><th>Student</th><th>' + esc(T("trend")) + '</th>' +
+        '<th>Class</th><th>Open homework</th>' +
         '<th>Not revisited</th><th></th></tr></thead><tbody>' +
         d.students.map(function (s) {
-          return '<tr><td><b>' + esc(s.name) + '</b></td><td>' + esc(s["class"] || "—") + '</td>' +
+          return '<tr><td><b>' + esc(s.name) + '</b></td>' +
+            '<td>' + (window.SijillTrend ? window.SijillTrend(s.trend, true) : "") + '</td>' +
+            '<td>' + esc(s["class"] || "—") + '</td>' +
             '<td class="n">' + s.open_homework + '</td><td class="n">' + s.not_revisited + '</td>' +
             '<td style="text-align:right;white-space:nowrap">' +
             '<button class="mini stu-go" data-id="' + esc(s.id) + '">Open</button> ' +

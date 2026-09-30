@@ -298,6 +298,11 @@
       : '<div class="donebar part"><span class="big">' + (tot - done) + '</span><div>' +
         T("donePart", { n: tot }) + '</div></div>';
 
+    // The register's arrows carry no words — there is no room beside a name —
+    // so the key goes directly under the list.
+    var lg = $("trendKey");
+    if (lg) lg.innerHTML = trendLegend();
+
     var c = { present: 0, late: 0, exc: 0, crit: 0 };
     d.students.forEach(function (s) {
       if (s.state === "present") c.present++;
@@ -416,22 +421,48 @@
      one instead: a double arrow reads as "more, faster" in every other
      interface a person has used, which is the opposite of what standing still
      means. Easy to change back if the teachers read it differently. */
+  /* Drawn, not typed. The text glyphs ↑ → ↓ come out of the system font as
+     hairlines — fine in a paragraph, invisible on a phone at 14px next to a
+     name. These are strokes we control: 2.8px, round caps, currentColor, so
+     they inherit the trend's colour and stay crisp at any size.
+
+     Diagonals rather than verticals, because a trend line is what this is —
+     the same shape a person already reads on any chart. */
   var TRENDS = {
-    up:   { glyph: "↑", cls: "tr-up" },
-    flat: { glyph: "→", cls: "tr-flat" },
-    down: { glyph: "↓", cls: "tr-down" },
-    away: { glyph: "–", cls: "tr-away" }
+    up:   { cls: "tr-up",   d: "M3 13 L13 3",  head: "M13 3 L8 3 M13 3 L13 8" },
+    flat: { cls: "tr-flat", d: "M3 8 L13 8",   head: "M13 8 L9 5 M13 8 L9 11" },
+    down: { cls: "tr-down", d: "M3 3 L13 13",  head: "M13 13 L8 13 M13 13 L13 8" },
+    away: { cls: "tr-away", d: "M3.5 8 L12.5 8", head: "" }
   };
+  function arrowSvg(dir) {
+    var k = TRENDS[dir] || TRENDS.away;
+    return '<svg class="tarrow" viewBox="0 0 16 16" width="16" height="16" aria-hidden="true" ' +
+      'fill="none" stroke="currentColor" stroke-width="2.8" ' +
+      'stroke-linecap="round" stroke-linejoin="round">' +
+      '<path d="' + k.d + '"/>' + (k.head ? '<path d="' + k.head + '"/>' : "") +
+    '</svg>';
+  }
   function trendHtml(t, withWords) {
     if (!t || !t.dir) return "";
     var k = TRENDS[t.dir] || TRENDS.away;
     var label = T("tr_" + t.dir);
     return '<span class="trend ' + k.cls + '" title="' + esc(label + (t.detail ? " — " + t.detail : "")) + '">' +
-      '<span class="g">' + k.glyph + '</span>' +
+      arrowSvg(t.dir) +
       (withWords ? '<span class="t">' + esc(label) + '</span>' : "") +
     '</span>';
   }
+  /* The same four, spelled out. Wherever a bare arrow appears with no words
+     beside it, this goes underneath — an arrow nobody can decode is just
+     decoration. */
+  function trendLegend() {
+    return '<div class="trlegend">' +
+      ["up", "flat", "down", "away"].map(function (dir) {
+        return '<span class="trend ' + TRENDS[dir].cls + '">' + arrowSvg(dir) +
+               '<span class="t">' + esc(T("tr_" + dir)) + '</span></span>';
+      }).join("") + '</div>';
+  }
   window.SijillTrend = trendHtml;
+  window.SijillTrendLegend = trendLegend;
 
   /* ------------------------------------------------------- student sheet */
   function openStudent(s) {
