@@ -39,10 +39,7 @@
   /* ---------------------------------------------------------------- open */
   function open(studentId, studentName) {
     M.student = studentId; M.name = studentName || ""; M.juz = null; M.open = {};
-    ["v-gate", "v-who", "v-class", "v-student", "v-coord", "v-mushaf"].forEach(function (v) {
-      var el = $(v); if (el) el.hidden = (v !== "v-mushaf");
-    });
-    window.scrollTo(0, 0);
+    window.SijillShow("v-mushaf");
     $("mtWho").textContent = M.name;
     load();
   }
@@ -69,6 +66,13 @@
       '<i class="s" style="width:' + ps + '%"></i>' +
       '<i class="r" style="width:' + pr + '%"></i></span>';
   }
+  /* "An-Naba 1 → An-Naas 6" */
+  function span(a, b, ar) {
+    if (!a || !b) return "";
+    var na = ar ? a.name_ar : a.name_en, nb = ar ? b.name_ar : b.name_en;
+    return na + " " + a.ayah + " → " + nb + " " + b.ayah;
+  }
+
   function words(solid, review, total) {
     var ar = i18n.isAr(), out = [];
     if (solid)  out.push(solid + " " + (ar ? "مُتْقَن" : "solid"));
@@ -82,11 +86,11 @@
   function setters(scope, number, extra) {
     return '<span class="setg" data-scope="' + scope + '" data-n="' + number + '"' +
       (extra || "") + '>' +
-      '<button class="gb lab3 sv" data-grade="1" title="' + esc(T("gGoodTip")) + '">' +
+      '<button class="gb lab3 sv t-ok" data-grade="1" title="' + esc(T("gGoodTip")) + '">' +
         '<span class="ic">✓</span><small>' + esc(T("mtSolid")) + '</small></button>' +
-      '<button class="gb lab3 sv" data-grade="2" title="' + esc(T("gAgainTip")) + '">' +
+      '<button class="gb lab3 sv t-rev" data-grade="2" title="' + esc(T("gAgainTip")) + '">' +
         '<span class="ic">↻</span><small>' + esc(T("mtReview")) + '</small></button>' +
-      '<button class="gb lab3 sv" data-grade="0" title="' + esc(T("mtClearTip")) + '">' +
+      '<button class="gb lab3 sv t-np" data-grade="0" title="' + esc(T("mtClearTip")) + '">' +
         '<span class="ic">–</span><small>' + esc(T("mtClear")) + '</small></button>' +
     '</span>';
   }
@@ -106,6 +110,9 @@
         '<div class="juzgrid" id="mtTree">' + M.data.juz.map(function (j) {
           return '<button class="juztile" data-juz="' + j.juz + '">' +
             '<span class="jn">' + (ar ? "جُزْء " : "Juz ") + j.juz + '</span>' +
+            // "Juz 12" means nothing to most people. Where it starts and
+            // ends is the thing a teacher actually recognises.
+            '<span class="jr">' + esc(span(j.starts, j.ends, ar)) + '</span>' +
             bar(+j.ayat_solid, +j.ayat_review, +j.ayat) +
             '<span class="jw">' + esc(j.pages_solid + "/" + j.pages +
               " " + (ar ? "صَفَحَات" : "pages")) + '</span>' +
@@ -137,6 +144,33 @@
         setters("juz", M.data.juz) +
       '</div>';
 
+    /* Surahs first, because "he has Al-Mulk" is how teachers actually think,
+       and until now the tree could mark a juz, a hizb, a page, or the
+       fragment of a surah sitting on one page — never a surah. */
+    html += '<div class="grph" style="margin-top:16px"><h2>' +
+              esc(ar ? "السُّوَرُ فِي هَذَا الجُزْء" : "Surahs in this juz") +
+            '</h2><span class="n">' + (M.data.surahs || []).length + '</span></div>' +
+            '<div class="card" style="margin-bottom:6px">' +
+            (M.data.surahs || []).map(function (g) {
+              return '<div class="seg srh">' +
+                '<span class="snum">' + g.surah + '</span>' +
+                '<span class="lab"><span class="ar" dir="rtl">' + esc(g.name_ar) + '</span>' +
+                '<span class="tr">' + esc(g.name_en) + '</span>' +
+                '<span class="m">' + esc(words(+g.solid, +g.review, +g.ayat)) +
+                  (g.whole ? "" :
+                    " · " + esc(ar ? "مِنْهَا فِي هَذَا الجُزْء " : "in this juz ") +
+                    g.in_juz_from + "–" + g.in_juz_to) +
+                '</span></span>' +
+                // No from/to: this marks the WHOLE surah, including any part
+                // of it that sits in the neighbouring juz. The line above
+                // says so when that is the case.
+                setters("surah", g.surah) +
+              '</div>';
+            }).join("") + '</div>' +
+            '<div class="note" style="margin-bottom:14px">' + esc(ar
+              ? "تَعْلِيمُ سُورَةٍ هُنَا يَشْمَلُهَا كَامِلَةً، وَلَوْ امْتَدَّ جُزْءٌ مِنْهَا إِلَى الجُزْءِ المُجَاوِر. لِتَعْلِيمِ جُزْءٍ مِنْهَا فَقَطْ، افْتَحْ صَفْحَةً أَدْنَاه."
+              : "Marking a surah here covers the whole surah, including any part of it that runs into the next juz. To mark only some of it, open a page below.") + '</div>';
+
     html += '<div id="mtTree">' + M.data.hizbs.map(function (h) {
       var hS = 0, hR = 0, hT = 0;
       h.pages.forEach(function (p) { hS += +p.solid; hR += +p.review; hT += +p.ayat; });
@@ -162,6 +196,7 @@
             (isOpen ? setters("page", p.page) : "") +
             (isOpen ? '<div class="segs">' + p.segments.map(function (g) {
               return '<div class="seg">' +
+                '<span class="snum">' + g.surah + '</span>' +
                 '<span class="lab"><span class="ar" dir="rtl">' + esc(g.name_ar) + '</span>' +
                 '<span class="tr">' + esc(g.name_en) + " " + g.from + "–" + g.to + '</span>' +
                 '<span class="m">' + esc(words(+g.solid, +g.review, +g.ayat)) + '</span></span>' +

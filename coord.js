@@ -9,7 +9,7 @@
   "use strict";
   var $ = function (id) { return document.getElementById(id); };
   var T = i18n.t;
-  var C = { tab: "dash", dash: null, stats: null, mtab: "students", dclass: "" };
+  var C = { tab: "dash", dash: null, stats: null, mtab: "students", dclass: "", cal: null, calMsg: "" };
 
   function esc(s) {
     return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) {
@@ -17,6 +17,16 @@
     });
   }
   function busy(el) { el.innerHTML = '<div class="loading"><span class="spin"></span></div>'; }
+
+  /* These tables scroll sideways on a phone and nothing said so, which meant
+     the buttons at the right-hand end simply did not exist as far as anyone
+     using a phone was concerned. */
+  function scrollHint() {
+    var ar = i18n.isAr();
+    return '<div class="scrollhint"><span class="ar">' + (ar ? "‹" : "›") + '</span>' +
+      esc(ar ? "اسْحَبِ الجَدْوَلَ جَانِبًا لِرُؤْيَةِ بَقِيَّةِ الأَعْمِدَةِ وَالأَزْرَار"
+             : "Swipe the table sideways for the rest of the columns and the buttons") + '</div>';
+  }
 
   /* -------------------------------------------------------------- elevate */
   function enter() {
@@ -46,10 +56,9 @@
   }
 
   function openCoord() {
-    ["v-gate","v-who","v-class","v-student","v-coord"].forEach(function (v) {
-      $(v).hidden = (v !== "v-coord");
-    });
-    window.scrollTo(0, 0);
+    // One switcher for the whole app — the second hand-written copy of this
+    // list is what made "Coordinator tools" land on the mushaf screen.
+    window.SijillShow("v-coord");
     $("coordWho").textContent = (window.SijillApp.S.me && window.SijillApp.S.me.teacher) || "Coordinator";
     renderTabs();
     openTab(C.tab);
@@ -233,7 +242,10 @@
         return '<button data-m="' + x[0] + '" aria-pressed="' + (C.mtab === x[0]) + '">' + esc(x[1]) + '</button>';
       }).join("") + '</div><div id="mbody"></div>';
     $("mtabs").querySelectorAll("button").forEach(function (b) {
-      b.onclick = function () { C.mtab = b.dataset.m; renderManage(); };
+      b.onclick = function () {
+        if (b.dataset.m !== "calendar") C.calMsg = "";
+        C.mtab = b.dataset.m; renderManage();
+      };
     });
     var body = $("mbody"); busy(body);
     if (C.mtab === "students") return manageStudents(body);
@@ -244,11 +256,55 @@
     return manageMaint(body);
   }
 
+  /* Renaming anything. The roster was imported as first-name-plus-initial and
+     that rule mangles compound names — "Abu Bakr Sangirov" came out as
+     "Abu S." when it should read "Abu Bakr S.". A name a family would not
+     recognise is not a cosmetic problem on a page their parents read. */
+  function renameSheet(kind, id, current) {
+    var ar = i18n.isAr();
+    var titles = {
+      student: ar ? "تَعْدِيلُ اسْمِ الطَّالِب" : "Rename student",
+      teacher: ar ? "تَعْدِيلُ اسْمِ المُعَلِّم" : "Rename teacher",
+      klass:   ar ? "تَعْدِيلُ اسْمِ الحَلْقَة" : "Rename class"
+    };
+    var calls = {
+      student: ["api_student_rename", "p_student"],
+      teacher: ["api_teacher_rename", "p_teacher"],
+      klass:   ["api_class_rename",   "p_class"]
+    };
+    window.SijillSheet(titles[kind],
+      '<input id="rnName" style="width:100%;padding:11px;font-size:16px;border:1px solid var(--line);' +
+      'border-radius:10px;background:var(--surface);color:var(--ink)">' +
+      '<div class="note" style="margin-top:10px">' + esc(kind === "student"
+        ? (ar ? "هَذَا الاِسْمُ يَرَاهُ الأَهْلُ فِي صَفْحَتِهِمْ. اُكْتُبْهُ كَمَا تُنَادِيهِ أُسْرَتُه."
+              : "This is the name the child's family sees on their page. Write it the way they would.")
+        : (ar ? "يَتَغَيَّرُ الاِسْمُ فِي كُلِّ مَكَانٍ فَوْرًا. لَا يُعَادُ كِتَابَةُ أَيِّ سِجِلّ."
+              : "The name changes everywhere at once. No history is rewritten and nothing is re-attributed.")) +
+      '</div>',
+      T("save"), function () {
+        var v = ($("rnName").value || "").trim();
+        if (v.length < 2 || v === current) return false;
+        var args = {}; args[calls[kind][1]] = id; args.p_name = v;
+        api.write(calls[kind][0], args, v)
+          .then(function () { window.SijillCloseSheet(); renderManage(); }).catch(err);
+        return false;
+      });
+    /* Filled in straight away, not on a timer.
+       SijillSheet writes the body synchronously, so the input already exists
+       here — and a 60ms timer that sets .value would overwrite anything typed
+       inside that window, which then compares equal to the old name and
+       silently saves nothing. Focus can wait for the next frame; the value
+       cannot. */
+    var f = $("rnName");
+    if (f) { f.value = current; setTimeout(function () { f.focus(); f.select(); }, 40); }
+  }
+
   function manageStudents(body) {
     api.read("api_dashboard", {}).then(function (d) {
       body.innerHTML =
         '<div class="filters"><span style="flex:1"></span>' +
         '<button class="btn sm" id="addStu">+ Add student</button></div>' +
+        scrollHint() +
         '<div class="tw"><table><thead><tr><th>Student</th><th>Class</th><th>Open homework</th>' +
         '<th>Not revisited</th><th></th></tr></thead><tbody>' +
         d.students.map(function (s) {
@@ -256,6 +312,7 @@
             '<td class="n">' + s.open_homework + '</td><td class="n">' + s.not_revisited + '</td>' +
             '<td style="text-align:right;white-space:nowrap">' +
             '<button class="mini stu-go" data-id="' + esc(s.id) + '">Open</button> ' +
+            '<button class="mini stu-ren" data-id="' + esc(s.id) + '" data-name="' + esc(s.name) + '">Rename</button> ' +
             '<button class="mini stu-link" data-id="' + esc(s.id) + '" data-name="' + esc(s.name) + '">Own link</button> ' +
             '<button class="mini stu-move" data-id="' + esc(s.id) + '" data-name="' + esc(s.name) + '">Move</button> ' +
             '<button class="mini stu-rm" data-id="' + esc(s.id) + '" data-name="' + esc(s.name) + '">Remove</button></td></tr>';
@@ -268,6 +325,9 @@
       });
       body.querySelectorAll(".stu-go").forEach(function (b) {
         b.onclick = function () { window.SijillOpenStudentById(b.dataset.id); };
+      });
+      body.querySelectorAll(".stu-ren").forEach(function (b) {
+        b.onclick = function () { renameSheet("student", b.dataset.id, b.dataset.name); };
       });
       body.querySelectorAll(".stu-move").forEach(function (b) {
         b.onclick = function () { moveStudent(b.dataset.id, b.dataset.name); };
@@ -428,6 +488,7 @@
           'color:var(--ink-3)">' + esc(ar ? "المُعَلِّمُون" : "Teachers") + '</b>' +
           '<span style="flex:1"></span>' +
           '<button class="btn sm" id="addTeacher">+ ' + esc(ar ? "مُعَلِّم" : "Teacher") + '</button></div>' +
+        scrollHint() +
         '<div class="tw"><table><thead><tr>' +
           '<th>' + esc(ar ? "الاِسْم" : "Name") + '</th>' +
           '<th>' + esc(ar ? "سَجَّلَ" : "Marked") + '</th>' +
@@ -440,7 +501,10 @@
                  esc(ar ? "غَيْرُ نَشِط" : "switched off") + '</span>') + '</td>' +
             '<td class="n">' + t.marked + '</td>' +
             '<td class="n">' + (t.last_seen ? i18n.fmtDate(t.last_seen) : "—") + '</td>' +
-            '<td style="text-align:right"><button class="mini tg-act" data-id="' + esc(t.id) +
+            '<td style="text-align:right;white-space:nowrap">' +
+            '<button class="mini tg-ren" data-id="' + esc(t.id) + '" data-name="' + esc(t.name) + '">' +
+              esc(ar ? "تَعْدِيل" : "Rename") + '</button> ' +
+            '<button class="mini tg-act" data-id="' + esc(t.id) +
               '" data-name="' + esc(t.name) + '" data-to="' + (t.active ? "0" : "1") + '">' +
               esc(t.active ? (ar ? "أَوْقِفْ" : "Switch off") : (ar ? "أَعِدْ تَفْعِيلَه" : "Switch on")) +
             '</button></td></tr>';
@@ -457,19 +521,22 @@
           'color:var(--ink-3)">' + esc(ar ? "الحَلْقَات" : "Classes") + '</b>' +
           '<span style="flex:1"></span>' +
           '<button class="btn sm" id="addClass">+ ' + esc(ar ? "حَلْقَة" : "Class") + '</button></div>' +
+        scrollHint() +
         '<div class="tw"><table><thead><tr>' +
           '<th>' + esc(ar ? "الاِسْم" : "Name") + '</th>' +
           '<th>' + esc(ar ? "تَجْتَمِع" : "Meets") + '</th>' +
           '<th>' + esc(ar ? "طُلَّاب" : "Students") + '</th>' +
-          '<th>' + esc(ar ? "حِصَص" : "Sessions") + '</th></tr></thead><tbody>' +
+          '<th>' + esc(ar ? "حِصَص" : "Sessions") + '</th><th></th></tr></thead><tbody>' +
         (r.classes.length ? r.classes.map(function (c) {
           return '<tr><td><b>' + esc(c.name) + '</b></td>' +
             '<td>' + esc((c.meets || []).map(function (m) {
                 return ar ? (m === "friday" ? "الجُمُعَة" : "الأَحَد")
                           : (m.charAt(0).toUpperCase() + m.slice(1));
               }).join(" · ")) + '</td>' +
-            '<td class="n">' + c.students + '</td><td class="n">' + c.sessions + '</td></tr>';
-        }).join("") : '<tr><td colspan="4" style="padding:18px;color:var(--ink-3)">—</td></tr>') +
+            '<td class="n">' + c.students + '</td><td class="n">' + c.sessions + '</td>' +
+            '<td style="text-align:right"><button class="mini cl-ren" data-id="' + esc(c.id) +
+              '" data-name="' + esc(c.name) + '">' + esc(ar ? "تَعْدِيل" : "Rename") + '</button></td></tr>';
+        }).join("") : '<tr><td colspan="5" style="padding:18px;color:var(--ink-3)">—</td></tr>') +
         '</tbody></table></div>' +
         '<div class="note" style="margin-top:10px">' +
           esc(ar
@@ -492,6 +559,9 @@
         setTimeout(function () { var f = $("tName"); if (f) f.focus(); }, 60);
       };
 
+      body.querySelectorAll(".tg-ren").forEach(function (b) {
+        b.onclick = function () { renameSheet("teacher", b.dataset.id, b.dataset.name); };
+      });
       body.querySelectorAll(".tg-act").forEach(function (b) {
         b.onclick = function () {
           var on = b.dataset.to === "1";
@@ -512,6 +582,10 @@
               return false;
             });
         };
+      });
+
+      body.querySelectorAll(".cl-ren").forEach(function (b) {
+        b.onclick = function () { renameSheet("klass", b.dataset.id, b.dataset.name); };
       });
 
       $("addClass").onclick = function () {
@@ -553,6 +627,7 @@
       var links = r[0], students = r[1].students;
       body.innerHTML =
         '<div class="filters"><span style="flex:1"></span><button class="btn sm" id="newLink">+ Issue a link</button></div>' +
+        scrollHint() +
         '<div class="tw"><table><thead><tr><th>Link covers</th><th>Whose</th><th>Status</th>' +
         '<th>Opens (30d)</th><th>Last opened</th><th></th></tr></thead><tbody>' +
         (links.length ? links.map(function (g) {
@@ -627,34 +702,104 @@
   }
 
   function manageCalendar(body) {
-    api.read("api_classes").then(function (cs) {
-      var today = new Date().toISOString().slice(0, 10);
+    var ar = i18n.isAr();
+    Promise.all([api.read("api_classes"), api.read("api_closures")]).then(function (res) {
+      var cs = res[0], closed = res[1] || [];
+      /* Closing a day refreshes this screen so the table below updates, and
+         that used to wipe the date, class and reason the coordinator had just
+         typed — so pressing Reopen straight afterwards reopened TODAY rather
+         than the day they were working on. The form remembers itself. */
+      var form = C.cal || {};
+      var today = form.date || new Date().toISOString().slice(0, 10);
       body.innerHTML =
-        '<div class="note"><b>Close a day.</b> Snow, Eid, no teacher available. A closed day stops counting ' +
-        'as an absence for every child in it — that is the whole point of it, and it is why teachers cannot ' +
-        'do it themselves.<div style="height:10px"></div>' +
+        '<div class="note"><b>' + esc(ar ? "إِغْلَاقُ يَوْم." : "Close a day.") + '</b> ' +
+        esc(ar
+          ? "ثَلْجٌ أَوْ عِيدٌ أَوْ لَا مُعَلِّمَ مُتَاح. اليَوْمُ المُغْلَقُ يُسَجَّلُ فِيهِ كُلُّ الطُّلَّابِ غَائِبِينَ بِعُذْرٍ مَعَ السَّبَبِ الَّذِي تَكْتُبُه، فَلَا يُحْسَبُ غِيَابًا عَلَى أَحَد. وَيَبْقَى بِإِمْكَانِ المُعَلِّمِينَ إِسْنَادُ وَاجِبِ الأُسْبُوعِ القَادِم."
+          : "Snow, Eid, no teacher available. Closing a day marks every child in it excused, with the reason you type, so it counts against nobody. Teachers can still set homework for the next class — only recitation is blocked, because none happened.") +
+        '<div style="height:10px"></div>' +
         '<div class="filters" style="margin:0"><input type="date" id="cdDate" value="' + today + '">' +
-        '<select id="cdScope"><option value="">Whole school</option>' +
-        cs.map(function (c) { return '<option value="' + esc(c.id) + '">' + esc(c.name) + '</option>'; }).join("") +
-        '</select><input type="search" id="cdNote" placeholder="Reason — snow, Eid, no teacher…">' +
-        '<button class="btn sm" id="cdGo">Mark closed</button>' +
-        '<button class="btn ghost sm" id="cdOpen">Reopen</button></div>' +
-        '<div id="cdOut" style="margin-top:10px"></div></div>';
+        '<select id="cdScope"><option value="">' + esc(ar ? "المَدْرَسَةُ كُلُّهَا" : "Whole school") + '</option>' +
+        cs.map(function (c) {
+          return '<option value="' + esc(c.id) + '"' + (form.scope === c.id ? " selected" : "") + '>' +
+                 esc(c.name) + '</option>'; }).join("") +
+        '</select><input type="search" id="cdNote" value="' + esc(form.note || "") + '" placeholder="' +
+          esc(ar ? "السَّبَب — ثَلْج، عِيد، لَا مُعَلِّم…" : "Reason — snow, Eid, no teacher…") + '">' +
+        '<button class="btn sm" id="cdGo">' + esc(ar ? "أَغْلِقْ" : "Mark closed") + '</button>' +
+        '<button class="btn ghost sm" id="cdOpen">' + esc(ar ? "أَعِدْ فَتْحَه" : "Reopen") + '</button></div>' +
+        '<div id="cdOut" style="margin-top:10px">' + (C.calMsg || "") + '</div></div>' +
+
+        /* Which days are already closed. The screen could close a day and
+           reopen one but never showed you the answer to "did we cancel the
+           20th?" — so the only way to know was to remember. */
+        '<div class="grph" style="margin-top:18px"><h2>' +
+          esc(ar ? "الأَيَّامُ المُغْلَقَة" : "Days already closed") +
+        '</h2><span class="n">' + closed.length + '</span></div>' +
+        (closed.length ? scrollHint() : "") +
+        '<div class="tw"><table><thead><tr>' +
+          '<th>' + esc(ar ? "التَّارِيخ" : "Date") + '</th>' +
+          '<th>' + esc(ar ? "السَّبَب" : "Reason") + '</th>' +
+          '<th>' + esc(ar ? "المَدَى" : "Scope") + '</th>' +
+          '<th></th></tr></thead><tbody>' +
+        (closed.length ? closed.map(function (x) {
+          var whole = +x.classes_closed >= +x.classes_total;
+          return '<tr><td><b>' + esc(i18n.fmtDate(x.held_on, true)) + '</b></td>' +
+            '<td>' + esc(x.reason) + '</td>' +
+            '<td>' + (whole
+                ? '<span class="pill crit"><i></i>' + esc(ar ? "المَدْرَسَةُ كُلُّهَا" : "whole school") + '</span>'
+                : '<span class="pill late"><i></i>' + x.classes_closed + "/" + x.classes_total + " " +
+                  esc(ar ? "حَلْقَات" : "classes") + '</span>' +
+                  '<div class="m" style="margin-top:3px">' + esc(x.which) + '</div>') + '</td>' +
+            '<td style="text-align:right"><button class="mini cd-reopen" data-on="' + esc(x.held_on) + '">' +
+              esc(ar ? "أَعِدْ فَتْحَه" : "Reopen") + '</button></td></tr>';
+        }).join("") : '<tr><td colspan="4" style="padding:18px;color:var(--ink-3)">' +
+            esc(ar ? "لَمْ يُغْلَقْ أَيُّ يَوْمٍ بَعْدُ." : "No days closed yet.") + '</td></tr>') +
+        '</tbody></table></div>';
+
+      function remember() {
+        C.cal = { date: $("cdDate").value, scope: $("cdScope").value, note: $("cdNote").value };
+      }
+      ["cdDate", "cdScope", "cdNote"].forEach(function (id) {
+        var el = $(id); if (el) el.onchange = remember;
+      });
+
       $("cdGo").onclick = function () {
+        remember();
         api.write("api_close_day", { p_on: $("cdDate").value, p_class: $("cdScope").value || null,
                                      p_note: $("cdNote").value || null }, "closure")
           .then(function (r) {
-            $("cdOut").innerHTML = '<span class="pill ' + (r.closed ? "mute" : "late") + '"><i></i>' +
-              (r.closed ? r.closed + " class(es) closed on " + i18n.fmtDate($("cdDate").value)
-                        : esc(r.note || "nothing to close that day")) + '</span>';
+            // Say how many children were excused, not just how many classes
+            // were closed — the excusing is the part that matters to families.
+            // Kept in module state, because the re-render below rebuilds this
+            // whole screen and would otherwise throw the message away before
+            // anybody read it.
+            C.calMsg = '<span class="pill ' + (r.closed ? "ok" : "late") + '"><i></i>' +
+              (r.closed
+                ? esc(r.closed + (ar ? " حَلْقَة أُغْلِقَتْ · " : " class(es) closed · ") +
+                      r.excused + (ar ? " طَالِبًا غَائِبٌ بِعُذْر" : " students excused"))
+                : esc(r.note || "nothing to close that day")) + '</span>';
+            if (r.closed) renderManage(); else $("cdOut").innerHTML = C.calMsg;
           }).catch(err);
       };
       $("cdOpen").onclick = function () {
-        api.write("api_reopen_day", { p_on: $("cdDate").value, p_class: $("cdScope").value || null }, "reopen")
-          .then(function (r) {
-            $("cdOut").innerHTML = '<span class="pill mute"><i></i>' + r.reopened + " reopened</span>";
-          }).catch(err);
+        remember();
+        reopen($("cdDate").value, $("cdScope").value || null);
       };
+      body.querySelectorAll(".cd-reopen").forEach(function (b) {
+        b.onclick = function () { reopen(b.dataset.on, null); };
+      });
+
+      function reopen(on, cls) {
+        window.SijillSheet(ar ? "إِعَادَةُ فَتْحِ اليَوْم؟" : "Reopen this day?",
+          '<div style="font-size:13.5px;line-height:1.55">' + esc(ar
+            ? "تُحْذَفُ الأَعْذَارُ الَّتِي أُنْشِئَتْ عِنْدَ الإِغْلَاق، وَيَعُودُ كُلُّ مَا سَجَّلَهُ المُعَلِّمُونَ قَبْلَهُ كَمَا كَانَ."
+            : "The excused marks that closing created are removed, and anything teachers had recorded before the closure comes back exactly as it was.") + '</div>',
+          ar ? "أَعِدْ فَتْحَه" : "Reopen", function () {
+            window.SijillCloseSheet();
+            api.write("api_reopen_day", { p_on: on, p_class: cls }, "reopen")
+              .then(function () { renderManage(); }).catch(err);
+            return false;
+          });
+      }
     }).catch(err);
   }
 

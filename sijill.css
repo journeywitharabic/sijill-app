@@ -397,7 +397,7 @@ html[lang="ar"] .heard small{font-size:9px}
 /* The gear came out at 31px wide, under the 32px floor the rest of the app
    holds to. A settings button that needs aiming at is a settings button
    people mis-tap on the way to something else. */
-#gear,#gearStu,#gearCoord{min-width:36px;text-align:center;font-size:14px}
+#gear,#gearStu,#gearCoord,#gearMushaf{min-width:36px;text-align:center;font-size:14px}
 
 /* U1, second pass · the class title and date block was costing 70px above a
    list that IS the screen. Same information, one line, half the height. */
@@ -469,8 +469,13 @@ html[lang="ar"] .gb.lab3 small{font-size:9px}
 /* U6 · "11+3" needed a key and tooltips do not exist on a touchscreen.
    The bar gives the shape at a glance, the words beside it say exactly what
    it is. Both, as Tarek asked — neither on its own is enough. */
-.cbar{display:inline-flex;height:6px;width:100%;max-width:190px;border-radius:99px;
-  background:var(--line-2);overflow:hidden;flex:1 1 60px;min-width:44px}
+.cbar{display:flex;height:6px;flex:0 0 6px;width:100%;max-width:190px;border-radius:99px;
+  background:var(--line-2);overflow:hidden;min-width:44px}
+/* Inside the juz tiles and the level rows the parent is a COLUMN flex box, so
+   a growable basis made the bar stretch to fill the tile and come out as a
+   60px blob rather than a 6px line. Height is fixed; only the width varies. */
+.juztile .cbar{flex:0 0 6px;align-self:stretch;max-width:none}
+.lvlh .cbar,.phead .cbar{flex:1 1 80px;height:6px;align-self:center}
 .cbar i{display:block;height:100%}
 .cbar i.s{background:var(--ok)}
 .cbar i.r{background:var(--late-fill)}
@@ -524,3 +529,69 @@ html[lang="ar"] .gb.lab3 small{font-size:9px}
 .pgcell{display:inline-flex;align-items:baseline;gap:5px;flex-wrap:wrap;font-size:12.5px}
 .pgcell b{font-family:var(--mono);font-size:13px}
 .pgcell .m{font-family:var(--mono);font-size:10.5px;color:var(--ink-3)}
+
+/* The language and theme buttons are borrowed out of the (hidden) bottom bar
+   into the settings sheet. They were styled for that bar — a translucent white
+   fill on a near-black strip — and inside the sheet that came out as white on
+   white in dark mode and invisible in light. They get their own look here,
+   from the ordinary surface tokens, so they work in both themes. */
+.setrow #lang, .setrow #theme,
+#slotLang #lang, #slotTheme #theme{
+  background:var(--surface-2);
+  border:1px solid var(--line);
+  color:var(--ink);
+  border-radius:8px;
+  padding:7px 13px;
+  font-size:13px;
+  font-weight:600;
+  min-height:36px;
+  min-width:44px;
+}
+.setrow #lang:hover, .setrow #theme:hover,
+#slotLang #lang:hover, #slotTheme #theme:hover{ border-color:var(--lapis); }
+#slotTheme #theme{ font-size:15px; }
+
+/* ==========================================================================
+   Second round of testing feedback
+   ========================================================================== */
+
+/* The three marks carry their colour all the time, not only once pressed.
+   A teacher scanning the screen should be able to find "again" by its colour
+   before reading the word — that is most of what colour is for. Soft fills,
+   because three saturated buttons on every row would shout. */
+.gb.t-ok { background:var(--ok-soft);   border-color:color-mix(in srgb,var(--ok) 34%,transparent);   color:var(--ok) }
+.gb.t-rev{ background:var(--late-soft); border-color:color-mix(in srgb,var(--late) 40%,transparent); color:var(--late) }
+.gb.t-np { background:var(--exc-soft);  border-color:color-mix(in srgb,var(--exc) 34%,transparent);  color:var(--exc) }
+/* Pressed stays the strong fill, so "what I just tapped" still reads at a glance. */
+.gb.on-ok { background:var(--ok);        border-color:var(--ok);        color:var(--ok-ink) }
+.gb.on-rev{ background:var(--late-fill); border-color:var(--late-fill); color:var(--late-ink) }
+.gb.on-np { background:var(--exc);       border-color:var(--exc);       color:var(--exc-ink) }
+
+/* A past recitation now says its outcome in words and in colour, instead of
+   a bare glyph you had to remember the meaning of. */
+.rec .outc{font-size:10.5px;font-weight:700;padding:2px 7px;border-radius:99px;white-space:nowrap}
+.rec .outc.t-ok { background:var(--ok-soft);   color:var(--ok) }
+.rec .outc.t-rev{ background:var(--late-soft); color:var(--late) }
+.rec .outc.t-np { background:var(--exc-soft);  color:var(--exc) }
+
+/* Surah numbers. Teachers say "surah 78", every printed mushaf is numbered,
+   and it is the fastest thing to type into a filter. */
+.snum{flex:none;min-width:26px;height:22px;display:inline-flex;align-items:center;justify-content:center;
+  font-family:var(--mono);font-size:10.5px;font-weight:700;
+  background:var(--surface-2);border:1px solid var(--line);border-radius:6px;color:var(--ink-3)}
+.trow .snum{margin-inline-end:2px}
+
+/* Where a juz begins and ends. */
+.juztile .jr{font-size:9.5px;line-height:1.35;color:var(--ink-3);
+  display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.juztile{min-height:92px}
+
+/* The whole-surah rows in a juz. */
+.seg.srh{padding:9px 12px;border-bottom:1px solid var(--line)}
+.seg.srh:last-child{border-bottom:0}
+
+/* The coordinator's tables scroll sideways on a phone and nothing said so. */
+.tw{position:relative}
+.scrollhint{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--ink-3);
+  margin:0 0 6px;font-weight:600}
+.scrollhint .ar{font-size:13px}

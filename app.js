@@ -13,12 +13,21 @@
   };
 
   /* ------------------------------------------------------------- plumbing */
+  /* Every screen in the app, in one place.
+     This list used to be written out by hand here AND again in coord.js, and
+     when the mushaf screen was added neither copy learned about it — so going
+     to the coordinator from the mushaf left the mushaf sitting on top and you
+     landed on whichever child you had open last. Reading the sections out of
+     the page means a screen added later cannot be forgotten. */
+  function allViews() {
+    return Array.prototype.slice.call(document.querySelectorAll("section.view"))
+      .map(function (el) { return el.id; });
+  }
   function show(id) {
-    ["v-gate","v-who","v-class","v-student","v-coord"].forEach(function (v) {
-      $(v).hidden = (v !== id);
-    });
+    allViews().forEach(function (v) { $(v).hidden = (v !== id); });
     window.scrollTo(0, 0);
   }
+  window.SijillShow = show;
   function esc(s) {
     return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) {
       return ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;" })[c];
@@ -249,6 +258,26 @@
       '</div>';
     }).join("") || '<div class="empty">Nobody is enrolled in this class.</div>';
 
+    /* A closed day looks almost identical to an open one, and a teacher who
+       cannot tell will keep tapping and keep failing. Say what happened, and
+       say what is still possible — homework for next week still is, which is
+       the whole reason the day being closed does not mean the class stops
+       being prepared for. */
+    if (d.session.status === "cancelled") {
+      $("doneBar").innerHTML =
+        '<div class="banner exc"><span class="ic">●</span><div>' +
+        '<b>' + esc(ar ? "هَذَا اليَوْمُ مُغْلَق" : "This day is closed") +
+        (d.session.closed_note || d.session.note
+          ? " — " + esc(d.session.closed_note || d.session.note) : "") + '.</b> ' +
+        esc(ar
+          ? "كُلُّ الطُّلَّابِ مُسَجَّلُونَ غَائِبِينَ بِعُذْر، وَلَا يُحْسَبُ عَلَى أَحَد. لَا يُمْكِنُ تَسْجِيلُ تِلَاوَة، لَكِنْ يُمْكِنُكَ إِسْنَادُ وَاجِبِ الأُسْبُوعِ القَادِم."
+          : "Everyone is recorded excused and it counts against nobody. Recitation cannot be recorded — none happened — but you can still set homework for next week.") +
+        '</div></div>';
+      $("allPresent").hidden = true;
+    } else {
+      $("allPresent").hidden = false;
+    }
+
     // "3 of 8 not yet marked" — Tarek asked for this up top and very visible
     var done = d.students.filter(function (s) { return s.state && s.recited > 0; }).length;
     var tot = d.students.length;
@@ -256,6 +285,7 @@
     // the first evening and then cost 22px of the register every week after.
     // It moved to the hint under the list, where it is still there to be
     // found and is not in the way.
+    if (d.session.status !== "cancelled")
     $("doneBar").innerHTML = (tot && done >= tot)
       ? '<div class="donebar all"><span class="big">✓</span><div>' + esc(T("doneAll")) +
         ' <span style="font-weight:400;color:var(--ink-2)">· ' + T("doneAllSub", { n: tot }) + '</span></div></div>'
@@ -523,10 +553,16 @@
                  without the coordinator digging through the change log —
                  which in practice meant it was never recovered. */
               var recited = (h.recited || []).map(function (r) {
+                var tone = r.outcome === "repeat" ? "t-rev"
+                         : r.outcome === "not_prepared" ? "t-np" : "t-ok";
+                var mark = r.outcome === "repeat" ? "↻"
+                         : r.outcome === "not_prepared" ? "–" : "✓";
+                var word = r.outcome === "repeat" ? T("gAgain")
+                         : r.outcome === "not_prepared" ? T("gNotReady") : T("gGood");
                 return '<span class="rec">' +
+                  '<span class="outc ' + tone + '">' + mark + ' ' + esc(word) + '</span>' +
                   '<span class="w">' + esc(r.name_en) +
                     (r.ayah_from ? " " + r.ayah_from + "–" + r.ayah_to : "") +
-                    (r.outcome === "repeat" ? " ↻" : r.outcome === "not_prepared" ? " –" : " ✓") +
                   '</span>' +
                   (S.readOnly || !r.id ? "" :
                     '<button class="undoRec" data-rec="' + esc(r.id) + '" data-what="' +
@@ -617,11 +653,11 @@
       '<span class="m' + stale + '">' + esc(meta) + '</span></div>' +
       (S.readOnly ? '' :
         '<button class="gb note" data-note="1" title="' + esc(T("noteAdd")) + '">✎</button>' +
-        '<button class="gb g lab3" data-g="good" title="' + esc(T("gGoodTip")) + '">' +
+        '<button class="gb g lab3 t-ok" data-g="good" title="' + esc(T("gGoodTip")) + '">' +
           '<span class="ic">✓</span><small>' + esc(T("gGood")) + '</small></button>' +
-        '<button class="gb g lab3" data-g="repeat" title="' + esc(T("gAgainTip")) + '">' +
+        '<button class="gb g lab3 t-rev" data-g="repeat" title="' + esc(T("gAgainTip")) + '">' +
           '<span class="ic">↻</span><small>' + esc(T("gAgain")) + '</small></button>' +
-        '<button class="gb g lab3" data-g="not_prepared" title="' + esc(T("gNotReadyTip")) + '">' +
+        '<button class="gb g lab3 t-np" data-g="not_prepared" title="' + esc(T("gNotReadyTip")) + '">' +
           '<span class="ic">–</span><small>' + esc(T("gNotReady")) + '</small></button>') +
       '</div>';
   }
@@ -729,35 +765,76 @@
 
   function editHomework(id) {
     var ar = i18n.isAr();
+    // What this row currently says, so the sheet opens filled in rather than
+    // blank. Editing something you cannot see is how you fix the wrong thing.
+    var cur = ((S.studentData.due_back || []).concat(S.studentData.new_memorisation || []))
+      .filter(function (h) { return h.homework_id === id; })[0] || {};
+
     sheet(ar ? "تَعْدِيلُ الوَاجِب" : "Change this homework",
-      '<div class="filters" style="margin:0 0 10px">' +
-      '<input id="hwFrom" class="mini" style="width:100px" placeholder="from ayah">' +
-      '<input id="hwTo" class="mini" style="width:100px" placeholder="to ayah"></div>' +
-      '<input id="hwNote" placeholder="' + (ar ? "مُلَاحَظَة لِلْأُسْرَة" : "A note for the family") + '" ' +
-      'style="width:100%;padding:11px;font-size:15px;border:1px solid var(--line);border-radius:10px;' +
-      'background:var(--surface);color:var(--ink)">' +
-      '<div class="note" style="margin-top:10px">' +
-      (ar ? "اتْرُكِ الحُقُولَ فَارِغَةً لِتُبْقِيَهَا كَمَا هِيَ."
-          : "Leave a box empty to keep what is already there.") + '</div>' +
-      '<div class="actionrow" style="margin-top:12px">' +
-      '<button class="btn ghost sm" id="hwRemove" style="border-color:var(--crit);color:var(--crit)">' +
-      (ar ? "حَذْفُ هَذَا الوَاجِب" : "Remove this homework") + '</button></div>',
-      T("save"), function () {
+      '<div class="loading"><span class="spin"></span></div>', T("save"), null);
+
+    api.read("api_mushaf", { p_student: S.student.id, p_juz: null }).then(function (list) {
+      $("shBody").innerHTML =
+        /* The surah is editable now. Picking the wrong one from a list of 114
+           on a phone is the easiest mistake to make here, and until now the
+           only repair was to delete the row and start again — which loses who
+           set it and when. */
+        '<label class="lbl" style="font-size:11px;font-weight:700;letter-spacing:.09em;' +
+          'text-transform:uppercase;color:var(--ink-3)">' +
+          esc(ar ? "السُّورَة" : "Surah") + '</label>' +
+        '<select id="hwSurah" style="width:100%;padding:11px;font-size:16px;margin:4px 0 12px;' +
+          'border:1px solid var(--line);border-radius:10px;background:var(--surface);color:var(--ink)">' +
+        list.map(function (x) {
+          return '<option value="' + x.surah + '"' + (x.surah === cur.surah ? " selected" : "") + '>' +
+            x.surah + " · " + esc(x.name_en) + " — " + esc(x.name_ar) + " (" + x.ayat + " " + T("ayat") + ")" +
+          '</option>';
+        }).join("") + '</select>' +
+
+        '<div class="filters" style="margin:0 0 12px">' +
+        '<select id="hwKind" class="mini">' +
+          '<option value="memorise"' + (cur.kind === "memorise" ? " selected" : "") + '>' +
+            esc(ar ? "لِلْحِفْظ" : "New memorization") + '</option>' +
+          '<option value="review"' + (cur.kind === "review" ? " selected" : "") + '>' +
+            esc(ar ? "لِلْمُرَاجَعَة" : "Review") + '</option>' +
+        '</select>' +
+        '<input id="hwFrom" class="mini" style="width:96px" placeholder="' +
+          esc(ar ? "مِنْ آيَة" : "from ayah") + '" value="' + (cur.ayah_from == null ? "" : cur.ayah_from) + '">' +
+        '<input id="hwTo" class="mini" style="width:96px" placeholder="' +
+          esc(ar ? "إِلَى آيَة" : "to ayah") + '" value="' + (cur.ayah_to == null ? "" : cur.ayah_to) + '"></div>' +
+
+        '<input id="hwNote" placeholder="' + esc(ar ? "مُلَاحَظَة لِلْأُسْرَة" : "A note for the family") + '" ' +
+        'value="' + esc(cur.note || "") + '" ' +
+        'style="width:100%;padding:11px;font-size:15px;border:1px solid var(--line);border-radius:10px;' +
+        'background:var(--surface);color:var(--ink)">' +
+        '<div class="note" style="margin-top:10px">' + esc(ar
+          ? "إِذَا غَيَّرْتَ السُّورَةَ وَتَرَكْتَ الآيَاتِ فَارِغَةً، فَالوَاجِبُ هُوَ السُّورَةُ كَامِلَةً."
+          : "Change the surah and leave the ayat empty, and the homework becomes the whole of the new surah.") +
+        '</div>' +
+        '<div class="actionrow" style="margin-top:12px">' +
+        '<button class="btn ghost sm" id="hwRemove" style="border-color:var(--crit);color:var(--crit)">' +
+        esc(ar ? "حَذْفُ هَذَا الوَاجِب" : "Remove this homework") + '</button></div>';
+
+      $("shOk").onclick = function () {
+        var newSurah = +$("hwSurah").value;
+        var changedSurah = newSurah !== cur.surah;
         api.write("api_edit_homework", {
           p_id: id,
-          p_from: $("hwFrom").value ? +$("hwFrom").value : null,
-          p_to:   $("hwTo").value   ? +$("hwTo").value   : null,
+          p_surah: newSurah,
+          p_kind: $("hwKind").value,
+          // When the surah moves and the teacher has not retyped the range,
+          // send nothing — the database then takes the whole new surah rather
+          // than carrying over ayat that may not exist in it.
+          p_from: $("hwFrom").value ? +$("hwFrom").value : (changedSurah ? null : cur.ayah_from),
+          p_to:   $("hwTo").value   ? +$("hwTo").value   : (changedSurah ? null : cur.ayah_to),
           p_note: $("hwNote").value || null, p_remove: false
-        }, S.student.name).then(reloadStudent).catch(fail);
-        return true;
-      });
-    setTimeout(function () {
-      var r = $("hwRemove"); if (!r) return;
-      r.onclick = function () {
+        }, S.student.name).then(function () { closeSheet(); return reloadStudent(); }).catch(fail);
+        return false;
+      };
+      $("hwRemove").onclick = function () {
         api.write("api_edit_homework", { p_id: id, p_remove: true }, S.student.name)
           .then(function () { closeSheet(); return reloadStudent(); }).catch(fail);
       };
-    }, 40);
+    }).catch(fail);
   }
 
   function reloadStudent() {
@@ -793,13 +870,16 @@
       '<div class="loading"><span class="spin"></span></div>', null, null, T("cancel"));
     api.read("api_mushaf", { p_student: S.student.id, p_juz: null }).then(function (list) {
       var rows = list.map(function (x) {
+        // The number matters: teachers say "surah 78", parents' mushafs are
+        // numbered, and it is also the fastest thing to type into the filter.
         return '<label class="trow" style="cursor:pointer"><input type="radio" name="sp" value="' + x.surah +
-          '" style="width:18px;height:18px"><span class="lbl"><span class="ar" dir="rtl">' + esc(x.name_ar) +
+          '" style="width:18px;height:18px"><span class="snum">' + x.surah + '</span>' +
+          '<span class="lbl"><span class="ar" dir="rtl">' + esc(x.name_ar) +
           '</span><span>' + esc(x.name_en) + '</span></span><span class="dt">' + x.ayat + ' ' + T("ayat") +
           (x.status && x.status !== "not_started" ? ' · ' + esc(x.status) : '') + '</span></label>';
       }).join("");
       $("shBody").innerHTML =
-        '<input id="spFilter" type="search" placeholder="Find a surah" style="width:100%;padding:10px;margin-bottom:10px;' +
+        '<input id="spFilter" type="search" placeholder="' + esc(T("findSurah")) + '" style="width:100%;padding:10px;margin-bottom:10px;' +
         'border:1px solid var(--line);border-radius:10px;background:var(--surface);color:var(--ink);font-size:15px">' +
         '<div class="filters" style="margin:0 0 8px"><input id="spFrom" class="mini" style="width:90px" placeholder="from ayah">' +
         '<input id="spTo" class="mini" style="width:90px" placeholder="to ayah">' +
@@ -1003,9 +1083,12 @@
     if (l && l.parentNode !== f) f.appendChild(l);
     if (t2 && t2.parentNode !== f) f.appendChild(t2);
   }
-  $("gear").onclick = openSettings;
-  $("gearStu").onclick = openSettings;
-  $("gearCoord").onclick = openSettings;
+  /* Every screen gets the same way into settings. The mushaf screen had none,
+     which meant a teacher deep in the audit had no way to switch language or
+     reach the coordinator tools without navigating back out first. */
+  ["gear", "gearStu", "gearCoord", "gearMushaf"].forEach(function (id) {
+    var el = $(id); if (el) el.onclick = openSettings;
+  });
   window.SijillReturnChrome = returnChrome;
 
   /* ------------------------------------------------------------ start up */
