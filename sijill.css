@@ -4,18 +4,27 @@
    If you change a colour here, re-check it against the attendance states —
    they are the one place colour carries meaning. */
 :root{
-  --paper:#F2F3F6; --surface:#FFFFFF; --surface-2:#E9ECF3; --surface-3:#DFE3ED;
-  --ink:#161A24; --ink-2:#4B5264; --ink-3:#5D6374;
-  --line:#D5DAE5; --line-2:#C3CAD9;
-  --lapis:#2D3E73; --lapis-ink:#FFFFFF; --lapis-soft:#E3E8F5;
+  /* The school's own palette, taken from its website: cream paper, white
+     cards, the deep green of the hero band, and the brass of its mark.
+     --lapis keeps its name because 40-odd rules refer to it; it is now the
+     brand green. Renaming it would touch every file for no gain. */
+  --paper:#F6F2E8; --surface:#FFFFFF; --surface-2:#EDE7D7; --surface-3:#E2DAC5;
+  --ink:#1A1E19; --ink-2:#47433C; --ink-3:#625E55;
+  --line:#DFD8C5; --line-2:#CBC2A9;
+  --lapis:#1D3B2C; --lapis-ink:#FFFFFF; --lapis-soft:#E4EBE3;
+  /* Brass is an ACCENT only — never a button. It sits 1 degree of hue from
+     the "late" amber below, so a brass button would read as a late marker. */
+  --brass:#BAA168; --brass-ink:#826939;
   /* attendance states — validated palette. Flags reuse the state colour of
-     whatever caused them, so colour always means the same thing. */
-  --ok:#0E7551;   --ok-soft:#DCEFE7;   --ok-ink:#FFFFFF;   /* present / solid  */
-  --late:#916000; --late-fill:#D18F00; --late-soft:#FAEDD4;--late-ink:#2A1B00;  /* late only */
-  --exc:#6A4BA8;  --exc-soft:#EAE4F7;  --exc-ink:#FFFFFF;  /* excused absence  */
-  --crit:#98122B; --crit-soft:#FADDE2; --crit-ink:#FFFFFF; /* unexplained      */
-  --rev:#916000;  --rev-soft:#FAEDD4;                      /* needs review     */
-  --shadow:0 1px 2px rgba(22,26,36,.06), 0 8px 24px -14px rgba(22,26,36,.22);
+     whatever caused them, so colour always means the same thing. The hues are
+     unchanged from the navy design: teachers have already learned them, and
+     they are the one place colour carries meaning rather than decoration. */
+  --ok:#0E7551;   --ok-soft:#DDEADD;   --ok-ink:#FFFFFF;   /* present / solid  */
+  --late:#916000; --late-fill:#D18F00; --late-soft:#F7E9CF;--late-ink:#2A1B00;  /* late only */
+  --exc:#6A4BA8;  --exc-soft:#E8E1F4;  --exc-ink:#FFFFFF;  /* excused absence  */
+  --crit:#98122B; --crit-soft:#F7DFD9; --crit-ink:#FFFFFF; /* unexplained      */
+  --rev:#916000;  --rev-soft:#F7E9CF;                      /* needs review     */
+  --shadow:0 1px 2px rgba(40,34,20,.07), 0 8px 24px -14px rgba(40,34,20,.26);
   /* Fonts the device already has. Nothing is downloaded from anywhere.
      The Arabic stacks name each platform's own Qur'anic-style face first —
      Geeza Pro on iPhone, Noto Naskh on Android, Traditional Arabic on
@@ -30,28 +39,38 @@
           "Traditional Arabic", Georgia, serif;
 }
 @media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
-  --paper:#0F131E; --surface:#171C2A; --surface-2:#1E2434; --surface-3:#262D41;
-  --ink:#E9ECF3; --ink-2:#A8B0C4; --ink-3:#9096A7;
-  --line:#2A3145; --line-2:#3A4257;
-  --lapis:#93A7E4; --lapis-ink:#101420; --lapis-soft:#1D2540;
-  --ok:#4FC79B;   --ok-soft:#153229;   --ok-ink:#0C1A15;
-  --late:#EFB840; --late-fill:#EFB840; --late-soft:#38290E; --late-ink:#1E1407;
-  --exc:#A493F5;  --exc-soft:#241E42;  --exc-ink:#12102B;
-  --crit:#F2637A; --crit-soft:#3A1520; --crit-ink:#1B0910;
-  --rev:#EFB840;  --rev-soft:#38290E;
-  --shadow:0 1px 2px rgba(0,0,0,.4), 0 8px 24px -14px rgba(0,0,0,.7);
+  /* The website is light-only, so this half has no reference to copy. It is
+     built from the same two colours: the green pulled down to a near-black
+     ground, the cream pulled up to become the ink, and the mark's gold kept
+     as the accent. */
+  --paper:#0E1411; --surface:#16201A; --surface-2:#1D2A22; --surface-3:#26352B;
+  --ink:#ECE8DB; --ink-2:#C9C4B6; --ink-3:#9F9B91;
+  --line:#2B3830; --line-2:#3B4A40;
+  --lapis:#8FC9A6; --lapis-ink:#0C1710; --lapis-soft:#1B2E23;
+  --brass:#D9B44A; --brass-ink:#E3C46E;
+  --ok:#5FCFA2;   --ok-soft:#13291F;   --ok-ink:#07150F;
+  --late:#EFB840; --late-fill:#EFB840; --late-soft:#332612; --late-ink:#1E1407;
+  --exc:#B2A2F7;  --exc-soft:#241F3C;  --exc-ink:#100C24;
+  --crit:#F4707F; --crit-soft:#36161B; --crit-ink:#1B0910;
+  --rev:#EFB840;  --rev-soft:#332612;
+  --shadow:0 1px 2px rgba(0,0,0,.45), 0 8px 24px -14px rgba(0,0,0,.72);
 }}
 :root[data-theme="dark"]{
-  --paper:#0F131E; --surface:#171C2A; --surface-2:#1E2434; --surface-3:#262D41;
-  --ink:#E9ECF3; --ink-2:#A8B0C4; --ink-3:#9096A7;
-  --line:#2A3145; --line-2:#3A4257;
-  --lapis:#93A7E4; --lapis-ink:#101420; --lapis-soft:#1D2540;
-  --ok:#4FC79B;   --ok-soft:#153229;   --ok-ink:#0C1A15;
-  --late:#EFB840; --late-fill:#EFB840; --late-soft:#38290E; --late-ink:#1E1407;
-  --exc:#A493F5;  --exc-soft:#241E42;  --exc-ink:#12102B;
-  --crit:#F2637A; --crit-soft:#3A1520; --crit-ink:#1B0910;
-  --rev:#EFB840;  --rev-soft:#38290E;
-  --shadow:0 1px 2px rgba(0,0,0,.4), 0 8px 24px -14px rgba(0,0,0,.7);
+  /* The website is light-only, so this half has no reference to copy. It is
+     built from the same two colours: the green pulled down to a near-black
+     ground, the cream pulled up to become the ink, and the mark's gold kept
+     as the accent. */
+  --paper:#0E1411; --surface:#16201A; --surface-2:#1D2A22; --surface-3:#26352B;
+  --ink:#ECE8DB; --ink-2:#C9C4B6; --ink-3:#9F9B91;
+  --line:#2B3830; --line-2:#3B4A40;
+  --lapis:#8FC9A6; --lapis-ink:#0C1710; --lapis-soft:#1B2E23;
+  --brass:#D9B44A; --brass-ink:#E3C46E;
+  --ok:#5FCFA2;   --ok-soft:#13291F;   --ok-ink:#07150F;
+  --late:#EFB840; --late-fill:#EFB840; --late-soft:#332612; --late-ink:#1E1407;
+  --exc:#B2A2F7;  --exc-soft:#241F3C;  --exc-ink:#100C24;
+  --crit:#F4707F; --crit-soft:#36161B; --crit-ink:#1B0910;
+  --rev:#EFB840;  --rev-soft:#332612;
+  --shadow:0 1px 2px rgba(0,0,0,.45), 0 8px 24px -14px rgba(0,0,0,.72);
 }
 *{box-sizing:border-box}
 body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--sans);font-size:15px;line-height:1.45;-webkit-text-size-adjust:100%}
@@ -89,13 +108,13 @@ button{font:inherit;color:inherit;cursor:pointer}
 .pill{display:inline-flex;align-items:center;gap:5px;border-radius:99px;padding:2.5px 9px 2.5px 7px;
   font-size:11px;font-weight:700;white-space:nowrap;border:1px solid transparent}
 .pill i{width:8px;height:8px;border-radius:50%;flex:none}
-.pill.ok{background:var(--ok-soft);color:var(--ok);border-color:color-mix(in srgb,var(--ok) 30%,transparent)}
+.pill.ok{background:var(--ok-soft);color:var(--ok);border-color:color-mix(in srgb,var(--ok) 58%,transparent)}
 .pill.ok i{background:var(--ok)}
-.pill.late{background:var(--late-soft);color:var(--late);border-color:color-mix(in srgb,var(--late) 34%,transparent)}
+.pill.late{background:var(--late-soft);color:var(--late);border-color:color-mix(in srgb,var(--late) 58%,transparent)}
 .pill.late i{background:var(--late-fill)}
-.pill.exc{background:var(--exc-soft);color:var(--exc);border-color:color-mix(in srgb,var(--exc) 34%,transparent)}
+.pill.exc{background:var(--exc-soft);color:var(--exc);border-color:color-mix(in srgb,var(--exc) 58%,transparent)}
 .pill.exc i{background:var(--exc)}
-.pill.crit{background:var(--crit-soft);color:var(--crit);border-color:color-mix(in srgb,var(--crit) 34%,transparent)}
+.pill.crit{background:var(--crit-soft);color:var(--crit);border-color:color-mix(in srgb,var(--crit) 58%,transparent)}
 .pill.crit i{background:var(--crit)}
 .pill.mute{background:var(--surface-2);color:var(--ink-3);border-color:var(--line)}
 .pill.mute i{background:var(--ink-3)}
@@ -415,6 +434,10 @@ html[lang="ar"] .heard small{font-size:9px}
    still says which app this is. 101px becomes about 50px. */
 @media (max-width: 480px) {
   .bar .logo .en{display:none}
+  /* ...except on the parent page, where the English block IS the school's
+     name and there is no Arabic wordmark beside it to fall back on. Hiding
+     it left that bar showing a mark, a divider, and nothing else. */
+  .bar .logo.barlock .en{display:flex}
   .bar .logo{flex:none}
 }
 /* With Undo hidden until it is needed, the remaining button stretched to the
@@ -561,7 +584,7 @@ html[lang="ar"] .gb.lab3 small{font-size:9px}
    because three saturated buttons on every row would shout. */
 .gb.t-ok { background:var(--ok-soft);   border-color:color-mix(in srgb,var(--ok) 34%,transparent);   color:var(--ok) }
 .gb.t-rev{ background:var(--late-soft); border-color:color-mix(in srgb,var(--late) 40%,transparent); color:var(--late) }
-.gb.t-np { background:var(--exc-soft);  border-color:color-mix(in srgb,var(--exc) 34%,transparent);  color:var(--exc) }
+.gb.t-np { background:var(--exc-soft);  border-color:color-mix(in srgb,var(--exc) 58%,transparent);  color:var(--exc) }
 /* Pressed stays the strong fill, so "what I just tapped" still reads at a glance. */
 .gb.on-ok { background:var(--ok);        border-color:var(--ok);        color:var(--ok-ink) }
 .gb.on-rev{ background:var(--late-fill); border-color:var(--late-fill); color:var(--late-ink) }
@@ -639,8 +662,8 @@ html[lang="ar"] .gb.lab3 small{font-size:9px}
 .trendbar .why{font-size:12px;color:var(--ink-2)}
 .trendbar .trend .t{font-size:13px}
 .trendbar .tarrow{width:19px;height:19px;stroke-width:3}
-.trendbar.tr-up   { background:var(--ok-soft);   border-color:color-mix(in srgb,var(--ok) 30%,transparent) }
-.trendbar.tr-flat { background:var(--late-soft); border-color:color-mix(in srgb,var(--late) 34%,transparent) }
+.trendbar.tr-up   { background:var(--ok-soft);   border-color:color-mix(in srgb,var(--ok) 58%,transparent) }
+.trendbar.tr-flat { background:var(--late-soft); border-color:color-mix(in srgb,var(--late) 58%,transparent) }
 .trendbar.tr-down { background:var(--crit-soft); border-color:color-mix(in srgb,var(--crit) 30%,transparent) }
 .trendbar.tr-away { background:var(--surface-2) }
 
@@ -675,10 +698,10 @@ tr.opens:hover .rowgo{color:var(--lapis)}
   display:block;
   flex:none;
 }
-:root[data-theme="dark"] .crest, :root[data-theme="dark"] .school{ color:#D9B44A }
+:root[data-theme="dark"] .crest, :root[data-theme="dark"] .school{ color:var(--brass) }
 @media (prefers-color-scheme: dark){
   :root:not([data-theme="light"]) .crest,
-  :root:not([data-theme="light"]) .school{ color:#D9B44A }
+  :root:not([data-theme="light"]) .school{ color:var(--brass) }
 }
 
 /* In a top bar: small, and given a hairline to separate it from the Sijill
@@ -718,16 +741,16 @@ tr.opens:hover .rowgo{color:var(--lapis)}
 .logo.barlock .en b{font-size:12.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--lapis)}
 .logo.barlock .en span{font-family:var(--serif);font-size:11px;letter-spacing:0;
   text-transform:none;color:var(--ink-2)}
-:root[data-theme="dark"] .logo.barlock .en b{color:#D9B44A}
+:root[data-theme="dark"] .logo.barlock .en b{color:var(--brass)}
 @media (prefers-color-scheme: dark){
-  :root:not([data-theme="light"]) .logo.barlock .en b{color:#D9B44A}
+  :root:not([data-theme="light"]) .logo.barlock .en b{color:var(--brass)}
 }
 .tagline{margin:0 0 22px;text-align:center;font-size:12px;font-weight:500;
   letter-spacing:.04em;color:var(--ink-3)}
 
-:root[data-theme="dark"] .slock-en{color:#D9B44A}
+:root[data-theme="dark"] .slock-en{color:var(--brass)}
 @media (prefers-color-scheme: dark){
-  :root:not([data-theme="light"]) .slock-en{color:#D9B44A}
+  :root:not([data-theme="light"]) .slock-en{color:var(--brass)}
 }
 /* On the narrowest phones the two scripts still have to fit side by side. */
 @media (max-width:360px){
