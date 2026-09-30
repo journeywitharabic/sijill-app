@@ -30,7 +30,7 @@ window.SIJILL = {
   SUPABASE_KEY: "sb_publishable_pNL06hdyJ4ZnBB6kCO1w5g_-Cyt4VAF",
 
   // The school's name, as it appears at the top of every screen
-  SCHOOL_NAME: "Ommah Madrasah",
+  SCHOOL_NAME: "",
    
   SITE_HOST: "sijill-app.pages.dev",
    
