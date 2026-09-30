@@ -76,18 +76,62 @@ Anything whose name starts with `_` is revoked from the web entirely. Only the
 catalogue every time it runs rather than trusting a hand-written one.
 
 **3. Passphrases are bcrypt hashes; link tokens are sha256.**
-Nothing is stored in a form that can be read back. A parent's link is shown
-**once**, at issue, and only its hash is kept — so a stolen database dump opens
-nobody's page. Losing a link means issuing a new one, which is the correct
-answer and is one tap.
+Nothing is stored in a form that can be read back. A link is shown **once**, at
+issue, and only its hash is kept — so a stolen database dump opens nobody's
+page. Losing a link means issuing a new one, which is the correct answer and is
+one tap.
+
+**How families get in.** There are no parent accounts and no parent passwords —
+ten volunteers will not run a password reset desk. Instead:
+
+- **One link per adult**, covering the children that adult is responsible for.
+  Two parents get two links, not a shared one.
+- **A student may have their own link**, separate from their parents': same
+  page, only them, and without the attendance-withdrawal warning, which is a
+  message for adults. `students.token_hash` exists for exactly this.
+- The link carries a 144-bit token in the URL fragment, so it is never sent to
+  the server as part of the path and never appears in a web log.
+- The page is **read-only at the database level**, not merely in the interface.
+  One of the automated checks has a parent link attempt to mark attendance and
+  requires HTTP 401.
+- Every open is recorded — coarsely, just that it happened — which is what lets
+  the coordinator see which families never look, and is disclosed in the parent
+  handbook.
 
 ### Children's privacy, structurally rather than by policy
+
+This is the part that drove most of the design decisions, so it is worth being
+precise about what is and is not in the database.
+
+**Children are stored as a first name and one surname initial.** `Jad H.`,
+`Khadija B.`, `Abu Bakr S.` — that is the whole of `students.full_name`. No date
+of birth, no address, no day school, no photograph, no medical note, no sibling
+link. A full name plus a mosque plus a weekly schedule identifies a family; a
+first name and an initial does not, and the difference costs us nothing because
+a teacher with eight children in a class needs no more than that to know who
+they mean.
 
 **There is no column anywhere that can hold a parent's name, phone number or
 email.** Not "we don't collect it" — there is nowhere to put it. A guardian row
 is a role (`mother`, `father`), a token hash, and which children it covers. The
 mapping from that to an actual human being lives in ClassDojo, which the school
 already uses and already has consent for.
+
+The consequence worth noting: **the database on its own is close to useless to
+whoever steals it.** Thirty-four first names with initials, some Qur'anic
+progress, and a term calendar. No way to contact anybody, no way to find anyone's
+home, and the links it contains open nothing because only their hashes are kept.
+
+The one place real names exist is `02_roster.sql`, which lives in the **private**
+repository and is never published. `04_audit.sql` stays out of both repositories:
+it is pseudonymous rather than anonymous, and a stable uuid5 key plus a known
+namespace is a confirmation oracle.
+
+The risk this design introduces, which is worth writing down: the coordinator
+screens can now rename a student, so the protection is one careless edit from
+being undone. That is a documented instruction in the teacher guide rather than
+a constraint, because a hard length check would also block legitimate fixes like
+`Abu S.` → `Abu Bakr S.`
 
 Several of the teachers are also parents of enrolled children, so the teacher
 app can never see another family's link, and the parent page can never see

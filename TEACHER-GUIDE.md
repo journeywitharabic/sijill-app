@@ -16,6 +16,11 @@ Ommah Madrasah. Five minutes to read, once. Keep it on your phone.
 No account, no password beyond the school one. Everything you record is signed
 with your name, so a mistake can always be traced back and corrected — by you.
 
+**One thing to know before you start recording anything:** every family has a
+read-only page of their own child, reached by a private link. What you mark, and
+any note you write, is what they see. Not immediately — but by the time they
+next open it. Write accordingly.
+
 ---
 
 ## Friday and Sunday: the register
@@ -144,6 +149,44 @@ the mushaf for what was already true.
 **It won't save.** A red banner appears with **Retry**. Nothing is lost while it
 is showing. If retrying keeps failing: **write the marks on paper and tell
 Tarek.** Do not spend the class fighting a phone instead of teaching.
+
+---
+
+## The children's names — please leave them short
+
+You will notice the register says **Jad H.**, not Jad El Haiba. That is
+deliberate, and it is the one thing in here I would ask you not to "fix".
+
+**Every child is stored as their first name and the initial of their surname.**
+Nothing else. No date of birth, no address, no school, no photograph. Their
+parents' names, phone numbers and email addresses are not in the system at all
+— there is nowhere in the database to put them. We find the adult by looking
+the child up in ClassDojo, which the madrasah already uses.
+
+This matters because the app lives on the internet. A child's full name plus
+their mosque plus their schedule is enough to identify a family; a first name
+and an initial is not.
+
+**The names can be corrected, and sometimes need to be.** The import got
+compound first names wrong — "Abu Bakr Sangirov" came out as "Abu S." when it
+should read "Abu Bakr S.". If a child's name is wrong, tell Tarek and he will
+fix it. When you see it corrected, it should still be **first name plus one
+initial**. Please don't type a full surname in, even to be helpful.
+
+If a name is so short it is ambiguous — two children called Anas in one class —
+tell Tarek. There are better answers than a full surname.
+
+---
+
+## Older students can have their own link
+
+A parent link covers one adult and the children they are responsible for. But a
+student old enough to have their own phone can have **their own link**, separate
+from their parents' — same page, showing only them, and without the attendance
+warning, which is a message for adults.
+
+Ask Tarek if one of your older students wants one. It is issued from
+Coordinator → Manage → Students → **Own link**.
 
 ---
 
