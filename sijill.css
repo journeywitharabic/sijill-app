@@ -543,10 +543,25 @@ html[lang="ar"] .gb.lab3 small{font-size:9px}
 /* U7 · the key to the flag colours, once, above the table. A tooltip would
    have been the obvious answer and is useless on the device most of these
    screens are read on. */
-.legend{display:flex;align-items:center;gap:6px;flex-wrap:wrap;font-size:11.5px;color:var(--ink-2);
+.legend{display:grid;grid-template-columns:auto 1fr;align-items:start;gap:8px 10px;
+  font-size:11.5px;color:var(--ink-2);
   background:var(--surface-2);border:1px solid var(--line);border-radius:10px;
-  padding:9px 12px;margin-bottom:12px;line-height:1.5}
-.legend .sep{color:var(--ink-3);margin:0 3px}
+  padding:9px 12px;margin-bottom:10px}
+/* pill and sentence travel together; the sentence wraps inside the item so
+   every colour still starts hard against the left edge */
+/* Two columns: the colour, then its sentence. The grid makes every sentence
+   start at the same x whatever the pill's word is — "violet" and
+   "بَنَفْسَجِيّ" are not the same width. */
+.legend .li{display:contents}
+.legend .li .pill{flex:none;margin-top:1px;justify-self:start}
+.legend .li .d{min-width:0}
+/* Side by side only where three full sentences genuinely fit on one line. */
+/* Side by side only where three full sentences genuinely fit on one line. */
+@media (min-width:1150px){
+  .legend{display:flex;flex-wrap:wrap;align-items:center;gap:8px 20px}
+  .legend .li{display:flex;align-items:center;gap:7px}
+  .legend .li .pill{margin-top:0}
+}
 
 /* U6 · the pages column used to read "11+3". */
 .pgcell{display:inline-flex;align-items:baseline;gap:5px;flex-wrap:wrap;font-size:12.5px}
@@ -720,6 +735,50 @@ tr.opens:hover .rowgo{color:var(--lapis)}
    see, at a size where the wordmark inside the artwork is actually legible. */
 .crown{display:flex;justify-content:center;margin-bottom:14px}
 
+/* ---- the app's own mark inside a bar -----------------------------------
+   Every bar now leads with the same thing: the school's mark, then سِجِلّ.
+   The school's NAME only appears where it genuinely fits, because the class
+   bar has 18px to spare on a 320px phone and the sub-screens have none. */
+.barschool{display:none}
+.barrule{width:1px;align-self:stretch;background:var(--line);margin:5px 0;flex:none}
+.bar .logo.applogo{gap:7px}
+.bar .logo.applogo .ar{font-size:22px}
+/* Back stays first — a thumb goes there without looking — and the mark
+   follows it. Below 380px there is no room, so it simply is not there. */
+.brandsub{display:none}
+@media (min-width:380px){
+  .brandsub{display:flex;align-items:center;gap:8px;flex:none}
+  /* The class bar's crest carries a divider before the wordmark. Here the
+     wordmark is hidden until 520px, so the divider would dangle. */
+  .brandsub .crest{height:24px;width:14px;box-sizing:content-box;
+    border-inline-end:0;padding-inline-end:0}
+  /* The mark alone from 380px. Adding سِجِلّ beside it costs ~38px, which
+     tipped this bar onto a second row at 390px and stole 42px from the
+     child's page — so the wordmark waits until there is real room. */
+  .brandsub .logo{display:none}
+}
+@media (min-width:520px){
+  .brandsub .crest{border-inline-end:1px solid var(--line);padding-inline-end:8px}
+  .brandsub .logo{display:flex;align-items:baseline;gap:6px}
+  .brandsub .logo .ar{font-family:var(--calig);font-size:20px;font-weight:700;
+    line-height:1;color:var(--lapis)}
+}
+/* Pre-existing, and nothing to do with the brand: at 320px this bar's own
+   controls added up to 325px and wrapped. Tightening the gaps fits them. */
+@media (max-width:360px){
+  #v-student .bar, #v-mushaf .bar, #v-coord .bar{gap:6px}
+}
+@media (min-width:520px){
+  .barschool{display:inline;font-family:var(--serif);font-size:11.5px;font-weight:600;
+    letter-spacing:.12em;text-transform:uppercase;color:var(--lapis);white-space:nowrap}
+}
+:root[data-theme="dark"] .brandsub .logo .ar,
+:root[data-theme="dark"] .barschool{color:var(--brass)}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]) .brandsub .logo .ar,
+  :root:not([data-theme="light"]) .barschool{color:var(--brass)}
+}
+
 /* ---- the school lockup ------------------------------------------------
    Laid out the way the school's own website lays it out: mark, a hairline
    rule, then the name in both scripts. It comes FIRST and reads largest,
@@ -728,10 +787,10 @@ tr.opens:hover .rowgo{color:var(--lapis)}
 .slock{display:flex;align-items:center;justify-content:center;gap:13px;margin-bottom:15px}
 .slock .school{box-sizing:content-box;height:58px;width:33px;flex:none}
 .slock-rule{width:1px;align-self:stretch;background:var(--line-2);margin:4px 0}
-.slock-t{display:flex;flex-direction:column;gap:3px;text-align:start}
-.slock-en{font-family:var(--serif);font-size:17px;font-weight:600;line-height:1;
+.slock-t{display:flex;flex-direction:column;gap:8px;text-align:start}
+.slock-en{font-family:var(--serif);font-size:17px;font-weight:600;line-height:1.05;
   letter-spacing:.15em;text-transform:uppercase;color:var(--lapis);white-space:nowrap}
-.slock-ar{font-family:var(--serif);font-size:16.5px;line-height:1.25;color:var(--ink-2);white-space:nowrap}
+.slock-ar{font-family:var(--serif);font-size:16.5px;line-height:1.35;color:var(--ink-2);white-space:nowrap}
 
 /* Sijill sits under the school, smaller, as the name of the tool. */
 .applock{display:flex;align-items:baseline;justify-content:center;gap:9px;margin-bottom:5px}
@@ -755,6 +814,7 @@ tr.opens:hover .rowgo{color:var(--lapis)}
 /* On the narrowest phones the two scripts still have to fit side by side. */
 @media (max-width:360px){
   .slock{gap:10px}
+  .slock-t{gap:6px}
   .slock .school{height:50px;width:28px}
   .slock-en{font-size:15px;letter-spacing:.12em}
   .slock-ar{font-size:14.5px}

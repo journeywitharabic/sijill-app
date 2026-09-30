@@ -144,16 +144,23 @@
     /* U7 · the colours had no key anywhere, and a tooltip is no use on a
        phone. One line above the table, where it is read once and then
        available whenever anyone forgets. */
+    /* Each colour and its sentence are ONE flex item now. They used to be
+       separate items with a "·" between them, so when the row wrapped on a
+       phone the separator landed at the start of the next line and the three
+       colours no longer lined up under each other. */
     h += '<div class="legend">' +
-      '<span class="pill crit"><i></i>' + esc(ar ? "أَحْمَر" : "red") + '</span> ' +
-        esc(ar ? "غِيَابٌ مُتَكَرِّرٌ بِلَا عُذْر، أَوْ بَنْدٌ أُعِيدَ ثَلَاثَ مَرَّاتٍ فَأَكْثَر"
-               : "repeated unexplained absence, or an item repeated three times or more") +
-      '<span class="sep">·</span>' +
-      '<span class="pill late"><i></i>' + esc(ar ? "بُرْتُقَالِيّ" : "amber") + '</span> ' +
-        esc(ar ? "تَعَثُّرٌ فِي التَّقَدُّمِ يَسْتَحِقُّ النَّظَر" : "slipping — worth a look, not yet a problem") +
-      '<span class="sep">·</span>' +
-      '<span class="pill exc"><i></i>' + esc(ar ? "بَنَفْسَجِيّ" : "violet") + '</span> ' +
-        esc(ar ? "غِيَابٌ بِعُذْرٍ مَعْرُوف" : "away, with a reason the school knows") +
+      [["crit", ar ? "أَحْمَر" : "red",
+               ar ? "غِيَابٌ مُتَكَرِّرٌ بِلَا عُذْر، أَوْ بَنْدٌ أُعِيدَ ثَلَاثَ مَرَّاتٍ فَأَكْثَر"
+                  : "repeated unexplained absence, or an item repeated three times or more"],
+       ["late", ar ? "بُرْتُقَالِيّ" : "amber",
+               ar ? "تَعَثُّرٌ فِي التَّقَدُّمِ يَسْتَحِقُّ النَّظَر"
+                  : "slipping — worth a look, not yet a problem"],
+       ["exc",  ar ? "بَنَفْسَجِيّ" : "violet",
+               ar ? "غِيَابٌ بِعُذْرٍ مَعْرُوف" : "away, with a reason the school knows"]
+      ].map(function (r) {
+        return '<span class="li"><span class="pill ' + r[0] + '"><i></i>' + esc(r[1]) +
+               '</span><span class="d">' + esc(r[2]) + '</span></span>';
+      }).join("") +
       '</div>' +
       (window.SijillTrendLegend ? window.SijillTrendLegend() : "");
 
