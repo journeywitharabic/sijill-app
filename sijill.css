@@ -652,3 +652,8 @@ tr.opens:hover{background:var(--surface-2)}
 tr.opens td:first-child{position:relative}
 tr.opens .rowgo{color:var(--ink-3);font-weight:400;margin-inline-start:6px}
 tr.opens:hover .rowgo{color:var(--lapis)}
+
+/* The guide link in the settings sheet is an <a>, not a button, so it needs
+   the same look and the same tap target as its neighbours. */
+.setrow a.mini{display:inline-flex;align-items:center;justify-content:center;
+  min-height:36px;padding:7px 13px;text-decoration:none}

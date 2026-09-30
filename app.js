@@ -1133,6 +1133,12 @@
         '<span id="slotLang"></span></div>' +
       '<div class="setrow"><span>' + (ar ? "المَظْهَر" : "Appearance") + '</span>' +
         '<span id="slotTheme"></span></div>' +
+      // The guide is a page in the app rather than a file in somebody's
+      // WhatsApp history, because the moment a teacher needs it is mid-class
+      // with the app already open.
+      '<div class="setrow"><span>' + (ar ? "دَلِيلُ المُعَلِّم" : "Teacher's guide") + '</span>' +
+        '<a class="mini" id="setGuide" href="guide.html" target="_blank" rel="noopener">' +
+          (ar ? "افْتَحْ" : "Open") + ' ›</a></div>' +
       '<div class="setrow"><span>' + (ar ? "أَدَوَاتُ المُنَسِّق" : "Coordinator tools") + '</span>' +
         '<button class="mini" id="setCoord">' + (ar ? "افْتَحْ" : "Open") + ' ›</button></div>' +
       '<div class="setrow"><span>' + (ar ? "الخُرُوج" : "Sign out") + '</span>' +
