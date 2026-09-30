@@ -8,6 +8,7 @@
 
   var EN = {
     schoolName:"Qur’an School",
+    tagline:"Attendance · homework · memorization",
     gateTitle:"Sign in",
     gateHelp:"Type the school passphrase. You only do this once on this phone — it will remember you.",
     gateGo:"Sign in",
@@ -61,7 +62,7 @@
     tr_down:"going backwards", tr_away:"not enough to say",
     mtClearTip:"Remove this from the child's record — use it to correct a mistake, not to mark forgetting",
     mtClearAsk:"Clear this from the record?",
-    mtClearBody:"It stops counting as memorised. If the child has forgotten it, mark it review instead — that keeps the history and puts it back in the rotation.",
+    mtClearBody:"It stops counting as memorized. If the child has forgotten it, mark it review instead — that keeps the history and puts it back in the rotation.",
     mtPagesSolid:"{n} pages solid across the mushaf",
     mtHelp:"Tap a juz to open it. You can mark a whole juz, a hizb, a page or a few ayat — whichever matches what you actually know. Nothing here says the child recited today; it records what they already have.",
     heardAll:"heard", heardAllTip:"Heard everything they had open, all good",
@@ -87,6 +88,7 @@
 
   var AR = {
     schoolName:"مَدْرَسَةُ القُرْآنِ",
+    tagline:"الحُضُورُ وَالوَاجِبَاتُ وَالحِفْظُ",
     gateTitle:"تَسْجِيلُ الدُّخُول",
     gateHelp:"اُكْتُبْ كَلِمَةَ مُرُورِ المَدْرَسَة. تَفْعَلُ ذَلِكَ مَرَّةً وَاحِدَةً عَلَى هَذَا الهَاتِفِ فَقَط.",
     gateGo:"دُخُول",

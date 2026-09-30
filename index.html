@@ -140,8 +140,20 @@
 <!-- ===================== SIGN IN ===================== -->
 <section class="view" id="v-gate">
   <div class="gate">
-    <div class="crown"><svg class="school"><use href="#crest-mark"/></svg></div>
-    <div class="logo"><span class="ar">سِجِلّ</span><span class="en"><b>Sijill</b><span class="schoolname" id="gateSchool">Qur’an School</span></span></div>
+    <!-- The school owns the tool, so the school is read first: its mark and
+         name the way the website sets them, then Sijill underneath as the
+         thing you are signing in to. The old order read as one name,
+         "Sijill Qur'an School". -->
+    <div class="slock">
+      <svg class="school" aria-hidden="true" focusable="false"><use href="#crest-mark"/></svg>
+      <span class="slock-rule"></span>
+      <span class="slock-t">
+        <span class="slock-en schoolname" id="gateSchool">Qur’an School</span>
+        <span class="slock-ar">مَدْرَسَةُ القُرْآنِ</span>
+      </span>
+    </div>
+    <div class="applock"><span class="ar">سِجِلّ</span><span class="en">Sijill</span></div>
+    <p class="tagline" data-t="tagline">Attendance · homework · memorization</p>
     <h1 data-t="gateTitle">Sign in</h1>
     <p data-t="gateHelp">Type the school passphrase. You only do this once on this phone — it will remember you.</p>
     <form id="gateForm" autocomplete="off">
@@ -155,8 +167,16 @@
 <!-- ===================== PICK YOUR NAME ===================== -->
 <section class="view" id="v-who" hidden>
   <div class="gate">
-    <div class="crown"><svg class="school"><use href="#crest-mark"/></svg></div>
-    <div class="logo"><span class="ar">سِجِلّ</span><span class="en"><b>Sijill</b><span class="schoolname">Qur’an School</span></span></div>
+    <div class="slock">
+      <svg class="school" aria-hidden="true" focusable="false"><use href="#crest-mark"/></svg>
+      <span class="slock-rule"></span>
+      <span class="slock-t">
+        <span class="slock-en schoolname">Qur’an School</span>
+        <span class="slock-ar">مَدْرَسَةُ القُرْآنِ</span>
+      </span>
+    </div>
+    <div class="applock"><span class="ar">سِجِلّ</span><span class="en">Sijill</span></div>
+    <p class="tagline" data-t="tagline">Attendance · homework · memorization</p>
     <h1 data-t="whoTitle">Who is teaching?</h1>
     <p data-t="whoHelp">Pick your name. Everything you record today is signed with it, so a mistake can always be traced back and corrected.</p>
     <div class="pick" id="whoList"></div>
@@ -170,7 +190,7 @@
 <section class="view wrap" id="v-class" hidden>
   <div class="bar">
     <svg class="crest" aria-label="Qur’an School" role="img"><use href="#crest-mark"/></svg>
-    <div class="logo"><span class="ar">سِجِلّ</span><span class="en"><b>Sijill</b><span class="schoolname">Qur’an School</span></span></div>
+    <div class="logo"><span class="ar">سِجِلّ</span><span class="en"><b>Sijill</b></span></div>
     <span class="sp"></span>
     <select id="classPick" class="mini" style="padding:6px 8px;max-width:140px"></select>
     <!-- The caret is the whole point: without it this reads as a label and

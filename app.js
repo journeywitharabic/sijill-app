@@ -585,6 +585,11 @@
     }
 
     html += group(T("gDue"), d.due_back, "noneDue", "due");
+    /* CAREFUL: "memorise" and "new_memorisation" are spelled the British way
+       on purpose — they are not words here, they are a value stored in
+       homework.kind and a key the SQL builds. The visible English says
+       "memorization"; changing these to match it silently stops the app
+       matching its own database. */
     html += group(T("gNew"), d.new_memorisation, "noneNew", "new");
     html += (S.readOnly ? '<div class="note" style="margin-bottom:16px">Viewing from the coordinator ' +
               'screen, so nothing here can be marked. Open the class to record a recitation.</div>'
@@ -1183,11 +1188,14 @@
   });
   window.SijillReturnChrome = returnChrome;
 
-  /* The school's name is a proper noun that still has an Arabic form, so it
-     follows the language like every other string. config.SCHOOL_NAME
-     overrides it for anyone running this for a different school. */
+  /* The lockup carries the school's name in BOTH scripts at once, the way
+     the school's website does, so it is written into the markup rather than
+     translated. config.SCHOOL_NAME is the one thing that overrides it, for
+     anyone running this for a different school — and only then, or we would
+     write the Arabic name into the English line and print it twice. */
   function setSchoolName() {
-    var n = (api.config && api.config.SCHOOL_NAME) || i18n.t("schoolName");
+    var n = api.config && api.config.SCHOOL_NAME;
+    if (!n) return;
     Array.prototype.forEach.call(document.querySelectorAll(".schoolname"),
       function (el) { el.textContent = n; });
   }

@@ -696,6 +696,47 @@ tr.opens:hover .rowgo{color:var(--lapis)}
 /* On the sign-in screen and the parent masthead it is the first thing you
    see, at a size where the wordmark inside the artwork is actually legible. */
 .crown{display:flex;justify-content:center;margin-bottom:14px}
+
+/* ---- the school lockup ------------------------------------------------
+   Laid out the way the school's own website lays it out: mark, a hairline
+   rule, then the name in both scripts. It comes FIRST and reads largest,
+   because the school is the institution and Sijill is only its register.
+   Stacking them the other way made the two read as one name. */
+.slock{display:flex;align-items:center;justify-content:center;gap:13px;margin-bottom:15px}
+.slock .school{box-sizing:content-box;height:58px;width:33px;flex:none}
+.slock-rule{width:1px;align-self:stretch;background:var(--line-2);margin:4px 0}
+.slock-t{display:flex;flex-direction:column;gap:3px;text-align:start}
+.slock-en{font-family:var(--serif);font-size:17px;font-weight:600;line-height:1;
+  letter-spacing:.15em;text-transform:uppercase;color:var(--lapis);white-space:nowrap}
+.slock-ar{font-family:var(--serif);font-size:16.5px;line-height:1.25;color:var(--ink-2);white-space:nowrap}
+
+/* Sijill sits under the school, smaller, as the name of the tool. */
+.applock{display:flex;align-items:baseline;justify-content:center;gap:9px;margin-bottom:5px}
+.applock .ar{font-family:var(--calig);font-size:25px;font-weight:700;line-height:1;color:var(--ink)}
+.applock .en{font-size:15px;font-weight:700;letter-spacing:.02em;color:var(--ink)}
+/* The parent bar names the school, not the tool — bold line then the Arabic. */
+.logo.barlock .en b{font-size:12.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--lapis)}
+.logo.barlock .en span{font-family:var(--serif);font-size:11px;letter-spacing:0;
+  text-transform:none;color:var(--ink-2)}
+:root[data-theme="dark"] .logo.barlock .en b{color:#D9B44A}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]) .logo.barlock .en b{color:#D9B44A}
+}
+.tagline{margin:0 0 22px;text-align:center;font-size:12px;font-weight:500;
+  letter-spacing:.04em;color:var(--ink-3)}
+
+:root[data-theme="dark"] .slock-en{color:#D9B44A}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]) .slock-en{color:#D9B44A}
+}
+/* On the narrowest phones the two scripts still have to fit side by side. */
+@media (max-width:360px){
+  .slock{gap:10px}
+  .slock .school{height:50px;width:28px}
+  .slock-en{font-size:15px;letter-spacing:.12em}
+  .slock-ar{font-size:14.5px}
+}
+
 .crown .school{box-sizing:content-box;height:86px;width:48px}
 @media (max-width:360px){ .crown .school{height:72px;width:40px} }
 

@@ -227,7 +227,7 @@
         var g = b.closest(".setg");
         var grade = +b.dataset.grade, scope = g.dataset.scope, n = +g.dataset.n;
         // Clearing is the destructive one: it is the only way to lose a
-        // record of memorisation from this screen, so it asks first.
+        // record of memorization from this screen, so it asks first.
         if (grade === 0) {
           window.SijillSheet(T("mtClearAsk"),
             '<div style="font-size:13.5px;line-height:1.55">' + esc(T("mtClearBody")) + '</div>',
