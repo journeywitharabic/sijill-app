@@ -802,7 +802,14 @@
               (r.closed
                 ? esc(r.closed + (ar ? " حَلْقَة أُغْلِقَتْ · " : " class(es) closed · ") +
                       r.excused + (ar ? " طَالِبًا غَائِبٌ بِعُذْر" : " students excused"))
-                : esc(r.note || "nothing to close that day")) + '</span>';
+                : esc(r.note || "nothing to close that day")) + '</span>' +
+              // A closed day with recitation already on it is a contradiction
+              // worth seeing, not worth silently tidying away.
+              (r.recitations_kept ? ' <span class="pill late"><i></i>' +
+                esc(r.recitations_kept + (ar
+                  ? " تِلَاوَةً سُجِّلَتْ قَبْلَ الإِغْلَاقِ وَبَقِيَتْ"
+                  : " recitations were already recorded that day and were kept")) +
+                '</span>' : "");
             if (r.closed) renderManage(); else $("cdOut").innerHTML = C.calMsg;
           }).catch(err);
       };
