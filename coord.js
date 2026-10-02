@@ -18,6 +18,17 @@
   }
   function busy(el) { el.innerHTML = '<div class="loading"><span class="spin"></span></div>'; }
 
+  /* renderManage() rebuilds #cbody from scratch, which throws away the old
+     #mbody and makes a new one. Every Manage sub-tab fetches before it draws,
+     so tapping a second tab while the first is still loading left the first
+     one's promise to resolve against a node that is no longer in the page:
+     it wrote its HTML into nothing, then looked up a button by id, got null,
+     and died on `.onclick` — surfacing as "Cannot set properties of null".
+     Six tabs, one shape of bug. Each one now asks whether the element it was
+     handed is still the one on screen, and if not, quietly gives up: a newer
+     render is already on its way. */
+  function gone(body) { return !body || !document.body.contains(body); }
+
   /* These tables scroll sideways on a phone and nothing said so, which meant
      the buttons at the right-hand end simply did not exist as far as anyone
      using a phone was concerned. */
@@ -330,6 +341,7 @@
 
   function manageStudents(body) {
     api.read("api_dashboard", {}).then(function (d) {
+      if (gone(body)) return;   // a newer render replaced this one
       body.innerHTML =
         '<div class="filters"><span style="flex:1"></span>' +
         '<button class="btn sm" id="addStu">+ Add student</button></div>' +
@@ -434,6 +446,10 @@
       'no siblings, and never the attendance warning — that is a message for adults.</div>',
       "Issue link", function () {
         api.write("api_issue_student_link", { p_student: id }, name).then(function (r) {
+          /* No guardian id, deliberately. An older child's own link lives on
+             their own row rather than in guardians, so it is not one of the
+             rows the Links screen tracks and there is nothing to mark sent.
+             showLinkOnce leaves the button reading plain "Copy". */
           showLinkOnce(r.token, name);
         }).catch(err);
         return false;
@@ -443,7 +459,7 @@
   /* The one moment the plaintext link exists. It is never stored and can
      never be looked up again — only replaced. So the screen has to make
      copying it the obvious thing to do. */
-  function showLinkOnce(token, who) {
+  function showLinkOnce(token, who, guardianId, onClose) {
     /* Which address the link is built from.
        Cloudflare gives every build its own address with a hash in front of
        it — 128ef441.sijill-app.pages.dev — alongside the permanent one.
@@ -473,17 +489,41 @@
       '<textarea id="lkUrl" readonly style="width:100%;min-height:92px;font-family:var(--mono);font-size:12px;' +
       'padding:10px;border:1px solid var(--line);border-radius:10px;background:var(--surface-2);color:var(--ink)">' +
       esc(url) + '</textarea>' +
-      '<div class="actionrow" style="margin-top:10px"><button class="btn sm" id="lkCopy">Copy</button></div>' +
+      '<div class="actionrow" style="margin-top:10px"><button class="btn sm" id="lkCopy">' +
+      (guardianId ? 'Copy link &amp; mark sent' : 'Copy') + '</button></div>' +
       '<div class="banner crit" style="margin-top:10px"><span class="ic">●</span><div>' +
       'Only the scrambled form of this link is kept. If it is lost you cannot look it up — you issue a new ' +
       'one, and the old one stops working. That is what makes a stolen database useless.</div></div>',
       null, null, "Done");
     setTimeout(function () {
+      /* Whatever dismisses this sheet, the list underneath has to be rebuilt:
+         a link was just created or replaced, and until this was here the new
+         row simply did not appear until you navigated away and came back. */
+      if (onClose) {
+        var done = $("shNo");
+        if (done) {
+          var prev = done.onclick;
+          done.onclick = function () { if (prev) prev.apply(this, arguments); onClose(); };
+        }
+      }
       var c = $("lkCopy"); if (!c) return;
       c.onclick = function () {
         var ta = $("lkUrl"); ta.select();
         try { navigator.clipboard.writeText(url); } catch (e) { document.execCommand("copy"); }
         c.textContent = "Copied";
+        /* The copy and the "sent" mark are one press on purpose. Two presses
+           means the second one gets skipped on the evening you are doing
+           thirty of these, and a to-send list you half-keep is worse than
+           none. Marking it is also honest about what it means: you have the
+           link on your clipboard and nothing else will ever show it to you
+           again, so the only thing left to do with it is send it.
+           The stamp is best-effort — the clipboard already has the link, and
+           failing to record a date is not a reason to put a red error over a
+           sheet that says "send this now". */
+        if (!guardianId) return;
+        api.write("api_mark_link_sent", { p_guardian: guardianId, p_sent: true }, "link")
+          .then(function () { c.textContent = "Copied · marked sent"; })
+          .catch(function () { c.textContent = "Copied — mark it sent on the list"; });
       };
     }, 50);
   }
@@ -494,11 +534,26 @@
      and the old dropdown only ever recorded an intention. Three states rather
      than two, because "opened once in September" and "reads it every week"
      are different problems and only one of them needs a phone call. */
+  /* Four states, and they need four different actions:
+       not sent      — issued and still sitting here. Send it.
+       never opened  — the family has it and has not looked. Chase it, but
+                       only once it has had a few days.
+       reading it    — nothing to do.
+       stopped       — opened once, then drifted. Worth a word.
+     Before sent_on existed the first two were the same row, which meant the
+     only one that needed doing something looked exactly like the one that
+     needed waiting. */
   function linkStatus(g) {
     var ar = i18n.isAr();
+    if (!g.sent_on) {
+      return '<span class="pill mute"><i></i>' +
+        esc(ar ? "لَمْ يُرْسَلْ بَعْد" : "not sent yet") + '</span>';
+    }
     if (!g.opens_all_time) {
-      return '<span class="pill crit"><i></i>' +
-        esc(ar ? "أُصْدِرَ وَلَمْ يُفْتَحْ" : "issued, never opened") + '</span>';
+      var d = daysSince(g.sent_on);
+      return '<span class="pill ' + (d >= 7 ? "crit" : "late") + '"><i></i>' +
+        esc(ar ? "أُرْسِلَ وَلَمْ يُفْتَحْ" : "sent, never opened") +
+        (d >= 7 ? " · " + d + (ar ? " يَوْمًا" : "d") : "") + '</span>';
     }
     if (g.engagement === "regular") {
       return '<span class="pill ok"><i></i>' +
@@ -508,6 +563,11 @@
       esc(ar ? "تَوَقَّفَتْ عَنِ المُتَابَعَة" : "stopped opening it") + '</span>';
   }
 
+  function daysSince(iso) {
+    if (!iso) return null;
+    return Math.max(0, Math.floor((Date.now() - new Date(iso).getTime()) / 86400000));
+  }
+
   /* F2 · teachers and classes.
      The database has been able to do all of this since the beginning; there
      was simply no screen for it, so the honest note in the deploy guide said
@@ -515,6 +575,7 @@
      editor is the same as saying it cannot be done. */
   function manageStaff(body) {
     api.read("api_roster").then(function (r) {
+      if (gone(body)) return;   // a newer render replaced this one
       var ar = i18n.isAr();
       body.innerHTML =
         '<div class="filters"><b style="font-size:12px;letter-spacing:.1em;text-transform:uppercase;' +
@@ -655,30 +716,98 @@
     }).catch(err);
   }
 
+  /* Which rows the Links screen is showing. Kept on the module, not in the
+     DOM, so it survives the re-render that follows every action on it. */
+  var LINKFILTER = "all";
+
   function manageLinks(body) {
     Promise.all([api.read("api_links"), api.read("api_dashboard", {})]).then(function (r) {
+      if (gone(body)) return;   // a newer render replaced this one
       var links = r[0], students = r[1].students;
+
+      /* The three questions actually asked of this screen, in the order they
+         come up during an evening of sending links out:
+           to send  — I issued it and have not pasted it anywhere yet
+           chase    — they have had it a week and never opened it
+           all      — everything
+         A count on each, because a tab reading 0 is an answer in itself. */
+      var counts = {
+        all: links.length,
+        tosend: links.filter(function (g) { return !g.sent_on; }).length,
+        chase: links.filter(function (g) {
+          return g.sent_on && !g.opens_all_time && daysSince(g.sent_on) >= 7; }).length
+      };
+      var shown = links.filter(function (g) {
+        if (LINKFILTER === "tosend") return !g.sent_on;
+        if (LINKFILTER === "chase")  return g.sent_on && !g.opens_all_time && daysSince(g.sent_on) >= 7;
+        return true;
+      });
+
       body.innerHTML =
-        '<div class="filters"><span style="flex:1"></span><button class="btn sm" id="newLink">+ Issue a link</button></div>' +
+        '<div class="filters">' +
+        [["all","All"],["tosend","To send"],["chase","Chase"]].map(function (f) {
+          return '<button class="mini lk-f' + (LINKFILTER === f[0] ? " on" : "") +
+            '" data-f="' + f[0] + '">' + f[1] + ' <b class="n">' + counts[f[0] === "all" ? "all" : f[0]] + '</b></button>';
+        }).join("") +
+        '<span style="flex:1"></span><button class="btn sm" id="newLink">+ Issue a link</button></div>' +
         scrollHint() +
         '<div class="tw"><table><thead><tr><th>Link covers</th><th>Whose</th><th>Status</th>' +
-        '<th>Opens (30d)</th><th>Last opened</th><th></th></tr></thead><tbody>' +
-        (links.length ? links.map(function (g) {
-          return '<tr><td><b>' + esc(g.children || "—") + '</b></td><td>' + esc(g.label) + '</td>' +
-            '<td>' + linkStatus(g) + '</td><td class="n">' + g.opens_30d + '</td>' +
+        '<th>Sent</th><th>Opens (30d)</th><th>Last opened</th><th></th></tr></thead><tbody>' +
+        (shown.length ? shown.map(function (g) {
+          // data-g marks a real link row. The "nothing here" line below is a
+          // <tr> too, and counting rows without this said one when it meant none.
+          return '<tr data-g="' + esc(g.guardian_id) + '"><td><b>' + esc(g.children || "—") + '</b></td><td>' + esc(g.label) + '</td>' +
+            '<td>' + linkStatus(g) + '</td>' +
+            '<td style="white-space:nowrap">' + (g.sent_on
+              ? '<button class="mini lk-unsent" data-id="' + esc(g.guardian_id) + '" ' +
+                'title="Mark this as not sent after all">✓ ' + esc(i18n.fmtDate(g.sent_on.slice(0,10))) + '</button>'
+              : '<button class="mini lk-sent" data-id="' + esc(g.guardian_id) + '">Mark sent</button>') + '</td>' +
+            '<td class="n">' + g.opens_30d + '</td>' +
             '<td class="n">' + (g.last_opened ? i18n.fmtDate(g.last_opened.slice(0,10)) : "never") + '</td>' +
             '<td style="text-align:right;white-space:nowrap">' +
             '<button class="mini lk-rot" data-id="' + esc(g.guardian_id) + '" data-who="' + esc(g.children || "") + '">Replace</button> ' +
             '<button class="mini lk-rev" data-id="' + esc(g.guardian_id) + '">Revoke</button></td></tr>';
-        }).join("") : '<tr><td colspan="6" style="padding:18px;color:var(--ink-3)">No links issued yet.</td></tr>') +
+        }).join("") : '<tr><td colspan="7" style="padding:18px;color:var(--ink-3)">' +
+            (links.length ? "Nothing in this list — which is the answer you want."
+                          : "No links issued yet.") + '</td></tr>') +
         '</tbody></table></div><div style="height:10px"></div>' +
-        '<div class="note"><b>No parent names, phone numbers or emails are stored anywhere.</b> A link is a ' +
-        'random code, which children it covers, and whose it is. You find the actual person by looking the ' +
-        'child up in ClassDojo, which already has all of that.</div>';
+        '<div class="note"><b>Sent is something you tell this screen, not something it can know.</b> ' +
+        'Pressing Copy on a new link marks it sent for you. Nothing here records who it went to — ' +
+        'no parent names, phone numbers or emails are stored anywhere. A link is a random code, which ' +
+        'children it covers, and whose it is. You find the actual person by looking the child up in ' +
+        'ClassDojo, which already has all of that.</div>' +
+        '<div class="note" style="margin-top:8px">Replacing a link clears its Sent mark, because the ' +
+        'family has not been given the new one.</div>';
+
+      body.querySelectorAll(".lk-f").forEach(function (b) {
+        b.onclick = function () { LINKFILTER = b.dataset.f; renderManage(); };
+      });
+      body.querySelectorAll(".lk-sent").forEach(function (b) {
+        b.onclick = function () {
+          api.write("api_mark_link_sent", { p_guardian: b.dataset.id, p_sent: true }, "link")
+            .then(function () { renderManage(); }).catch(err);
+        };
+      });
+      body.querySelectorAll(".lk-unsent").forEach(function (b) {
+        b.onclick = function () {
+          /* Asked for, because it throws away a date and the button sits one
+             column away from Replace, which throws away the link itself. */
+          window.SijillSheet("Mark this as not sent?",
+            '<div class="note">The date is forgotten and the link goes back to the to-send list. ' +
+            'The link itself keeps working — nothing changes for the family.</div>',
+            "Mark not sent", function () {
+              api.write("api_mark_link_sent", { p_guardian: b.dataset.id, p_sent: false }, "link")
+                .then(function () { window.SijillCloseSheet(); renderManage(); }).catch(err);
+              return false;
+            });
+        };
+      });
       body.querySelectorAll(".lk-rot").forEach(function (b) {
         b.onclick = function () {
           api.write("api_rotate_link", { p_guardian: b.dataset.id }, "link")
-            .then(function (r) { showLinkOnce(r.token, b.dataset.who); }).catch(err);
+            .then(function (r) {
+              showLinkOnce(r.token, b.dataset.who, r.guardian_id || b.dataset.id, renderManage);
+            }).catch(err);
         };
       });
       body.querySelectorAll(".lk-rev").forEach(function (b) {
@@ -719,7 +848,8 @@
           p_students: boxes.map(function (b) { return b.value; }),
           p_label: $("nlLabel").value
         }, "link").then(function (r) {
-          showLinkOnce(r.token, boxes.map(function (b) { return b.dataset.name; }).join(" · "));
+          showLinkOnce(r.token, boxes.map(function (b) { return b.dataset.name; }).join(" · "),
+                       r.guardian_id, renderManage);
         }).catch(err);
         return false;
       });
@@ -737,6 +867,7 @@
   function manageCalendar(body) {
     var ar = i18n.isAr();
     Promise.all([api.read("api_classes"), api.read("api_closures")]).then(function (res) {
+      if (gone(body)) return;   // a newer render replaced this one
       var cs = res[0], closed = res[1] || [];
       /* Closing a day refreshes this screen so the table below updates, and
          that used to wipe the date, class and reason the coordinator had just
@@ -845,6 +976,7 @@
 
   function manageLog(body) {
     api.read("api_change_log", { p_limit: 60, p_entity: null }).then(function (rows) {
+      if (gone(body)) return;   // a newer render replaced this one
       body.innerHTML =
         '<div class="note" style="margin-bottom:10px">Every change that replaced something, newest first. ' +
         '<b>Undo</b> puts that one row back — it is the middle ground between the in-app undo and restoring ' +
@@ -898,7 +1030,13 @@
   /* --------------------------------------------------------- 3. statistics */
   function loadStats() {
     api.read("api_statistics", { p_days: 30 }).then(function (d) {
-      C.stats = d; renderStats();
+      C.stats = d;
+      // Same race as the Manage tabs, one level up: leave Statistics while it
+      // is loading and this would draw the statistics over whichever tab you
+      // had moved to. The numbers are kept either way, so coming back to the
+      // tab shows them immediately rather than fetching again.
+      if (C.tab !== "stats") return;
+      renderStats();
     }).catch(err);
   }
 

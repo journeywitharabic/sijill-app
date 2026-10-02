@@ -58,24 +58,58 @@ the free plan, and this is how every Supabase app in the world works.
 
 ## Step 2 · Upload the app files
 
-**Add file → Upload files**, drag in everything from the `sijill-app` folder
-**except** the three testing files:
+**Add file → Upload files**, then drag in **everything inside the zip I send
+you** — all fifteen files, nothing else, nothing left out. The zip contains
+exactly the files that belong on the live site and nothing that does not, so
+"drag in the whole zip's contents" is the entire rule. You do not need to
+check them off against a list.
 
-**Upload these fourteen:**
+**What is in it, for reference:**
 
-`index.html` · `family.html` · `guide.html` · `config.js` · `api.js` ·
-`app.js` · `coord.js` · `mushaf.js` · `family.js` · `i18n.js` ·
-`sijill.css` · `manifest.json` · `icon-192.png` · `icon-512.png`
+`index.html` · `family.html` · `guide.html` · `parent-guide.html` ·
+`parent-guide-ar.html` · `api.js` · `app.js` · `coord.js` · `mushaf.js` ·
+`family.js` · `i18n.js` · `sijill.css` · `manifest.json` ·
+`icon-192.png` · `icon-512.png`
 
 `guide.html` is the teacher's guide. It is a page in the app, linked from the
 ⚙ settings sheet, so a teacher who needs it mid-class is one tap away rather
 than scrolling back through WhatsApp.
 
-**Do NOT upload these** — they are my testing tools and belong nowhere near
-your live site:
+`parent-guide.html` and `parent-guide-ar.html` are the same thing for
+families, in English and Arabic. The child's own page links to whichever one
+matches the language they are reading, so a parent who has lost the PDF can
+always find it again.
 
-`devserver.py` · `test.js` · `test-coord.js` · `test-family.js` ·
-`test-week1.js` · `test-round2.js` · `test-round3.js` · `repro.js` · `run-tests.sh`
+> **Never upload `config.js`.** It is the one file that is *yours*: it holds
+> your Supabase address and key. Every zip I send has my test values in it
+> (`127.0.0.1` and `DEV: true`), so uploading it points the live site at a
+> server that does not exist and every sign-in fails with "could not reach the
+> database". If that happens, open `config.js` in GitHub and put your two
+> Supabase values back, with `DEV: false`.
+
+**Do NOT upload these** — they are my testing tools and belong nowhere near
+your live site. They are not in the zip, so this is only a problem if you are
+copying out of the folder rather than the zip:
+
+`devserver.py` · every `test-*.js` · `test.js` · `repro.js` ·
+`run-tests.sh` · `package.sh` · `make-pdfs.js` · `build-ar-guide.py` ·
+`fonts-compare.html` · the `.pdf` guides (those are for sending to people,
+not for the site)
+
+Also skip `logo.svg` and `logo-mark.svg`. They are the source I cut the
+school mark from; the mark itself is written straight into the pages that use
+it, so the app never fetches them. They stay in the folder only so the mark
+can be re-cut later without going back to Illustrator.
+
+**Updating later is the same step.** Drag the new zip's contents in over the
+old ones and commit — GitHub replaces the files it recognises and leaves
+everything else alone. `config.js` is never in the zip, so your Supabase
+values survive every update without you doing anything.
+
+**If a round comes with a `.sql` file, run that first**, in the Supabase SQL
+editor, before you upload. `MIGRATIONS.md` in the `sijill-db` folder is the
+running list of which ones you have run, and carries a query that tells you
+the answer if you are not sure.
 
 Commit.
 
@@ -118,7 +152,7 @@ NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=sb_publishable_xxxxxxxxxxxxxxx
 window.SIJILL = {
   SUPABASE_URL: "https://pcwxkwlpblyztugxvwnk.supabase.co",
   SUPABASE_KEY: "sb_publishable_xxxxxxxxxxxxxxx",
-  SCHOOL_NAME: "Ommah Madrasah",
+  SCHOOL_NAME: "Qur’an School",
   DEV: false
 };
 ```

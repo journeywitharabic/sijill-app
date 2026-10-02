@@ -50,6 +50,10 @@
     $("shBody").innerHTML = bodyHtml;
     $("shOk").textContent = okLabel || T("save");
     $("shOk").hidden = !onOk;
+    // One button serves every sheet, so anything a previous sheet put on it
+    // has to come off here — otherwise the red "Remove it" styling follows
+    // the next sheet around and Save turns up looking like a delete.
+    $("shOk").classList.remove("danger");
     $("shNo").textContent = noLabel || T("cancel");
     s.hidden = false;
     $("shOk").onclick = function () { if (onOk && onOk() !== false) closeSheet(); };
@@ -584,6 +588,25 @@
     var en = '<span class="tr">' + esc(x.name_en) + rangeLabel(x) + "</span>";
     return ar + en;
   }
+  /* How long a piece of homework has been sitting there. Only open homework
+     reaches this box, so anything more than a couple of weeks old is a child
+     who has not been heard on it — which is worth seeing without having to
+     work it out from a date. Weeks, not days: this school meets twice a week
+     and nobody counts in days. */
+  function hwAge(h) {
+    if (!h.set_on) return "";
+    // The browser's own clock. There is no server "today" on this screen, and
+    // at week granularity a few hours of skew cannot change the answer.
+    var days = Math.floor((Date.now() - new Date(h.set_on + "T12:00:00").getTime()) / 86400000);
+    if (!isFinite(days) || days < 0) days = 0;
+    var weeks = Math.floor(days / 7), txt, old = weeks >= 3;
+    if (weeks === 0)      txt = T("hwSetThis");
+    else if (weeks === 1) txt = T("hwSetLast");
+    else                  txt = T("hwSetWeeks").split("{n}").join(weeks);
+    return '<div class="hwage' + (old ? " old" : "") + '">' + esc(txt) +
+           (old ? ' · ' + esc(T("hwStillOpen")) : "") + '</div>';
+  }
+
   function rangeLabel(x) {
     if (x.ayah_from == null && x.ayah_to == null) return "";
     if (x.whole_surah) return "";
@@ -631,16 +654,27 @@
     html += '<div class="grp"><div class="grph"><h2>' + esc(T("nextWeek")) + '</h2>' +
             '<span class="n">' + hw.length + '</span></div><div class="hwbox">' +
             (hw.length ? hw.map(function (h) {
-              return '<div class="kv" style="border-color:transparent"><span>' +
-                '<b style="font-size:10px;letter-spacing:.09em;text-transform:uppercase;color:var(--ink-3)">' +
+              /* The control used to be a bare ✎, 38x26, with its only
+                 explanation in a title= tooltip — which does not exist on a
+                 phone, and a phone is the only thing this is used on. Nobody
+                 knew homework could be corrected at all. It says a word now,
+                 and it is a real tap target.
+
+                 The age line is here because this box lists every piece of
+                 OPEN homework, not just this week's: a review set five weeks
+                 ago that the child has never been heard on sits in it looking
+                 exactly like something set yesterday. */
+              return '<div class="hwrow"><div class="hwmain">' +
+                '<b class="k">' +
                   (h.kind === "memorise" ? esc(ar ? "لِلْحِفْظ" : "Memorize") : esc(ar ? "لِلْمُرَاجَعَة" : "Review")) +
-                '</b>&nbsp;<span class="ar" style="font-family:var(--serif);font-size:18px;font-weight:700">' +
-                esc(h.name_ar) + '</span> <span style="color:var(--ink-2)">' + esc(h.name_en) + rangeLabel(h) + '</span></span>' +
-                '<span>' + (h.source === "auto"
+                '</b> <span class="ar" style="font-family:var(--serif);font-size:18px;font-weight:700">' +
+                esc(h.name_ar) + '</span> <span style="color:var(--ink-2)">' + esc(h.name_en) + rangeLabel(h) + '</span>' +
+                hwAge(h) +
+                '</div><div class="hwside">' + (h.source === "auto"
                   ? '<span class="pill late"><i></i>' + (ar ? "مِنْ ↻ إِعَادَة" : "from ↻ repeat") + '</span>'
                   : '<span class="pill mute"><i></i>' + (ar ? "أَضَافَهُ المُعَلِّم" : "set by teacher") + '</span>') +
-                ' <button class="gb note hw-edit" data-hw="' + esc(h.homework_id) + '" title="Change or remove"' +
-                ' style="width:28px;height:26px;font-size:11px">✎</button></span></div>';
+                '<button class="btn ghost sm hw-edit" data-hw="' + esc(h.homework_id) + '">' +
+                esc(T("hwChange")) + '</button></div></div>';
             }).join("") : '<div style="font-size:13.5px">' + esc(T("noneHw")) + '</div>') +
             '</div><div style="height:8px"></div><div class="note">' + T("hwHint") + '</div></div>';
 
@@ -1107,8 +1141,34 @@
         return false;
       };
       $("hwRemove").onclick = function () {
-        api.write("api_edit_homework", { p_id: id, p_remove: true }, S.student.name)
-          .then(function () { closeSheet(); return reloadStudent(); }).catch(fail);
+        /* Asked for. Everything else destructive in this app asks first, and
+           this one sits directly under Save on a phone — one mis-tap and a
+           family's page loses its homework with no warning at all. The
+           question names the surah so it is answerable without scrolling
+           back, and says who can put it back. */
+        /* Name it the way the row names it — Arabic first, then the English
+           and the range — so the question can be answered without scrolling
+           back to see which one was tapped. surahLabel escapes its own parts. */
+        sheet(T("hwRemoveAsk"),
+          '<div class="note hwname" style="margin-bottom:10px">' +
+            surahLabel(cur) + '</div>' +
+          '<div class="note">' + esc(T("hwRemoveBody")) + '</div>',
+          T("hwRemoveGo"), function () {
+            api.write("api_edit_homework", { p_id: id, p_remove: true }, S.student.name)
+              .then(function () {
+                closeSheet();
+                toast(T("hwRemoved"));
+                return reloadStudent();
+              }).catch(fail);
+            return false;
+          });
+        // The confirm button deletes, so it is not the same green as Save.
+        $("shOk").classList.add("danger");
+        /* Answering "no" put you back on the student page having lost the
+           editor you were in the middle of. Put it back instead — saying no
+           to a delete is not a request to abandon the edit. */
+        var no = $("shNo");
+        if (no) no.onclick = function () { editHomework(id); };
       };
     }).catch(fail);
   }
