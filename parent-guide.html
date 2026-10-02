@@ -1,0 +1,442 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#1D3B2C">
+<meta name="robots" content="noindex,nofollow">
+<title>Sijill — your child’s page</title>
+<style>
+
+/* Self-contained on purpose: this page has to render identically whether it is
+   opened from the app, saved to a phone, or printed to PDF, so it carries its
+   own copy of the palette rather than depending on sijill.css. */
+:root{
+  /* Same palette as the app, kept in step by hand because this page is
+     deliberately self-contained — it has to open from a phone with no
+     stylesheet beside it. */
+  --paper:#F6F2E8; --surface:#FFFFFF; --surface-2:#EDE7D7;
+  --ink:#1A1E19; --ink-2:#47433C; --ink-3:#625E55;
+  --line:#DFD8C5; --line-2:#CBC2A9;
+  --lapis:#1D3B2C; --lapis-soft:#E4EBE3;
+  --ok:#0E7551;   --ok-soft:#DDEADD;
+  --late:#916000; --late-soft:#F7E9CF; --late-fill:#D18F00;
+  --crit:#98122B; --crit-soft:#F7DFD9;
+  --exc:#6A4BA8;  --exc-soft:#E8E1F4;
+  --sans:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  --mono:ui-monospace,Menlo,Consolas,monospace;
+  --serif:"Noto Naskh Arabic","Times New Roman",serif;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0;background:var(--paper);color:var(--ink);
+  font-family:var(--sans);font-size:16px;line-height:1.6;
+  -webkit-text-size-adjust:100%}
+.wrap{max-width:660px;margin:0 auto;padding:0 18px 60px}
+
+/* ---- masthead ---- */
+header{background:var(--lapis);color:#fff;margin:0 -18px 26px;padding:26px 18px 22px}
+.wrap>header{border-radius:0 0 16px 16px}
+header .mark{font-family:var(--serif);font-size:30px;line-height:1;margin-bottom:8px;
+  display:flex;align-items:center;gap:12px}
+header .mark .crest{height:46px;width:26px;flex:none;color:#D9B44A;fill:currentColor;display:block}
+header h1{margin:0;font-size:21px;line-height:1.25;font-weight:700}
+header p{margin:6px 0 0;font-size:13.5px;opacity:.85;line-height:1.5}
+
+/* ---- rhythm ---- */
+h2{margin:34px 0 12px;font-size:19px;line-height:1.3;font-weight:700;
+  padding-bottom:8px;border-bottom:2px solid var(--line)}
+h3{margin:22px 0 8px;font-size:15.5px;font-weight:700}
+p{margin:0 0 12px}
+ol,ul{margin:0 0 14px;padding-inline-start:22px}
+li{margin-bottom:7px}
+strong{font-weight:700}
+a{color:var(--lapis)}
+hr{border:0;border-top:1px solid var(--line);margin:30px 0}
+
+/* ---- the real controls, shown rather than described ---- */
+.btn{display:inline-flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:1px;min-width:46px;padding:5px 9px;border-radius:9px;border:1px solid var(--line);
+  background:var(--surface-2);font-size:13px;font-weight:700;line-height:1;
+  vertical-align:middle;color:var(--ink-2)}
+.btn small{font-size:8.5px;font-weight:600;opacity:.9}
+.btn.ok  {background:var(--ok-soft);  border-color:color-mix(in srgb,var(--ok) 34%,transparent);  color:var(--ok)}
+.btn.rev {background:var(--late-soft);border-color:color-mix(in srgb,var(--late) 40%,transparent);color:var(--late)}
+.btn.np  {background:var(--exc-soft); border-color:color-mix(in srgb,var(--exc) 34%,transparent); color:var(--exc)}
+.btn.crit{background:var(--crit-soft);border-color:color-mix(in srgb,var(--crit) 34%,transparent);color:var(--crit)}
+
+/* ---- cards ---- */
+.card{background:var(--surface);border:1px solid var(--line);border-radius:12px;
+  padding:14px 16px;margin:0 0 14px}
+.card h3{margin-top:0}
+.card.q{background:var(--lapis-soft);border-color:color-mix(in srgb,var(--lapis) 22%,transparent)}
+.card.warn{background:var(--crit-soft);border-color:color-mix(in srgb,var(--crit) 26%,transparent)}
+.card.note{background:var(--late-soft);border-color:color-mix(in srgb,var(--late) 30%,transparent)}
+.card p:last-child{margin-bottom:0}
+
+/* ---- the control table ---- */
+.rows{border:1px solid var(--line);border-radius:12px;overflow:hidden;background:var(--surface);margin-bottom:16px}
+.row{display:flex;gap:13px;padding:13px 15px;border-bottom:1px solid var(--line);align-items:flex-start}
+.row:last-child{border-bottom:0}
+.row .k{flex:0 0 74px}
+.row .v{flex:1;min-width:0;font-size:14.5px;line-height:1.5}
+.row .v b{display:block;margin-bottom:1px}
+
+/* ---- trend arrows ---- */
+.tr{display:inline-flex;align-items:center;gap:7px;font-weight:700;font-size:14px}
+.tr svg{flex:none}
+.tr.up{color:var(--ok)} .tr.flat{color:var(--late)}
+.tr.down{color:var(--crit)} .tr.away{color:var(--ink-3)}
+
+/* ---- misc ---- */
+.ar{font-family:var(--serif);direction:rtl;unicode-bidi:isolate}
+code{font-family:var(--mono);font-size:.88em;background:var(--surface-2);
+  padding:2px 5px;border-radius:5px}
+.lede{font-size:15px;color:var(--ink-2)}
+footer{margin-top:40px;padding-top:18px;border-top:1px solid var(--line);
+  font-size:13px;color:var(--ink-3);text-align:center}
+footer .ar{font-size:17px;display:block;margin-bottom:6px;color:var(--ink-2)}
+
+/* ---- dark, for anyone reading in the masjid car park at 9pm ---- */
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --paper:#0E1411; --surface:#16201A; --surface-2:#1D2A22;
+    --ink:#ECE8DB; --ink-2:#C9C4B6; --ink-3:#9F9B91;
+    --line:#2B3830; --line-2:#3B4A40;
+    --lapis:#8FC9A6; --lapis-soft:#1B2E23;
+    --ok:#5FCFA2;   --ok-soft:#13291F;
+    --late:#EFB840; --late-soft:#332612; --late-fill:#EFB840;
+    --crit:#F4707F; --crit-soft:#36161B;
+    --exc:#B2A2F7;  --exc-soft:#241F3C;
+  }
+  :root:not([data-theme="light"]) header{background:#16281E}
+}
+
+/* ---- print / PDF ---- */
+@media print{
+  html,body{background:#fff;font-size:11.5pt}
+  .wrap{max-width:none;padding:0}
+  header{margin:0 0 18px;border-radius:0;background:#1D3B2C !important;
+    -webkit-print-color-adjust:exact;print-color-adjust:exact}
+  h2{page-break-after:avoid;break-after:avoid}
+  h3{page-break-after:avoid;break-after:avoid}
+  /* A whole table kept together pushed the next section to a fresh page and
+     left a third of a page blank. A single ROW must not split across a page —
+     a button orphaned from its explanation is useless — but the table itself
+     may break between rows. */
+  .card{page-break-inside:avoid;break-inside:avoid}
+  .rows{break-inside:auto}
+  .row{page-break-inside:avoid;break-inside:avoid}
+  a{text-decoration:none}
+  footer{page-break-before:avoid}
+}
+
+/* ---- the mock page -------------------------------------------------------
+   Not a screenshot: the real components, rebuilt here, so the guide cannot
+   drift out of date with a stale image and so it stays sharp in print. */
+.demo{border:1px solid var(--line-2);border-radius:14px;overflow:hidden;
+  background:var(--paper);margin:0 0 6px;box-shadow:0 1px 2px rgba(40,34,20,.07)}
+.demo .bar{display:flex;align-items:center;gap:10px;background:var(--surface);
+  border-bottom:1px solid var(--line);padding:9px 12px}
+.demo .bar .crest{height:24px;width:14px;color:var(--lapis);fill:currentColor;flex:none}
+.demo .bar .rule{width:1px;align-self:stretch;background:var(--line);margin:2px 0}
+.demo .bar .nm{font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--lapis)}
+.demo .bar .ar{font-family:var(--serif);font-size:11px;color:var(--ink-2)}
+.demo .body{padding:12px}
+.demo .kid{display:inline-block;background:var(--lapis);color:#fff;border-radius:99px;
+  padding:5px 13px;font-size:12.5px;font-weight:700;margin-inline-end:6px}
+.demo .kid.off{background:var(--surface);color:var(--ink);border:1px solid var(--line)}
+.demo h4{margin:12px 0 2px;font-size:17px;font-weight:700}
+.demo .sub{font-family:var(--mono);font-size:11px;color:var(--ink-3);margin-bottom:10px}
+.demo .hero{background:var(--lapis);color:#fff;border-radius:12px;padding:12px 14px;margin-bottom:10px}
+.demo .hero .lbl{font-size:10px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;opacity:.75}
+.demo .hero .hw{font-size:14px;margin-top:5px;line-height:1.5}
+.demo .hero .hw b{font-family:var(--serif);font-size:16px}
+.pcard{background:var(--surface);border:1px solid var(--line);border-radius:12px;
+  padding:12px 13px;margin-bottom:10px}
+.pcard .h{font-size:10px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;
+  color:var(--ink-3);margin-bottom:9px}
+.dots{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px}
+.dots .d{text-align:center}
+.dots .d i{width:22px;height:22px;border-radius:7px;display:block;border:1px solid transparent}
+.dots .d span{font-family:var(--mono);font-size:8.5px;color:var(--ink-3);display:block;margin-top:3px}
+.d i.p{background:var(--ok-soft);border-color:var(--ok)}
+.d i.l{background:var(--late-soft);border-color:var(--late-fill)}
+.d i.e{background:var(--exc-soft);border-color:var(--exc)}
+.d i.a{background:var(--crit-soft);border-color:var(--crit)}
+.d i.c{background:var(--surface-2);border:1px solid var(--line-2);
+  background-image:repeating-linear-gradient(135deg,transparent 0 3px,rgba(98,94,85,.42) 3px 4px)}
+.d i.n{background:transparent;border:1px dashed var(--line-2)}
+.kv{display:flex;justify-content:space-between;gap:10px;padding:7px 0;
+  border-top:1px solid var(--line);font-size:13.5px}
+.kv b{font-family:var(--mono)}
+.pills{display:flex;gap:6px;flex-wrap:wrap;margin-top:9px}
+.pl{display:inline-flex;align-items:center;gap:5px;border-radius:99px;padding:3px 9px;
+  font-size:10.5px;font-weight:700;border:1px solid transparent}
+.pl i{width:8px;height:8px;border-radius:50%;flex:none}
+.pl.ok{background:var(--ok-soft);color:var(--ok);border-color:rgba(14,117,81,.55)} .pl.ok i{background:var(--ok)}
+.pl.late{background:var(--late-soft);color:var(--late);border-color:rgba(145,96,0,.55)} .pl.late i{background:var(--late-fill)}
+.pl.exc{background:var(--exc-soft);color:var(--exc);border-color:rgba(106,75,168,.55)} .pl.exc i{background:var(--exc)}
+.pl.crit{background:var(--crit-soft);color:var(--crit);border-color:rgba(152,18,43,.55)} .pl.crit i{background:var(--crit)}
+.pl.mute{background:var(--surface-2);color:var(--ink-3);border-color:var(--line)}
+.pl.mute i.swc{border-radius:3px;width:12px;height:12px;background:var(--surface);
+  background-image:repeating-linear-gradient(135deg,transparent 0 2px,rgba(71,67,60,.62) 2px 3.5px)}
+.pl.mute i.swn{border-radius:3px;width:12px;height:12px;background:var(--surface);border:1px dashed var(--ink-3)}
+.bar2{display:flex;height:9px;border-radius:99px;overflow:hidden;background:var(--surface-2);gap:2px;margin:8px 0 4px}
+.bar2 i{display:block}
+.rev{display:flex;justify-content:space-between;padding:5px 0;font-size:13.5px;border-top:1px solid var(--line)}
+.rev .ar{font-family:var(--serif);font-size:16px}
+.sess{border-inline-start:2px solid var(--line-2);padding-inline-start:11px}
+.sess .s{margin-bottom:11px}
+.sess .dt{font-family:var(--mono);font-size:11px;color:var(--ink-3)}
+.sess .w{font-size:14px;margin-top:1px}
+.stars{display:inline-flex;gap:1px;vertical-align:middle;margin-inline-start:5px}
+.stars svg{width:11px;height:11px;fill:none;stroke:var(--ink-3);stroke-width:1.4;stroke-linejoin:round}
+.stars .on svg{fill:var(--brass);stroke:#826939}
+.adabline{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--ink-2);margin-top:3px}
+.face{width:17px;height:17px;fill:none;stroke:currentColor;stroke-width:1.3;stroke-linecap:round;flex:none}
+.face .eye{fill:currentColor;stroke:none}
+.f1{color:var(--crit)} .f2{color:#A8501E} .f3{color:var(--late)} .f4{color:#4E7F3E} .f5{color:var(--ok)}
+
+/* ---- callouts ---- */
+.call{display:flex;gap:12px;margin:0 0 14px;align-items:flex-start}
+.call .num{flex:none;width:26px;height:26px;border-radius:50%;background:var(--lapis);color:#fff;
+  font-size:13px;font-weight:700;display:flex;align-items:center;justify-content:center;margin-top:1px}
+.call .txt{flex:1;min-width:0}
+.call .txt b{display:block;margin-bottom:2px}
+.tag{display:inline-flex;align-items:center;justify-content:center;min-width:22px;height:22px;
+  border-radius:50%;background:var(--lapis);color:#fff;font-size:12px;font-weight:700;
+  margin-inline-end:6px;vertical-align:middle}
+.note{background:var(--lapis-soft);border:1px solid rgba(29,59,44,.18);border-radius:11px;
+  padding:12px 14px;margin:0 0 16px;font-size:14.5px;line-height:1.55}
+@media print{
+  /* The mock page is taller than a sheet. Keeping it whole threw it onto the
+     next page and left half of page one blank — the same trap the teacher
+     guide hit with tables. Let the mock break between its cards, but never
+     split a single card, and never split a callout from its number. */
+  .demo{break-inside:auto}
+  .demo .body{break-inside:auto}
+  .pcard, .hero{break-inside:avoid}
+  .call{break-inside:avoid}
+  h3{break-after:avoid}
+}
+
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+<symbol id="crest-mark" viewBox="4.1 -0.2 7.7 14"><path d="M7.8,0.1C7.6,0.5,7.5,1,7.4,1.5c0,0.4,0.1,0.8,0.2,1.2C8,3.5,8.5,4.1,9,4.8c1,1.3,2,2.7,2.5,4.3
+		c0.3,0.9,0.4,1.8,0.2,2.7c0,0.1,0-0.1,0,0c0-0.1,0.1-0.2,0.1-0.3c0.1-0.2,0.1-0.4,0.2-0.6c0.6-3.2-1.9-5.7-3.5-8.2
+		C8.2,2.3,8,1.9,7.9,1.5C7.8,1.3,7.7,1.1,7.7,0.9c0-0.1,0-0.2,0-0.3c0,0,0-0.1,0-0.1c0,0,0-0.1,0-0.1c0.1-0.3,0-0.1-0.2,0.6
+		c0.1-0.2,0.1-0.5,0.2-0.7C7.8,0.2,7.8-0.1,7.8,0.1L7.8,0.1z"/><path d="M8.6,0.1C8.8,0.5,8.9,1,9,1.5c0,0.4-0.1,0.8-0.2,1.2C8.4,3.5,7.9,4.1,7.4,4.8c-1,1.3-2,2.7-2.5,4.3
+		c-0.3,0.9-0.4,1.8-0.2,2.7c0,0.1,0-0.1,0,0c0-0.1-0.1-0.2-0.1-0.3c-0.1-0.2-0.1-0.4-0.2-0.6C3.9,7.6,6.3,5.1,7.9,2.7
+		c0.2-0.4,0.5-0.7,0.6-1.1c0.1-0.2,0.1-0.4,0.2-0.7c0-0.1,0-0.2,0-0.3c0,0,0-0.1,0-0.1c0,0,0-0.1,0-0.1C8.6,0,8.7,0.2,8.8,0.9
+		C8.8,0.7,8.7,0.5,8.7,0.2C8.6,0.2,8.6-0.1,8.6,0.1L8.6,0.1z"/><path d="M11.5,10.2c0-0.2,0-0.4-0.1-0.6c0-0.1,0-0.2,0-0.3c0,0,0-0.1,0,0c0,0.6-0.1,1.2-0.4,1.7
+	c-1.1,2.1-4.4,2.1-5.5,0.1c0,0,0,0,0-0.1C5.1,10.5,5,9.9,5,9.3c0-0.1,0,0.1,0,0c0,0.1,0,0.2,0,0.3c0,0.2-0.1,0.4-0.1,0.6
+	c0,0.1,0,0.1,0,0.2c0,1.4,1,2.7,2.4,3c0.6,0.1,1.3,0.1,1.8,0c1.4-0.3,2.4-1.6,2.4-3C11.5,10.3,11.5,10.2,11.5,10.2z"/><path d="M6.5,8.8"/><path d="M6.5,9c0,0,0.1,0.6,0.3,0.9c0.4,0.7,1.1,1,1.8,1v0c0,0,0,0,0,0c0,0,0,0,0,0v0c0.2,0,0.4,0,0.6-0.1
+		c0-0.1,0.1-0.3,0.1-0.4c0,0,0.1-0.4,0.1-0.4c0,0,0,0,0.1,0c0.6-0.1,1.1-0.6,1.1-1.2c0,0,0,0,0,0c0,0,0,0,0,0c0,0.1,0,0.1,0,0.2
+		c0,0.1,0,0.2,0,0.4c0,0,0,0.1,0,0.1c0,0.9-0.6,1.8-1.6,2c-0.2,0-0.4,0.1-0.6,0c-0.2,0-0.4,0-0.6,0c-0.9-0.2-1.5-1-1.6-1.8
+		c0,0.1-0.1,0.1-0.1,0.2c-0.3,0.3-0.7,0.4-0.8,0.9c0,0.1,0-0.1,0-0.1c0-0.2,0-0.3,0-0.5c0-0.3,0.1-0.5,0.4-0.7
+		C6.1,9.3,6.4,9.2,6.5,9c0-0.1,0-0.1,0-0.1l0-0.1"/><path d="M5.5,10.8c0.7,0.2,1.4,0,1.8-0.6c0.3-0.4,0.4-0.9,0.4-1.3c0-0.1,0-0.1,0,0c0,0.1,0,0.2,0,0.3
+		c0,0,0.1-0.4,0-0.2c0,0,0,0.1,0,0.1c0,0.1-0.1,0.2-0.1,0.3C7.5,9.6,7.3,9.8,7.2,10c-0.4,0.4-1.1,0.5-1.6,0.4
+		C5.6,10.3,5.5,10.8,5.5,10.8L5.5,10.8z"/><path d="M8.2,1.1C8.1,1.2,8,1.3,8,1.3c0,0,0,0,0,0c0,0,0,0,0,0l0-0.2c0,0,0-0.1,0-0.1C8,1,7.9,0.9,8,0.7l0-0.3
+	c0,0,0,0,0.1,0c0.1,0,0.1,0,0.2,0c0.1,0,0.1,0.1,0.1,0.1l0,0.2c0,0,0,0,0,0c0,0,0,0,0,0c0-0.1-0.1-0.1-0.1-0.1c-0.1,0-0.1,0-0.2,0
+	c0,0.1,0.1,0.2,0.2,0.1c0.1,0,0.2-0.1,0.4-0.2l0,0.3C8.5,0.9,8.4,1,8.2,1.1z"/><path d="M7.2,8.9c0-0.3-0.4-0.5-0.4-0.8c0,0,0,0.1,0,0.1c0,0,0,0,0,0c0,0,0-0.1,0-0.1c0,0,0,0.1,0,0.1
+		c0,0.2-0.1,0.3-0.1,0.5c-0.1,0.2,0,0.3,0.1,0.5C6.9,9.2,7.1,9.3,7,9.5c0-0.1,0.1-0.2,0.1-0.3C7.2,9.1,7.2,9,7.2,8.9L7.2,8.9z"/><path d="M7.3,7.8c0-0.3-0.4-0.5-0.4-0.8c0,0,0,0.1,0,0.1c0,0,0,0,0,0c0,0,0-0.1,0-0.1c0,0,0,0.1,0,0.1
+		c0,0.2-0.1,0.3-0.1,0.5C6.7,7.7,6.7,7.9,6.9,8C7,8.2,7.1,8.3,7.1,8.5c0-0.1,0.1-0.2,0.1-0.3C7.2,8.1,7.3,8,7.3,7.8L7.3,7.8z"/></symbol>
+</svg>
+
+<div class="wrap">
+<header>
+  <div class="mark">
+    <svg class="crest" aria-label="Qur’an School" role="img"><use href="#crest-mark"/></svg>
+    <span>سِجِلّ</span>
+  </div>
+  <h1>Your child’s page — a short guide</h1>
+  <p>Qur’an School · مَدْرَسَةُ القُرْآنِ · five minutes to read, once.</p>
+</header>
+
+<p>Every family has a private link that opens one page: what your child is working
+on, how they are getting on, and what to practise at home. It updates itself —
+there is nothing to install and nothing to log into.</p>
+
+<div class="note"><b>Open it once a week, ideally mid-week.</b> That is the whole
+ask. Homework is set at the end of each class and is due at the next one, so
+Tuesday or Wednesday is the moment it is still useful.</div>
+
+<h2>What the page looks like</h2>
+<p>Below is an example page for an invented child. The numbers are not on the
+real page — they point to the explanations that follow.</p>
+
+
+<div class="demo">
+  <div class="bar">
+    <svg class="crest" aria-hidden="true"><use href="#crest-mark"/></svg>
+    <span class="rule"></span>
+    <span><span class="nm">Qur’an School</span><br><span class="ar">مَدْرَسَةُ القُرْآنِ</span></span>
+  </div>
+  <div class="body">
+    <span class="tag">1</span><span class="kid">Yusuf A.</span><span class="kid off">Maryam A.</span>
+
+    <h4><span class="tag">2</span>Yusuf A.</h4>
+    <div class="sub">Hizb 54 · Surat Ar-Rahman group</div>
+
+    <div class="hero"><div class="lbl"><span class="tag">3</span>This week</div>
+      <div class="hw"><b>الفَجْر</b> Al-Fajr 1–8 · memorize<br>
+      <b>القَدْر</b> Al-Qadr · review</div></div>
+
+    <div class="pcard"><div class="h"><span class="tag">4</span>Attendance</div>
+      <div class="dots">
+        <div class="d"><i class="p"></i><span>12 Sept</span></div>
+        <div class="d"><i class="l"></i><span>14 Sept</span></div>
+        <div class="d"><i class="e"></i><span>19 Sept</span></div>
+        <div class="d"><i class="a"></i><span>21 Sept</span></div>
+        <div class="d"><i class="c"></i><span>26 Sept</span></div>
+        <div class="d"><i class="n"></i><span>28 Sept</span></div>
+      </div>
+      <div class="kv"><span>Attendance this year</span><b>83%</b></div>
+      <div class="kv"><span>Present / late / excused / no reason</span><b>8 · 1 · 1 · 1</b></div>
+      <div class="pills">
+        <span class="pl ok"><i></i>Present</span><span class="pl late"><i></i>Late</span>
+        <span class="pl exc"><i></i>Excused</span><span class="pl crit"><i></i>No reason</span>
+        <span class="pl mute"><i class="swc"></i>Class closed</span>
+        <span class="pl mute"><i class="swn"></i>not marked</span>
+      </div>
+    </div>
+
+    <div class="pcard"><div class="h"><span class="tag">5</span>Where Yusuf is</div>
+      <div class="kv" style="border-top:0"><span>Pages solid</span><b>9 of 23 in this juz</b></div>
+      <div class="kv"><span>Surahs solid</span><b>24</b></div>
+      <div class="kv"><span>Needs review</span><b>5</b></div>
+      <div class="bar2"><i style="background:var(--ok);flex:9"></i><i style="background:var(--late);flex:5"></i><i style="background:var(--surface-3);flex:9"></i></div>
+    </div>
+
+    <div class="pcard"><div class="h"><span class="tag">6</span>Needs review — help at home</div>
+      <div class="rev" style="border-top:0"><span class="ar">القَدْر</span><span>Al-Qadr</span></div>
+      <div class="rev"><span class="ar">العَلَق</span><span>Al-ʻAlaq</span></div>
+      <div class="rev"><span class="ar">القَارِعَة</span><span>Al-Qāriʻa</span></div>
+    </div>
+
+    <div class="pcard"><div class="h"><span class="tag">7</span>Recent classes</div>
+      <div class="sess">
+        <div class="s"><div class="dt">Friday, 26 Sept 2026 · Ustadh Ahmed</div>
+          <div class="w">Al-Fajr 1–8 <span class="stars"><span class="on"><svg viewBox="0 0 16 16"><path d="M8 1.6l1.9 3.9 4.3.6-3.1 3 .7 4.3L8 11.4l-3.8 2-.7-4.3-3.1-3 4.3-.6z"/></svg></span><span class="on"><svg viewBox="0 0 16 16"><path d="M8 1.6l1.9 3.9 4.3.6-3.1 3 .7 4.3L8 11.4l-3.8 2-.7-4.3-3.1-3 4.3-.6z"/></svg></span><span class="on"><svg viewBox="0 0 16 16"><path d="M8 1.6l1.9 3.9 4.3.6-3.1 3 .7 4.3L8 11.4l-3.8 2-.7-4.3-3.1-3 4.3-.6z"/></svg></span><span class="on"><svg viewBox="0 0 16 16"><path d="M8 1.6l1.9 3.9 4.3.6-3.1 3 .7 4.3L8 11.4l-3.8 2-.7-4.3-3.1-3 4.3-.6z"/></svg></span><span class=""><svg viewBox="0 0 16 16"><path d="M8 1.6l1.9 3.9 4.3.6-3.1 3 .7 4.3L8 11.4l-3.8 2-.7-4.3-3.1-3 4.3-.6z"/></svg></span></span></div></div>
+        <div class="s"><div class="dt">Sunday, 21 Sept 2026 · Ustadh Ahmed</div>
+          <div class="w">Al-Qadr <span class="stars"><span class="on"><svg viewBox="0 0 16 16"><path d="M8 1.6l1.9 3.9 4.3.6-3.1 3 .7 4.3L8 11.4l-3.8 2-.7-4.3-3.1-3 4.3-.6z"/></svg></span><span class="on"><svg viewBox="0 0 16 16"><path d="M8 1.6l1.9 3.9 4.3.6-3.1 3 .7 4.3L8 11.4l-3.8 2-.7-4.3-3.1-3 4.3-.6z"/></svg></span><span class=""><svg viewBox="0 0 16 16"><path d="M8 1.6l1.9 3.9 4.3.6-3.1 3 .7 4.3L8 11.4l-3.8 2-.7-4.3-3.1-3 4.3-.6z"/></svg></span><span class=""><svg viewBox="0 0 16 16"><path d="M8 1.6l1.9 3.9 4.3.6-3.1 3 .7 4.3L8 11.4l-3.8 2-.7-4.3-3.1-3 4.3-.6z"/></svg></span><span class=""><svg viewBox="0 0 16 16"><path d="M8 1.6l1.9 3.9 4.3.6-3.1 3 .7 4.3L8 11.4l-3.8 2-.7-4.3-3.1-3 4.3-.6z"/></svg></span></span></div>
+          <div class="adabline"><svg class="face f2" viewBox="0 0 16 16"><circle cx="8" cy="8" r="6.6"/><circle class="eye" cx="5.9" cy="6.3" r=".85"/><circle class="eye" cx="10.1" cy="6.3" r=".85"/><path d="M5.6 10.9a3.4 3.4 0 0 1 4.8 .5"/></svg><span>Adab — behaviour 2/5 · “kept leaving his seat; settled after the break”</span></div></div>
+        <div class="s"><div class="dt">Friday, 19 Sept 2026</div>
+          <div class="w">Here — nothing recorded</div></div>
+        <div class="s"><div class="dt">Sunday, 14 Sept 2026</div>
+          <div class="w">Class closed</div></div>
+      </div>
+    </div>
+
+    <div class="pcard" style="background:var(--surface-2)">
+      <div style="font-size:13.5px">Any question about homework or attendance — message the school on ClassDojo.</div>
+    </div>
+  </div>
+</div>
+
+
+<h2>Section by section</h2>
+
+<div class="call"><div class="num">1</div><div class="txt">
+  <b>Your children</b>
+  If you have more than one child at the school, they appear as buttons here.
+  Tap a name to switch. One link covers your whole family.
+</div></div>
+
+<div class="call"><div class="num">2</div><div class="txt">
+  <b>Name and group</b>
+  We show first name and last initial only. Your child’s full name, your phone
+  number and your email are <b>not</b> stored in this app at all — see the note
+  on privacy at the end.
+</div></div>
+
+<div class="call"><div class="num">3</div><div class="txt">
+  <b>This week</b>
+  What was set at the last class, due at the next one. <i>Memorize</i> is new
+  ground. <i>Review</i> is something learned before that is coming back round.
+  <b>Homework is set even when your child was absent</b>, so this is the place to
+  look after a missed week.
+</div></div>
+
+<div class="call"><div class="num">4</div><div class="txt">
+  <b>Attendance</b>
+  One square per class, most recent last, then the totals for the year. Two of
+  the six are easy to mix up: a <b>hatched</b> square means the school closed
+  that day and it counts against nobody; an <b>empty dashed</b> square means the
+  class ran but your child was not marked — if you see several of those, tell us.
+</div></div>
+
+<div class="call"><div class="num">5</div><div class="txt">
+  <b>Where your child is</b>
+  How much of the current juz is solid, how much still needs review. Pages are a
+  fairer measure than surahs, because surahs vary enormously in length. This
+  fills in after the teacher has done the first assessment — usually in the
+  first few weeks.
+</div></div>
+
+<div class="call"><div class="num">6</div><div class="txt">
+  <b>Needs review — help at home</b>
+  The surahs that have slipped. This is the most useful list on the page: ten
+  minutes on one of these during the week is worth more than an hour the night
+  before.
+</div></div>
+
+<div class="call"><div class="num">7</div><div class="txt">
+  <b>Recent classes</b>
+  What actually happened, newest first — what was recited, and the teacher who
+  heard it. Three things can appear here:
+</div></div>
+
+<h3>Tajwīd stars</h3>
+<p>Beside each passage, out of five, for the recitation itself — makārij, madd,
+the rules being applied. It is graded <b>against your child’s own level</b>, not
+against a hāfiẓ: a young child reading cleanly earns five stars. A lower score is
+an invitation to practise aloud, not a complaint.</p>
+
+<h3>Adab — behaviour</h3>
+<p>Out of five, with a face. <b>Most weeks this will not appear at all</b> — it is
+only recorded when a teacher has something to tell you, good or otherwise. The
+lowest mark cannot be given without a written line explaining it, so you will
+never receive a bare number with no context.</p>
+
+<h3>Lines without a recitation</h3>
+<p><b>Class closed</b> — no class that day; nothing is counted.
+<b>Here — nothing recorded</b> — your child attended but did not recite.
+<b>Not marked</b> — the class ran and no attendance was taken for your child.</p>
+
+<h2>Keep the link handy</h2>
+<p>The page lives at a web address, so put it where you will find it again:</p>
+<ul>
+  <li><b>iPhone / iPad (Safari)</b> — open the link, tap <b>Share</b> (the square
+    with the arrow), then <b>Add to Home Screen</b>. It behaves like an app.</li>
+  <li><b>Android (Chrome)</b> — open the link, tap the <b>⋮</b> menu, then
+    <b>Add to Home screen</b>.</li>
+  <li>Or simply bookmark it, or keep our ClassDojo message so you can tap the
+    link again.</li>
+</ul>
+
+<div class="note"><b>Your link is private — please do not forward it.</b> Anyone
+holding it can see your child’s page. If you think it has gone astray, tell us
+and we will issue a new one; the old one stops working immediately.</div>
+
+<h2>What the teachers do</h2>
+<p>So you know where this comes from. In class the teacher marks who is here,
+listens to each child, and records what was recited and how it went. Setting
+next week’s homework is part of the same few taps. Nothing is written about your
+child that a teacher would not say to you directly — that is the rule we work to.</p>
+
+<h2>Privacy</h2>
+<p>The app holds first name and last initial, the class, attendance, what was
+recited, and homework. It holds <b>no parent names, no phone numbers, no email
+addresses, no dates of birth and no addresses</b>. Nothing identifies your family
+publicly. Messages still go through ClassDojo as they always have.</p>
+
+<footer style="margin-top:34px;padding-top:16px;border-top:1px solid var(--line);
+  font-size:12.5px;color:var(--ink-3)">
+  Qur’an School · مَدْرَسَةُ القُرْآنِ · Assalam Mosque, Ottawa · questions on ClassDojo
+</footer>
+</div>
+</body>
+</html>
