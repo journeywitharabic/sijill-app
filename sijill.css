@@ -97,6 +97,13 @@ button{font:inherit;color:inherit;cursor:pointer}
 .logo .en b{font-size:13.5px;font-weight:700;line-height:1}
 .logo .en span{font-size:8.5px;font-weight:600;letter-spacing:.13em;text-transform:uppercase;color:var(--ink-3)}
 .bar .sp{flex:1}
+/* The light/dark button used to be the character ◐ (U+25D0). It is not in
+   every font, and where it is missing the browser substitutes whatever it
+   likes — on one machine it came out as a stray ‹, which is what a parent
+   would then have seen printed in the guide. Drawn, it is the same shape on
+   every device, and it takes the button's own colour in both themes. */
+.ticon{width:13px;height:13px;display:block;flex:none}
+button#theme{display:inline-flex;align-items:center;justify-content:center}
 .mini{background:var(--surface-2);border:1px solid var(--line);border-radius:8px;padding:5px 9px;font-size:12px;font-weight:600;color:var(--ink-2)}
 .back{background:var(--surface-2);border:1px solid var(--line);border-radius:8px;padding:6px 11px;font-size:12.5px;font-weight:600;color:var(--ink-2)}
 

@@ -163,6 +163,12 @@ footer .ar{font-size:17px;display:block;margin-bottom:6px;color:var(--ink-2)}
 .demo .bar .rule{width:1px;align-self:stretch;background:var(--line);margin:2px 0}
 .demo .bar .nm{font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--lapis)}
 .demo .bar .ar{font-family:var(--serif);font-size:11px;color:var(--ink-2)}
+.demo .bar .sp{flex:1}
+/* drawn, not typed — see the note beside .ticon in sijill.css */
+.ticon{width:12px;height:12px;display:block}
+.icb{display:inline-flex;vertical-align:-2px;margin:0 1px}
+.demo .bar .mini{display:inline-flex;align-items:center;background:var(--surface-2);border:1px solid var(--line);border-radius:8px;
+  padding:4px 8px;font-size:11px;font-weight:600;color:var(--ink-2);white-space:nowrap}
 .demo .body{padding:12px}
 .demo .kid{display:inline-block;background:var(--lapis);color:#fff;border-radius:99px;
   padding:5px 13px;font-size:12.5px;font-weight:700;margin-inline-end:6px}
@@ -360,20 +366,22 @@ li{margin-bottom:9px}
     <svg class="crest" aria-hidden="true"><use href="#crest-mark"/></svg>
     <span class="rule"></span>
     <span><span class="nm">مَدْرَسَةُ القُرْآنِ</span><br><span class="ar">Qur’an School</span></span>
+    <span class="sp"></span>
+    <span class="tag">1</span><span class="mini lat">English</span><span class="mini"><svg class="ticon" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><circle cx="8" cy="8" r="6.3" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M8 1.7a6.3 6.3 0 0 0 0 12.6z" fill="currentColor"/></svg></span>
   </div>
   <div class="body">
-    <span class="tag">1</span><span class="kid lat">Yusuf A.</span><span class="kid off lat">Maryam A.</span>
+    <span class="tag">2</span><span class="kid lat">Yusuf A.</span><span class="kid off lat">Maryam A.</span>
 
-    <h4><span class="tag">2</span><span class="lat">Yusuf A.</span></h4>
+    <h4><span class="tag">3</span><span class="lat">Yusuf A.</span></h4>
     <div class="sub">جُزْءُ عَمّ</div>
 
-    <div class="dtr"><span class="tag">3</span><span class="tr up"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 13 L13 3"/><path d="M13 3 L8 3 M13 3 L13 8"/></svg>يَتَقَدَّم</span><span class="wh">خِلَالَ الحِصَصِ الأَخِيرَة</span></div>
+    <div class="dtr"><span class="tag">4</span><span class="tr up"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 13 L13 3"/><path d="M13 3 L8 3 M13 3 L13 8"/></svg>يَتَقَدَّم</span><span class="wh">خِلَالَ الحِصَصِ الأَخِيرَة</span></div>
 
-    <div class="hero"><div class="lbl"><span class="tag">4</span>هَذَا الأُسْبُوع</div>
+    <div class="hero"><div class="lbl"><span class="tag">5</span>هَذَا الأُسْبُوع</div>
       <div class="hw">لِلْحِفْظ · <b>الفَجْر</b> <span class="lat">Al-Fajr 1&ndash;8</span><br>
       لِلْمُرَاجَعَة · <b>القَدْر</b> <span class="lat">Al-Qadr</span></div></div>
 
-    <div class="pcard"><div class="h"><span class="tag">5</span>الحُضُور</div>
+    <div class="pcard"><div class="h"><span class="tag">6</span>الحُضُور</div>
       <div class="dots"><div class="d"><i class="p"></i><span>5 سبتمبر</span></div><div class="d"><i class="p"></i><span>6 سبتمبر</span></div><div class="d"><i class="l"></i><span>12 سبتمبر</span></div><div class="d"><i class="e"></i><span>13 سبتمبر</span></div><div class="d"><i class="p"></i><span>19 سبتمبر</span></div><div class="d"><i class="p"></i><span>20 سبتمبر</span></div><div class="d"><i class="p"></i><span>26 سبتمبر</span></div><div class="d"><i class="c"></i><span>27 سبتمبر</span></div></div>
       <div class="kv"><span>الحُضُورُ هَذَا العَام</span><b class="lat">86%</b></div>
       <div class="kv"><span>حَاضِر / مُتَأَخِّر / بِعُذْر / بِدُونِ عُذْر</span><b class="lat">5 · 1 · 1 · 0</b></div>
@@ -385,20 +393,20 @@ li{margin-bottom:9px}
       </div>
     </div>
 
-    <div class="pcard"><div class="h"><span class="tag">6</span>مُسْتَوَى <span class="lat">Yusuf</span></div>
+    <div class="pcard"><div class="h"><span class="tag">7</span>مُسْتَوَى <span class="lat">Yusuf</span></div>
       <div class="kv" style="border-top:0"><span>صَفَحَاتٌ مُتْقَنَة</span><b class="lat">9 <span style="font-weight:400;color:var(--ink-3)">مِنْ 23 فِي هَذَا الجُزْء</span></b></div>
       <div class="kv"><span>سُوَرٌ مُتْقَنَة</span><b class="lat">24</b></div>
       <div class="kv"><span>يَحْتَاجُ مُرَاجَعَة</span><b class="lat">3</b></div>
       <div class="bar2"><i style="background:var(--ok);flex:9"></i><i style="background:var(--late);flex:5"></i><i style="background:var(--surface-3);flex:9"></i></div>
     </div>
 
-    <div class="pcard"><div class="h"><span class="tag">7</span>يَحْتَاجُ مُرَاجَعَة — لِلْمُسَاعَدَةِ فِي البَيْت</div>
+    <div class="pcard"><div class="h"><span class="tag">8</span>يَحْتَاجُ مُرَاجَعَة — لِلْمُسَاعَدَةِ فِي البَيْت</div>
       <div class="rev" style="border-top:0"><span class="ar">القَدْر</span><span class="lat">Al-Qadr</span></div>
       <div class="rev"><span class="ar">العَلَق</span><span class="lat">Al-ʻAlaq</span></div>
       <div class="rev"><span class="ar">القَارِعَة</span><span class="lat">Al-Qāriʻa</span></div>
     </div>
 
-    <div class="pcard"><div class="h"><span class="tag">8</span>الحِصَصُ الأَخِيرَة</div>
+    <div class="pcard"><div class="h"><span class="tag">9</span>الحِصَصُ الأَخِيرَة</div>
       <div class="sess">
         <div class="s"><div class="dt">الأحد، 27 سبتمبر 2026</div>
           <div class="w">الحَلْقَةُ مُغْلَقَة</div></div>
@@ -422,12 +430,21 @@ li{margin-bottom:9px}
 <h2>قِسْمًا قِسْمًا</h2>
 
 <div class="call"><div class="num">1</div><div class="txt">
+  <b>بِالعَرَبِيَّةِ أَوِ الإِنْجِلِيزِيَّة، فَاتِحٌ أَوْ دَاكِن</b>
+  الزِّرَّانِ فِي أَعْلَى الصَّفْحَة. زِرُّ <b class="lat">English</b> يُحَوِّلُ الصَّفْحَةَ كُلَّهَا
+  إِلَى الإِنْجِلِيزِيَّة — وَيَعُودُ بِهَا، فَيُقْرَأُ عِنْدَئِذٍ <b>العربية</b>. وَزِرُّ
+  <b class="icb"><svg class="ticon" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><circle cx="8" cy="8" r="6.3" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M8 1.7a6.3 6.3 0 0 0 0 12.6z" fill="currentColor"/></svg></b> يُبَدِّلُ بَيْنَ الصَّفْحَةِ الفَاتِحَةِ وَالدَّاكِنَة، وَالدَّاكِنَةُ أَرْفَقُ
+  بِالعَيْنِ لَيْلًا. وَتَحْفَظُ الصَّفْحَةُ اخْتِيَارَيْكُمْ عَلَى ذَلِكَ الهَاتِف، فَتَخْتَارُونَ مَرَّةً
+  وَاحِدَة.
+</div></div>
+
+<div class="call"><div class="num">2</div><div class="txt">
   <b>أَبْنَاؤُكُم</b>
   إِنْ كَانَ لَكُمْ أَكْثَرُ مِنْ وَلَدٍ فِي المَدْرَسَة، ظَهَرُوا هُنَا أَزْرَارًا.
   اِضْغَطُوا عَلَى الاِسْمِ لِلاِنْتِقَالِ بَيْنَهُم. رَابِطٌ وَاحِدٌ يَكْفِي الأُسْرَةَ كُلَّهَا.
 </div></div>
 
-<div class="call"><div class="num">2</div><div class="txt">
+<div class="call"><div class="num">3</div><div class="txt">
   <b>الاِسْمُ وَالحَلْقَة</b>
   نَعْرِضُ الاِسْمَ الأَوَّلَ وَالحَرْفَ الأَوَّلَ مِنِ اسْمِ العَائِلَةِ فَقَط. أَمَّا
   الاِسْمُ الكَامِلُ لِابْنِكُمْ وَرَقْمُ هَاتِفِكُمْ وَبَرِيدُكُمُ الإِلِكْتُرُونِيُّ
@@ -435,7 +452,7 @@ li{margin-bottom:9px}
   الخُصُوصِيَّةِ فِي الآخِر.
 </div></div>
 
-<div class="call"><div class="num">3</div><div class="txt">
+<div class="call"><div class="num">4</div><div class="txt">
   <b>كَيْفَ يَسِير</b>
   سَهْمٌ وَاحِدٌ يَقْرَأُ الحِصَصَ الأَخِيرَةَ مَجْمُوعَةً — لَا الحِصَّةَ الأَخِيرَةَ
   وَحْدَهَا. يَنْظُرُ فِي الحِفْظِ الجَدِيدِ وَفِي ثَبَاتِ مَا حُفِظَ مِنْ قَبْل. وَهُوَ
@@ -447,7 +464,7 @@ li{margin-bottom:9px}
     <span class="tr flat"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8 L13 8"/><path d="M13 8 L9 5 M13 8 L9 11"/></svg>ثَابِت</span>
     <span class="wh">يَحْضُرُ الحِصَص، لَكِنَّ المُضَافَ قَلِيل. وَالسَّبَبُ غَالِبًا مَا يَجْرِي فِي الأُسْبُوعِ بَيْنَ الحِصَّتَيْن.</span>
     <span class="tr down"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3 L13 13"/><path d="M13 13 L8 13 M13 13 L13 8"/></svg>يَحْتَاجُ انْتِبَاهًا</span>
-    <span class="wh">هُنَاكَ تَرَاجُع — قَائِمَةُ المُرَاجَعَةِ تَكْبُرُ أَسْرَعَ مِنَ الحِفْظِ الجَدِيد. اِبْدَأُوا بِالقِسْمِ <span class="lat">7</span>.</span>
+    <span class="wh">هُنَاكَ تَرَاجُع — قَائِمَةُ المُرَاجَعَةِ تَكْبُرُ أَسْرَعَ مِنَ الحِفْظِ الجَدِيد. اِبْدَأُوا بِالقِسْمِ <span class="lat">9</span>.</span>
     <span class="tr away"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 8 L12.5 8"/></svg>لَا يُمْكِنُ الحُكْمُ بَعْد</span>
     <span class="wh">الحِصَصُ قَلِيلَةٌ إِلَى الآنَ، أَوِ الغِيَابُ كَثِير، فَلَا يَصِحُّ الحُكْمُ فِي الاِتِّجَاهَيْن. وَهَذَا مُعْتَادٌ فِي أَوَّلِ العَام.</span>
   </div>
@@ -455,7 +472,7 @@ li{margin-bottom:9px}
   نَفْسِهَا، فَلَا يَنْظُرُ أَحَدُكُمَا إِلَى جَوَابٍ غَيْرِ جَوَابِ الآخَر.
 </div></div>
 
-<div class="call"><div class="num">4</div><div class="txt">
+<div class="call"><div class="num">5</div><div class="txt">
   <b>هَذَا الأُسْبُوع</b>
   مَا حُدِّدَ فِي الحِصَّةِ الأَخِيرَة، وَيُسَلَّمُ فِي الحِصَّةِ القَادِمَة.
   <i>لِلْحِفْظ</i> أَرْضٌ جَدِيدَة، وَ<i>لِلْمُرَاجَعَة</i> شَيْءٌ حُفِظَ مِنْ قَبْلُ
@@ -463,7 +480,7 @@ li{margin-bottom:9px}
   فَهُنَا مَوْضِعُ النَّظَرِ بَعْدَ أُسْبُوعٍ فَاتَكُم.
 </div></div>
 
-<div class="call"><div class="num">5</div><div class="txt">
+<div class="call"><div class="num">6</div><div class="txt">
   <b>الحُضُور</b>
   مُرَبَّعٌ لِكُلِّ حِصَّة، وَالأَحْدَثُ فِي الآخِر، ثُمَّ مَجَامِيعُ السَّنَة. وَالمِفْتَاحُ
   تَحْتَهَا يُسَمِّي الحَالَاتِ السِّتَّ كُلَّهَا. اِثْنَتَانِ مِنْهَا يَسْهُلُ الخَلْطُ
@@ -473,7 +490,7 @@ li{margin-bottom:9px}
   فَإِنْ رَأَيْتُمْ عِدَّةَ مُرَبَّعَاتٍ مِنْ هَذَا النَّوْعِ فَأَخْبِرُونَا.
 </div></div>
 
-<div class="call"><div class="num">6</div><div class="txt">
+<div class="call"><div class="num">7</div><div class="txt">
   <b>أَيْنَ وَصَلَ ابْنُكُم</b>
   كَمْ مِنَ الجُزْءِ الَّذِي يَعْمَلُ عَلَيْهِ صَارَ مُتْقَنًا، وَكَمْ مِنْهُ لَا يَزَالُ
   يَحْتَاجُ مُرَاجَعَة. وَالصَّفَحَاتُ مِقْيَاسٌ أَعْدَلُ مِنَ السُّوَرِ لِأَنَّ أَطْوَالَ
@@ -481,13 +498,13 @@ li{margin-bottom:9px}
   يُجْرِيَ المُعَلِّمُ الجَرْدَ الأَوَّل — عَادَةً فِي الأَسَابِيعِ الأُولَى.
 </div></div>
 
-<div class="call"><div class="num">7</div><div class="txt">
+<div class="call"><div class="num">8</div><div class="txt">
   <b>يَحْتَاجُ مُرَاجَعَة — لِلْمُسَاعَدَةِ فِي البَيْت</b>
   السُّوَرُ الَّتِي ضَعُفَت. وَهَذِهِ أَنْفَعُ قَائِمَةٍ فِي الصَّفْحَة: عَشْرُ دَقَائِقَ
   عَلَى وَاحِدَةٍ مِنْهَا خِلَالَ الأُسْبُوعِ خَيْرٌ مِنْ سَاعَةٍ لَيْلَةَ الحِصَّة.
 </div></div>
 
-<div class="call"><div class="num">8</div><div class="txt">
+<div class="call"><div class="num">9</div><div class="txt">
   <b>الحِصَصُ الأَخِيرَة</b>
   مَا جَرَى فِعْلًا، وَالأَحْدَثُ أَوَّلًا — مَا تُلِيَ وَمَنِ اسْتَمَعَ إِلَيْه. وَتَظْهَرُ
   هُنَا ثَلَاثَةُ أَشْيَاء:
