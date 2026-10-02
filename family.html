@@ -25,9 +25,11 @@
   .oops h1{font-size:19px;margin:0 0 10px}
   .oops p{font-size:14px;color:var(--ink-2);line-height:1.6}
   .proto .rt button{min-height:34px;min-width:44px}
-  /* The language/theme bar is pinned to the bottom, so the page needs room
-     underneath it or the last card sits behind it and cannot be read. */
-  body{padding-bottom:calc(64px + env(safe-area-inset-bottom,0px))}
+  /* The language and theme buttons used to sit in a bar pinned to the bottom
+     of the window, which needed 64px of clearance under the last card. They
+     now live in the page's own bar at the top, so this is just breathing room
+     at the end of a long page. */
+  body{padding-bottom:calc(22px + env(safe-area-inset-bottom,0px))}
   /* see the note in index.html — Latin names inside Arabic sentences */
   .ctx h1, .kid, .rlist .tr{ unicode-bidi:plaintext; text-align:start; }
   .ctx .sub, .sess .d, .sess .w, .hero span{ unicode-bidi:isolate; }
@@ -95,7 +97,10 @@
 
 <section class="view wrap" id="v-family" hidden>
   <div class="bar"><svg class="crest" aria-label="Qur’an School" role="img"><use href="#crest-mark"/></svg><div class="logo barlock"><span class="en">
-    <b class="schoolname" id="school">Qur’an School</b><span>مَدْرَسَةُ القُرْآنِ</span></span></div><span class="barrule"></span><span class="logo applogo"><span class="ar">سِجِلّ</span><span class="en"><b>Sijill</b></span></span></div>
+    <b class="schoolname" id="school">Qur’an School</b><span>مَدْرَسَةُ القُرْآنِ</span></span></div><span class="barrule"></span><span class="logo applogo"><span class="ar">سِجِلّ</span><span class="en"><b>Sijill</b></span></span>
+    <span class="sp"></span>
+    <button class="mini" id="lang">العربية</button>
+    <button class="mini" id="theme" aria-label="Light or dark">◐</button></div>
   <div class="pad">
     <div class="kids" id="kidRow"></div>
     <div id="body"></div>
@@ -123,10 +128,6 @@
   </div>
 </section>
 
-<div class="proto" style="position:fixed;bottom:0;left:0;right:0;top:auto;padding:6px 12px;z-index:50">
-  <span class="tag">SIJILL</span><span class="sw" style="flex:1"></span>
-  <div class="rt"><button id="lang">العربية</button><button id="theme">◐</button></div>
-</div>
 
 <script src="config.js"></script>
 <script src="api.js"></script>

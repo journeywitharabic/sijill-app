@@ -15,10 +15,11 @@
   /* Same palette as the app, kept in step by hand because this page is
      deliberately self-contained — it has to open from a phone with no
      stylesheet beside it. */
-  --paper:#F6F2E8; --surface:#FFFFFF; --surface-2:#EDE7D7;
+  --paper:#F6F2E8; --surface:#FFFFFF; --surface-2:#EDE7D7; --surface-3:#E2DAC5;
   --ink:#1A1E19; --ink-2:#47433C; --ink-3:#625E55;
   --line:#DFD8C5; --line-2:#CBC2A9;
   --lapis:#1D3B2C; --lapis-soft:#E4EBE3;
+  --brass:#BAA168; --brass-ink:#826939;
   --ok:#0E7551;   --ok-soft:#DDEADD;
   --late:#916000; --late-soft:#F7E9CF; --late-fill:#D18F00;
   --crit:#98122B; --crit-soft:#F7DFD9;
@@ -81,11 +82,28 @@ hr{border:0;border-top:1px solid var(--line);margin:30px 0}
 .row .v{flex:1;min-width:0;font-size:14.5px;line-height:1.5}
 .row .v b{display:block;margin-bottom:1px}
 
-/* ---- trend arrows ---- */
-.tr{display:inline-flex;align-items:center;gap:7px;font-weight:700;font-size:14px}
-.tr svg{flex:none}
+/* ---- trend arrows ----
+   Same four strokes the app draws, at the same proportions. fill and stroke
+   are set on each <svg> in the markup rather than here, because these paths
+   have no area: left to inherit they come out fill:black / stroke:none, which
+   is to say invisible. */
+.tr{display:inline-flex;align-items:center;gap:7px;font-weight:700;font-size:13.5px}
+.tr svg{flex:none;width:17px;height:17px}
 .tr.up{color:var(--ok)} .tr.flat{color:var(--late)}
 .tr.down{color:var(--crit)} .tr.away{color:var(--ink-3)}
+/* the key under callout 3 — one arrow per line, so the words line up */
+.trkey{display:grid;grid-template-columns:auto 1fr;gap:7px 12px;align-items:baseline;
+  background:var(--surface);border:1px solid var(--line);border-radius:11px;
+  padding:11px 13px;margin:9px 0 2px;font-size:14px}
+.trkey .tr{font-size:13.5px}
+.trkey .wh{color:var(--ink-2);line-height:1.45}
+/* On a phone the second column is too narrow to be worth having — the label
+   and its sentence stack instead, which is also how it reads in print. */
+@media (max-width:460px){
+  .trkey{grid-template-columns:1fr;gap:3px}
+  .trkey .wh{margin-bottom:8px}
+  .trkey .wh:last-child{margin-bottom:0}
+}
 
 /* ---- misc ---- */
 .ar{font-family:var(--serif);direction:rtl;unicode-bidi:isolate}
@@ -99,10 +117,11 @@ footer .ar{font-size:17px;display:block;margin-bottom:6px;color:var(--ink-2)}
 /* ---- dark, for anyone reading in the masjid car park at 9pm ---- */
 @media (prefers-color-scheme: dark){
   :root:not([data-theme="light"]){
-    --paper:#0E1411; --surface:#16201A; --surface-2:#1D2A22;
+    --paper:#0E1411; --surface:#16201A; --surface-2:#1D2A22; --surface-3:#26352B;
     --ink:#ECE8DB; --ink-2:#C9C4B6; --ink-3:#9F9B91;
     --line:#2B3830; --line-2:#3B4A40;
     --lapis:#8FC9A6; --lapis-soft:#1B2E23;
+    --brass:#D9B44A; --brass-ink:#E3C46E;
     --ok:#5FCFA2;   --ok-soft:#13291F;
     --late:#EFB840; --late-soft:#332612; --late-fill:#EFB840;
     --crit:#F4707F; --crit-soft:#36161B;
@@ -155,6 +174,12 @@ footer .ar{font-size:17px;display:block;margin-bottom:6px;color:var(--ink-2)}
   padding:12px 13px;margin-bottom:10px}
 .pcard .h{font-size:10px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;
   color:var(--ink-3);margin-bottom:9px}
+/* the trend line as it appears on the real page, under the child's name */
+.dtr{display:flex;align-items:center;gap:9px;flex-wrap:wrap;border-radius:11px;
+  padding:9px 12px;margin-bottom:10px;font-size:13px;
+  background:var(--ok-soft);border:1px solid color-mix(in srgb,var(--ok) 58%,transparent)}
+.dtr .tr{font-size:13px}
+.dtr .wh{color:var(--ink-2);font-size:12px}
 .dots{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px}
 .dots .d{text-align:center}
 .dots .d i{width:22px;height:22px;border-radius:7px;display:block;border:1px solid transparent}
@@ -191,7 +216,7 @@ footer .ar{font-size:17px;display:block;margin-bottom:6px;color:var(--ink-2)}
 .sess .w{font-size:14px;margin-top:1px}
 .stars{display:inline-flex;gap:1px;vertical-align:middle;margin-inline-start:5px}
 .stars svg{width:11px;height:11px;fill:none;stroke:var(--ink-3);stroke-width:1.4;stroke-linejoin:round}
-.stars .on svg{fill:var(--brass);stroke:#826939}
+.stars .on svg{fill:var(--brass);stroke:var(--brass-ink)}
 .adabline{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--ink-2);margin-top:3px}
 .face{width:17px;height:17px;fill:none;stroke:currentColor;stroke-width:1.3;stroke-linecap:round;flex:none}
 .face .eye{fill:currentColor;stroke:none}
@@ -202,7 +227,10 @@ footer .ar{font-size:17px;display:block;margin-bottom:6px;color:var(--ink-2)}
 .call .num{flex:none;width:26px;height:26px;border-radius:50%;background:var(--lapis);color:#fff;
   font-size:13px;font-weight:700;display:flex;align-items:center;justify-content:center;margin-top:1px}
 .call .txt{flex:1;min-width:0}
-.call .txt b{display:block;margin-bottom:2px}
+/* Only the LEADING label is a block. This used to apply to every <b> in the
+   paragraph, so emphasis mid-sentence threw the rest onto a new line. */
+.call .txt b{display:inline}
+.call .txt > b:first-child{display:block;margin-bottom:2px}
 .tag{display:inline-flex;align-items:center;justify-content:center;min-width:22px;height:22px;
   border-radius:50%;background:var(--lapis);color:#fff;font-size:12px;font-weight:700;
   margin-inline-end:6px;vertical-align:middle}
@@ -218,6 +246,20 @@ footer .ar{font-size:17px;display:block;margin-bottom:6px;color:var(--ink-2)}
   .pcard, .hero{break-inside:avoid}
   .call{break-inside:avoid}
   h3{break-after:avoid}
+  /* The mock is about one and a half sheets tall, so it always breaks; the
+     question is only where. Left alone it used three fragments — a third of
+     page one blank, and the little grey "message us on ClassDojo" card
+     stranded by itself at the top of a page with nothing above it. Taking
+     roughly a tenth off its type and padding in print, and nowhere else,
+     brings it down to two. */
+  .demo{font-size:.92em}
+  .demo .body{padding:9px}
+  .demo .pcard, .demo .hero{padding:9px 10px;margin-bottom:7px}
+  .demo .dots .d i{width:19px;height:19px}
+  .demo .kv{padding:5px 0}
+  /* and if it still lands badly, the contact card follows the card above it
+     rather than opening a page on its own. */
+  .demo .pcard:last-child{break-before:avoid}
 }
 
 </style>
@@ -259,9 +301,10 @@ footer .ar{font-size:17px;display:block;margin-bottom:6px;color:var(--ink-2)}
 on, how they are getting on, and what to practise at home. It updates itself —
 there is nothing to install and nothing to log into.</p>
 
-<div class="note"><b>Open it once a week, ideally mid-week.</b> That is the whole
-ask. Homework is set at the end of each class and is due at the next one, so
-Tuesday or Wednesday is the moment it is still useful.</div>
+<div class="note"><b>Open it after every class.</b> Homework is set at the end of
+each lesson and is due at the next one, so looking the same evening or the day
+after lets you plan the week and split the work into short daily sessions
+instead of one long one the night before.</div>
 
 <h2>What the page looks like</h2>
 <p>Below is an example page for an invented child. The numbers are not on the
@@ -278,23 +321,30 @@ real page — they point to the explanations that follow.</p>
     <span class="tag">1</span><span class="kid">Yusuf A.</span><span class="kid off">Maryam A.</span>
 
     <h4><span class="tag">2</span>Yusuf A.</h4>
-    <div class="sub">Hizb 54 · Surat Ar-Rahman group</div>
+    <div class="sub">Juz Amma</div>
 
-    <div class="hero"><div class="lbl"><span class="tag">3</span>This week</div>
+    <div class="dtr"><span class="tag">3</span><span class="tr up"><svg viewBox="0 0 16 16"
+        fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round"
+        stroke-linejoin="round"><path d="M3 13 L13 3"/><path d="M13 3 L8 3 M13 3 L13 8"/></svg>moving
+        forward</span><span class="wh">over the last few classes</span></div>
+
+    <div class="hero"><div class="lbl"><span class="tag">4</span>This week</div>
       <div class="hw"><b>الفَجْر</b> Al-Fajr 1–8 · memorize<br>
       <b>القَدْر</b> Al-Qadr · review</div></div>
 
-    <div class="pcard"><div class="h"><span class="tag">4</span>Attendance</div>
+    <div class="pcard"><div class="h"><span class="tag">5</span>Attendance</div>
       <div class="dots">
-        <div class="d"><i class="p"></i><span>12 Sept</span></div>
-        <div class="d"><i class="l"></i><span>14 Sept</span></div>
-        <div class="d"><i class="e"></i><span>19 Sept</span></div>
-        <div class="d"><i class="a"></i><span>21 Sept</span></div>
-        <div class="d"><i class="c"></i><span>26 Sept</span></div>
-        <div class="d"><i class="n"></i><span>28 Sept</span></div>
+        <div class="d"><i class="p"></i><span>5 Sept</span></div>
+        <div class="d"><i class="p"></i><span>6 Sept</span></div>
+        <div class="d"><i class="l"></i><span>12 Sept</span></div>
+        <div class="d"><i class="e"></i><span>13 Sept</span></div>
+        <div class="d"><i class="p"></i><span>19 Sept</span></div>
+        <div class="d"><i class="p"></i><span>20 Sept</span></div>
+        <div class="d"><i class="p"></i><span>26 Sept</span></div>
+        <div class="d"><i class="c"></i><span>27 Sept</span></div>
       </div>
-      <div class="kv"><span>Attendance this year</span><b>83%</b></div>
-      <div class="kv"><span>Present / late / excused / no reason</span><b>8 · 1 · 1 · 1</b></div>
+      <div class="kv"><span>Attendance this year</span><b>86%</b></div>
+      <div class="kv"><span>Present / late / excused / no reason</span><b>5 · 1 · 1 · 0</b></div>
       <div class="pills">
         <span class="pl ok"><i></i>Present</span><span class="pl late"><i></i>Late</span>
         <span class="pl exc"><i></i>Excused</span><span class="pl crit"><i></i>No reason</span>
@@ -303,30 +353,30 @@ real page — they point to the explanations that follow.</p>
       </div>
     </div>
 
-    <div class="pcard"><div class="h"><span class="tag">5</span>Where Yusuf is</div>
+    <div class="pcard"><div class="h"><span class="tag">6</span>Where Yusuf is</div>
       <div class="kv" style="border-top:0"><span>Pages solid</span><b>9 of 23 in this juz</b></div>
       <div class="kv"><span>Surahs solid</span><b>24</b></div>
-      <div class="kv"><span>Needs review</span><b>5</b></div>
+      <div class="kv"><span>Needs review</span><b>3</b></div>
       <div class="bar2"><i style="background:var(--ok);flex:9"></i><i style="background:var(--late);flex:5"></i><i style="background:var(--surface-3);flex:9"></i></div>
     </div>
 
-    <div class="pcard"><div class="h"><span class="tag">6</span>Needs review — help at home</div>
+    <div class="pcard"><div class="h"><span class="tag">7</span>Needs review — help at home</div>
       <div class="rev" style="border-top:0"><span class="ar">القَدْر</span><span>Al-Qadr</span></div>
       <div class="rev"><span class="ar">العَلَق</span><span>Al-ʻAlaq</span></div>
       <div class="rev"><span class="ar">القَارِعَة</span><span>Al-Qāriʻa</span></div>
     </div>
 
-    <div class="pcard"><div class="h"><span class="tag">7</span>Recent classes</div>
+    <div class="pcard"><div class="h"><span class="tag">8</span>Recent classes</div>
       <div class="sess">
-        <div class="s"><div class="dt">Friday, 26 Sept 2026 · Ustadh Ahmed</div>
+        <div class="s"><div class="dt">Sunday, 27 Sept 2026</div>
+          <div class="w">Class closed</div></div>
+        <div class="s"><div class="dt">Saturday, 26 Sept 2026 · Ustadh Ahmed</div>
           <div class="w">Al-Fajr 1–8 <span class="stars"><span class="on"><svg viewBox="0 0 16 16"><path d="M8 1.6l1.9 3.9 4.3.6-3.1 3 .7 4.3L8 11.4l-3.8 2-.7-4.3-3.1-3 4.3-.6z"/></svg></span><span class="on"><svg viewBox="0 0 16 16"><path d="M8 1.6l1.9 3.9 4.3.6-3.1 3 .7 4.3L8 11.4l-3.8 2-.7-4.3-3.1-3 4.3-.6z"/></svg></span><span class="on"><svg viewBox="0 0 16 16"><path d="M8 1.6l1.9 3.9 4.3.6-3.1 3 .7 4.3L8 11.4l-3.8 2-.7-4.3-3.1-3 4.3-.6z"/></svg></span><span class="on"><svg viewBox="0 0 16 16"><path d="M8 1.6l1.9 3.9 4.3.6-3.1 3 .7 4.3L8 11.4l-3.8 2-.7-4.3-3.1-3 4.3-.6z"/></svg></span><span class=""><svg viewBox="0 0 16 16"><path d="M8 1.6l1.9 3.9 4.3.6-3.1 3 .7 4.3L8 11.4l-3.8 2-.7-4.3-3.1-3 4.3-.6z"/></svg></span></span></div></div>
-        <div class="s"><div class="dt">Sunday, 21 Sept 2026 · Ustadh Ahmed</div>
+        <div class="s"><div class="dt">Sunday, 20 Sept 2026 · Ustadh Ahmed</div>
           <div class="w">Al-Qadr <span class="stars"><span class="on"><svg viewBox="0 0 16 16"><path d="M8 1.6l1.9 3.9 4.3.6-3.1 3 .7 4.3L8 11.4l-3.8 2-.7-4.3-3.1-3 4.3-.6z"/></svg></span><span class="on"><svg viewBox="0 0 16 16"><path d="M8 1.6l1.9 3.9 4.3.6-3.1 3 .7 4.3L8 11.4l-3.8 2-.7-4.3-3.1-3 4.3-.6z"/></svg></span><span class=""><svg viewBox="0 0 16 16"><path d="M8 1.6l1.9 3.9 4.3.6-3.1 3 .7 4.3L8 11.4l-3.8 2-.7-4.3-3.1-3 4.3-.6z"/></svg></span><span class=""><svg viewBox="0 0 16 16"><path d="M8 1.6l1.9 3.9 4.3.6-3.1 3 .7 4.3L8 11.4l-3.8 2-.7-4.3-3.1-3 4.3-.6z"/></svg></span><span class=""><svg viewBox="0 0 16 16"><path d="M8 1.6l1.9 3.9 4.3.6-3.1 3 .7 4.3L8 11.4l-3.8 2-.7-4.3-3.1-3 4.3-.6z"/></svg></span></span></div>
           <div class="adabline"><svg class="face f2" viewBox="0 0 16 16"><circle cx="8" cy="8" r="6.6"/><circle class="eye" cx="5.9" cy="6.3" r=".85"/><circle class="eye" cx="10.1" cy="6.3" r=".85"/><path d="M5.6 10.9a3.4 3.4 0 0 1 4.8 .5"/></svg><span>Adab — behaviour 2/5 · “kept leaving his seat; settled after the break”</span></div></div>
-        <div class="s"><div class="dt">Friday, 19 Sept 2026</div>
+        <div class="s"><div class="dt">Saturday, 19 Sept 2026</div>
           <div class="w">Here — nothing recorded</div></div>
-        <div class="s"><div class="dt">Sunday, 14 Sept 2026</div>
-          <div class="w">Class closed</div></div>
       </div>
     </div>
 
@@ -353,6 +403,37 @@ real page — they point to the explanations that follow.</p>
 </div></div>
 
 <div class="call"><div class="num">3</div><div class="txt">
+  <b>How it is going</b>
+  One arrow, reading the last few classes together — not the last one. It looks
+  at whether new ground is being covered and whether what was learned before is
+  holding. It is the quickest thing on the page: if the arrow is green, carry on
+  as you are.
+  <div class="trkey">
+    <span class="tr up"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor"
+      stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 13 L13 3"/><path
+      d="M13 3 L8 3 M13 3 L13 8"/></svg>moving forward</span>
+    <span class="wh">New ground is going in and the review list is not growing.</span>
+    <span class="tr flat"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor"
+      stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8 L13 8"/><path
+      d="M13 8 L9 5 M13 8 L9 11"/></svg>standing still</span>
+    <span class="wh">Coming to class, but little is being added. Usually the week
+      between classes.</span>
+    <span class="tr down"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor"
+      stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3 L13 13"/><path
+      d="M13 13 L8 13 M13 13 L13 8"/></svg>needs attention</span>
+    <span class="wh">Ground is being lost — the review list is growing faster than
+      the new work. Start with section 7.</span>
+    <span class="tr away"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor"
+      stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"><path
+      d="M3.5 8 L12.5 8"/></svg>not enough to say</span>
+    <span class="wh">Too few classes so far, or too many missed, to call it either
+      way. Normal in September.</span>
+  </div>
+  Your child’s teacher sees <b>the same arrow</b>, worked out the same way, so the
+  two of you are never looking at different answers.
+</div></div>
+
+<div class="call"><div class="num">4</div><div class="txt">
   <b>This week</b>
   What was set at the last class, due at the next one. <i>Memorize</i> is new
   ground. <i>Review</i> is something learned before that is coming back round.
@@ -360,15 +441,16 @@ real page — they point to the explanations that follow.</p>
   look after a missed week.
 </div></div>
 
-<div class="call"><div class="num">4</div><div class="txt">
+<div class="call"><div class="num">5</div><div class="txt">
   <b>Attendance</b>
-  One square per class, most recent last, then the totals for the year. Two of
-  the six are easy to mix up: a <b>hatched</b> square means the school closed
-  that day and it counts against nobody; an <b>empty dashed</b> square means the
-  class ran but your child was not marked — if you see several of those, tell us.
+  One square per class, most recent last, then the totals for the year. The key
+  underneath names all six states. Two of them are easy to mix up: a
+  <b>hatched</b> square means the school closed that day and it counts against
+  nobody; an <b>empty dashed</b> square means the class ran but your child was
+  not marked — if you see several of those, tell us.
 </div></div>
 
-<div class="call"><div class="num">5</div><div class="txt">
+<div class="call"><div class="num">6</div><div class="txt">
   <b>Where your child is</b>
   How much of the current juz is solid, how much still needs review. Pages are a
   fairer measure than surahs, because surahs vary enormously in length. This
@@ -376,14 +458,14 @@ real page — they point to the explanations that follow.</p>
   first few weeks.
 </div></div>
 
-<div class="call"><div class="num">6</div><div class="txt">
+<div class="call"><div class="num">7</div><div class="txt">
   <b>Needs review — help at home</b>
   The surahs that have slipped. This is the most useful list on the page: ten
   minutes on one of these during the week is worth more than an hour the night
   before.
 </div></div>
 
-<div class="call"><div class="num">7</div><div class="txt">
+<div class="call"><div class="num">8</div><div class="txt">
   <b>Recent classes</b>
   What actually happened, newest first — what was recited, and the teacher who
   heard it. Three things can appear here:
@@ -391,9 +473,7 @@ real page — they point to the explanations that follow.</p>
 
 <h3>Tajwīd stars</h3>
 <p>Beside each passage, out of five, for the recitation itself — makārij, madd,
-the rules being applied. It is graded <b>against your child’s own level</b>, not
-against a hāfiẓ: a young child reading cleanly earns five stars. A lower score is
-an invitation to practise aloud, not a complaint.</p>
+the rules being applied. It is graded <b>against your child’s own level</b>.</p>
 
 <h3>Adab — behaviour</h3>
 <p>Out of five, with a face. <b>Most weeks this will not appear at all</b> — it is

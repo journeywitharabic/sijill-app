@@ -46,8 +46,8 @@
       helpHome:"Needs review — help at home", recent:"Recent classes",
       nothingYet:"Nothing set for this week yet.", noClasses:"No classes recorded yet.",
       contact:"Any question about homework or attendance — message the school on ClassDojo.",
-      tajweed:"Tajwīd", adab:"Adab", wholeSurah:"whole surah", ayat:"ayat", notMarked:"not marked",
-      noneRecorded:"Here — nothing recorded",
+      tajweed:"Tajwīd", adab:"Adab", tr_up:"moving forward", tr_flat:"standing still", tr_down:"needs attention", tr_away:"not enough to say", trHelp:"over the last few classes", wholeSurah:"whole surah", ayat:"ayat", notMarked:"not marked",
+      noneRecorded:"Here — nothing recorded", guideLink:"A short guide to this page",
       notAssessed:"We haven't done this year's review with your child yet. Once their teacher has been through it — usually in the first few weeks — their progress appears here." 
     },
     ar: {
@@ -63,8 +63,8 @@
       helpHome:"يَحْتَاجُ مُرَاجَعَة — لِلْمُسَاعَدَةِ فِي البَيْت", recent:"الحِصَصُ الأَخِيرَة",
       nothingYet:"لَمْ يُحَدَّدْ شَيْءٌ لِهَذَا الأُسْبُوعِ بَعْد.", noClasses:"لَا حِصَصَ مُسَجَّلَةٌ بَعْد.",
       contact:"لِأَيِّ سُؤَالٍ حَوْلَ الوَاجِبِ أَوِ الحُضُور، رَاسِلِ المَدْرَسَةَ عَبْرَ ClassDojo.",
-      tajweed:"التَّجْوِيد", adab:"الأَدَب", wholeSurah:"السُّورَةُ كَامِلَة", ayat:"آيَة", notMarked:"لَمْ يُسَجَّل",
-      noneRecorded:"حَاضِر — لَمْ يُسَجَّلْ شَيْء",
+      tajweed:"التَّجْوِيد", adab:"الأَدَب", tr_up:"يَتَقَدَّم", tr_flat:"ثَابِت", tr_down:"يَحْتَاجُ انْتِبَاهًا", tr_away:"لَا يُمْكِنُ الحُكْمُ بَعْد", trHelp:"خِلَالَ الحِصَصِ الأَخِيرَة", wholeSurah:"السُّورَةُ كَامِلَة", ayat:"آيَة", notMarked:"لَمْ يُسَجَّل",
+      noneRecorded:"حَاضِر — لَمْ يُسَجَّلْ شَيْء", guideLink:"دَلِيلٌ مُخْتَصَرٌ لِهَذِهِ الصَّفْحَة",
       notAssessed:"لَمْ نُجْرِ جَرْدَ هَذَا العَامِ مَعَ اِبْنِكُمْ بَعْد. وَحَالَمَا يُنْجِزُهُ مُعَلِّمُهُ — عَادَةً فِي الأَسَابِيعِ الأُولَى — سَيَظْهَرُ تَقَدُّمُهُ هُنَا." 
     }
   };
@@ -92,6 +92,38 @@
       '<circle class="eye" cx="10.1" cy="6.3" r=".85"/><path d="' + MOUTH[n] + '"/></svg>';
   }
 
+  /* The same four arrows the teachers see, drawn the same way. The wording is
+     translated here rather than taken from the database, because the database
+     writes it in English only and this page has to work in Arabic. */
+  var TR = {
+    up:   { cls:"tr-up",   d:"M3 13 L13 3",  head:"M13 3 L8 3 M13 3 L13 8" },
+    flat: { cls:"tr-flat", d:"M3 8 L13 8",   head:"M13 8 L9 5 M13 8 L9 11" },
+    down: { cls:"tr-down", d:"M3 3 L13 13",  head:"M13 13 L8 13 M13 13 L13 8" },
+    away: { cls:"tr-away", d:"M3.5 8 L12.5 8", head:"" }
+  };
+  function trendBar(tr) {
+    if (!tr || !tr.dir || !TR[tr.dir]) return "";
+    var a = TR[tr.dir];
+    /* fill/stroke live on the element, not in the stylesheet, exactly as the
+       teacher side draws them. Left to CSS the paths inherit fill:black and
+       stroke:none — and a stroke-only arrow with no stroke is an arrow nobody
+       can see. It shipped invisible once; the test below now looks at paint,
+       not at presence.
+       The inner .trend span is what carries the colour: .trend.tr-up and
+       friends are the only rules that set one, and .trendbar.tr-up sets the
+       background it has to read against. */
+    return '<div class="trendbar ' + a.cls + '">' +
+      '<span class="trend ' + a.cls + '">' +
+        '<svg class="tarrow" viewBox="0 0 16 16" width="16" height="16" aria-hidden="true" ' +
+          'fill="none" stroke="currentColor" stroke-width="2.8" ' +
+          'stroke-linecap="round" stroke-linejoin="round">' +
+          '<path d="' + a.d + '"/>' + (a.head ? '<path d="' + a.head + '"/>' : '') +
+        '</svg>' +
+        '<span class="t">' + esc(t("tr_" + tr.dir)) + '</span>' +
+      '</span>' +
+      '<span class="why">' + esc(t("trHelp")) + '</span></div>';
+  }
+
   /* --------------------------------------------------------------- render */
   function render() {
     if (!DATA) return;
@@ -116,6 +148,7 @@
 
     h += '<div class="ctx" style="padding:0 0 12px"><h1>' + esc(c.name) + '</h1>' +
          '<div class="sub">' + esc(c["class"] || "") + '</div></div>';
+    h += trendBar(c.trend);
 
     // the attendance warning — adults only; the server omits it on a student link
     if (c.flags && c.flags.kind) {
@@ -240,7 +273,13 @@
           adab + notes + '</div>';
       }).join("") : '<div class="empty" style="color:var(--ink-3);font-size:13.5px">' +
                      esc(t("noClasses")) + '</div>') +
-      '</div><div style="height:10px"></div><div class="note">' + esc(t("contact")) + '</div></div>';
+      '</div><div style="height:10px"></div><div class="note">' + esc(t("contact")) +
+      /* The guide goes out once, as a PDF attached to one message, and is lost
+         by the second week. The page it explains is the one place a parent
+         reliably comes back to, so it carries its own link to it — in the
+         language they are reading, not the language the file was named in. */
+      ' <a href="' + (i18n.isAr() ? "parent-guide-ar.html" : "parent-guide.html") +
+      '" target="_blank" rel="noopener">' + esc(t("guideLink")) + '</a></div></div>';
 
     $("body").innerHTML = h;
   }
