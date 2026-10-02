@@ -908,12 +908,13 @@
         }
       };
     });
-    /* Adab. A 1 or 2 must carry a sentence — the database refuses it
-       otherwise, and a teacher should find that out here, not as an error. */
+    /* Adab. A 1 must carry a sentence — the database refuses it otherwise,
+       and a teacher should find that out here, not as a raw error. A 2 is
+       "unsettled, worth mentioning" and does not need one. */
     var fbs = $("stuBody").querySelectorAll(".faces .fb");
     function sendAdab(stars) {
       var note = ($("adabNote") && $("adabNote").value || "").trim();
-      if (stars && stars <= 2 && !note) {
+      if (stars && stars <= 1 && !note) {
         $("adabNote").classList.add("need");
         $("adabNote").focus();
         window.SijillToast(T("adabNeedNote"));
@@ -940,7 +941,15 @@
     if ($("adabNote")) {
       $("adabNote").oninput = function () { this.classList.remove("need"); };
       // A note typed after the face is tapped still has to reach the record.
-      $("adabNote").onblur = function () {
+      // But if the blur was caused by tapping a FACE, that tap is about to
+      // save anyway — and saving here first would write the OLD face, then
+      // race the new one. Let the tap win.
+      var noteWas = $("adabNote").value;
+      $("adabNote").onblur = function (e) {
+        if (e && e.relatedTarget && e.relatedTarget.closest &&
+            e.relatedTarget.closest(".faces")) return;
+        if (this.value === noteWas) return;      // nothing actually changed
+        noteWas = this.value;
         var on = $("stuBody").querySelector(".faces .fb.on");
         if (on) sendAdab(+on.dataset.adab);
       };
