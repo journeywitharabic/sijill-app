@@ -42,7 +42,8 @@
       present:"Present", late:"Late", excused:"Excused", noreason:"No reason", closed:"Class closed",
       where:"Where {n} is", pagesSolid:"Pages solid", ofPages:"of {n} in this juz",
       surahsSolid:"Surahs solid", needsReview:"Needs review",
-      scope:"Counted within juz {j}, the section {n} is working through. Pages are a fairer measure than surahs, because surah lengths vary enormously.",
+      ofWhole:"in the whole Qur\u2019an",
+      scope:"The pages are counted inside juz {j} \u2014 the part {n} is memorising now. The two lines under it count the whole Qur\u2019an. Pages are a fairer measure than surahs, because surah lengths vary enormously.",
       helpHome:"Needs review — help at home", recent:"Recent classes",
       nothingYet:"Nothing set for this week yet.", noClasses:"No classes recorded yet.",
       contact:"Any question about homework or attendance — message the school on ClassDojo.",
@@ -59,7 +60,8 @@
       closed:"الحَلْقَةُ مُغْلَقَة",
       where:"مُسْتَوَى {n}", pagesSolid:"صَفَحَاتٌ مُتْقَنَة", ofPages:"مِنْ {n} فِي هَذَا الجُزْء",
       surahsSolid:"سُوَرٌ مُتْقَنَة", needsReview:"يَحْتَاجُ مُرَاجَعَة",
-      scope:"مَحْسُوبٌ ضِمْنَ الجُزْءِ {j}، القِسْمِ الَّذِي يَعْمَلُ عَلَيْهِ {n}. الصَّفَحَاتُ مِقْيَاسٌ أَدَقُّ مِنَ السُّوَرِ لِأَنَّ أَطْوَالَ السُّوَرِ مُتَفَاوِتَة.",
+      ofWhole:"فِي القُرْآنِ كُلِّه",
+      scope:"الصَّفَحَاتُ مَحْسُوبَةٌ ضِمْنَ الجُزْءِ {j} — القِسْمِ الَّذِي يَحْفَظُهُ {n} الآنَ. أَمَّا السَّطْرَانِ تَحْتَهُ فَيَشْمَلَانِ القُرْآنَ كُلَّه. وَالصَّفَحَاتُ مِقْيَاسٌ أَدَقُّ مِنَ السُّوَرِ لِأَنَّ أَطْوَالَ السُّوَرِ مُتَفَاوِتَة.",
       helpHome:"يَحْتَاجُ مُرَاجَعَة — لِلْمُسَاعَدَةِ فِي البَيْت", recent:"الحِصَصُ الأَخِيرَة",
       nothingYet:"لَمْ يُحَدَّدْ شَيْءٌ لِهَذَا الأُسْبُوعِ بَعْد.", noClasses:"لَا حِصَصَ مُسَجَّلَةٌ بَعْد.",
       contact:"لِأَيِّ سُؤَالٍ حَوْلَ الوَاجِبِ أَوِ الحُضُور، رَاسِلِ المَدْرَسَةَ عَبْرَ ClassDojo.",
@@ -211,8 +213,15 @@
         '<div class="kv"><span>' + esc(t("pagesSolid")) + '</span><b>' + p.pages_solid +
           ' <span style="font-weight:400;color:var(--ink-3)">' +
           esc(t("ofPages", { n: p.pages_in_juz })) + '</span></b></div>' +
-        '<div class="kv"><span>' + esc(t("surahsSolid")) + '</span><b>' + (c.surahs_solid || 0) + '</b></div>' +
-        '<div class="kv"><span>' + esc(t("needsReview")) + '</span><b>' + (c.needs_review || []).length + '</b></div>' +
+        /* These two have always counted the whole Qur'an while the line above
+           them counts one juz. Nothing said so, and the note underneath said
+           the opposite — it claimed the whole card was counted inside the
+           juz. Each line now carries its own scope, in the same muted voice
+           the pages line already used for "of 23 in this juz". */
+        '<div class="kv"><span>' + esc(t("surahsSolid")) + '</span><b>' + (c.surahs_solid || 0) +
+          ' <span style="font-weight:400;color:var(--ink-3)">' + esc(t("ofWhole")) + '</span></b></div>' +
+        '<div class="kv"><span>' + esc(t("needsReview")) + '</span><b>' + (c.needs_review || []).length +
+          ' <span style="font-weight:400;color:var(--ink-3)">' + esc(t("ofWhole")) + '</span></b></div>' +
         '<div style="height:10px"></div>' +
         '<span class="bar2" style="width:100%;height:10px"><i class="a" style="width:' + pct + '%"></i>' +
           '<i class="r" style="width:' + pctP + '%"></i></span>' +
