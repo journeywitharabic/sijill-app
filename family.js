@@ -47,6 +47,7 @@
       nothingYet:"Nothing set for this week yet.", noClasses:"No classes recorded yet.",
       contact:"Any question about homework or attendance — message the school on ClassDojo.",
       wholeSurah:"whole surah", ayat:"ayat", notMarked:"not marked",
+      noneRecorded:"Here — nothing recorded",
       notAssessed:"We haven't done this year's review with your child yet. Once their teacher has been through it — usually in the first few weeks — their progress appears here." 
     },
     ar: {
@@ -63,6 +64,7 @@
       nothingYet:"لَمْ يُحَدَّدْ شَيْءٌ لِهَذَا الأُسْبُوعِ بَعْد.", noClasses:"لَا حِصَصَ مُسَجَّلَةٌ بَعْد.",
       contact:"لِأَيِّ سُؤَالٍ حَوْلَ الوَاجِبِ أَوِ الحُضُور، رَاسِلِ المَدْرَسَةَ عَبْرَ ClassDojo.",
       wholeSurah:"السُّورَةُ كَامِلَة", ayat:"آيَة", notMarked:"لَمْ يُسَجَّل",
+      noneRecorded:"حَاضِر — لَمْ يُسَجَّلْ شَيْء",
       notAssessed:"لَمْ نُجْرِ جَرْدَ هَذَا العَامِ مَعَ اِبْنِكُمْ بَعْد. وَحَالَمَا يُنْجِزُهُ مُعَلِّمُهُ — عَادَةً فِي الأَسَابِيعِ الأُولَى — سَيَظْهَرُ تَقَدُّمُهُ هُنَا." 
     }
   };
@@ -75,7 +77,7 @@
   var DOT = {
     present:"p", late:"l", absent_unjustified:"a",
     absent_sick:"e", absent_travel:"e", absent_other:"e",
-    closed:"c", "not marked":"c"
+    closed:"c", "not marked":"n"
   };
 
   /* --------------------------------------------------------------- render */
@@ -146,8 +148,8 @@
         '<span class="pill late"><i></i>' + esc(t("late")) + '</span>' +
         '<span class="pill exc"><i></i>' + esc(t("excused")) + '</span>' +
         '<span class="pill crit"><i></i>' + esc(t("noreason")) + '</span>' +
-        '<span class="pill mute"><i style="background:none;border:1px dashed var(--line-2);border-radius:2px"></i>' +
-          esc(t("closed")) + '</span></div></div>';
+        '<span class="pill mute"><i class="sw-closed"></i>' + esc(t("closed")) + '</span>' +
+        '<span class="pill mute"><i class="sw-none"></i>' + esc(t("notMarked")) + '</span></div></div>';
 
     // progress, in pages
     var p = c.progress;
@@ -182,7 +184,10 @@
         }).join("") + '</div></div>';
     }
 
-    // recent classes
+    // recent classes. recent_attendance already carries the state for each
+    // date, so the two can be joined here rather than in a new SQL migration.
+    var ATT = {};
+    (c.recent_attendance || []).forEach(function (d) { ATT[d.held_on] = d.state; });
     h += '<div class="pcard"><h2>' + esc(t("recent")) + '</h2><div class="sess">' +
       ((c.recent_classes || []).length ? c.recent_classes.map(function (x) {
         var recited = (x.recited || []).map(function (r) {
@@ -193,9 +198,23 @@
                  (n.by ? ' <span style="font-style:normal;color:var(--ink-3)">— ' + esc(n.by) + '</span>' : '') +
                  '</div>';
         }).join("");
+        // A dash meant "nothing recited", which is not something a parent can
+        // be expected to decode — especially on a day their child was there.
+        // Say it, and say whether they were present, which this card never did.
+        var line;
+        if (x.status === "cancelled") line = esc(t("closed"));
+        else if (recited) line = recited;
+        else {
+          var st = ATT[x.held_on];
+          line = esc(
+            st === "present" || st === "late" ? t("noneRecorded")
+            : st === "absent_unjustified" ? t("noreason")
+            : (st === "absent_sick" || st === "absent_travel" || st === "absent_other") ? t("excused")
+            : t("notMarked"));
+        }
         return '<div class="s"><div class="d">' + i18n.fmtDate(x.held_on, true) +
           (x.teacher ? ' · ' + esc(x.teacher) : '') + '</div>' +
-          '<div class="w">' + (x.status === "cancelled" ? esc(t("closed")) : (recited || "—")) + '</div>' +
+          '<div class="w">' + line + '</div>' +
           notes + '</div>';
       }).join("") : '<div class="empty" style="color:var(--ink-3);font-size:13.5px">' +
                      esc(t("noClasses")) + '</div>') +

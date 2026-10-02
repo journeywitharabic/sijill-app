@@ -9,6 +9,8 @@
   var EN = {
     schoolName:"Qur’an School",
     tagline:"Attendance · homework · memorization",
+    lastHeld:"the last class that ran",
+    aheadNote:"This class has not met yet. You can set homework now — attendance and ✓ heard open on the day itself.",
     gateTitle:"Sign in",
     gateHelp:"Type the school passphrase. You only do this once on this phone — it will remember you.",
     gateGo:"Sign in",
@@ -89,6 +91,8 @@
   var AR = {
     schoolName:"مَدْرَسَةُ القُرْآنِ",
     tagline:"الحُضُورُ وَالوَاجِبَاتُ وَالحِفْظُ",
+    lastHeld:"آخِرُ حَلْقَةٍ انْعَقَدَتْ",
+    aheadNote:"لَمْ تَبْدَأْ هَذِهِ الحَلْقَةُ بَعْدُ. يُمْكِنُكَ تَعْيِينُ الوَاجِبَاتِ الآنَ، وَيُفْتَحُ الحُضُورُ يَوْمَ الحَلْقَةِ.",
     gateTitle:"تَسْجِيلُ الدُّخُول",
     gateHelp:"اُكْتُبْ كَلِمَةَ مُرُورِ المَدْرَسَة. تَفْعَلُ ذَلِكَ مَرَّةً وَاحِدَةً عَلَى هَذَا الهَاتِفِ فَقَط.",
     gateGo:"دُخُول",

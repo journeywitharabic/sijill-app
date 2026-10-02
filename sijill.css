@@ -219,7 +219,16 @@ button{font:inherit;color:inherit;cursor:pointer}
 .dot i.l{background:var(--late-soft);border-color:var(--late-fill)}
 .dot i.e{background:var(--exc-soft);border-color:var(--exc)}
 .dot i.a{background:var(--crit-soft);border-color:var(--crit)}
-.dot i.c{background:var(--surface-2);border-color:var(--line-2);border-style:dashed}
+/* "Closed" and "not marked" used to be the same swatch, and they are not the
+   same thing: one is the school calling the class off, the other is the class
+   running and nobody recording this child. The first is hatched — a struck-out
+   day. The second is simply empty, with a dashed edge, because nothing is
+   there. */
+.dot i.c, .sw-closed{background:var(--surface-3);border:1px solid var(--line-2);
+  background-image:repeating-linear-gradient(135deg,
+    transparent 0 3px, color-mix(in srgb,var(--ink-3) 42%,transparent) 3px 4px)}
+.dot i.n, .sw-none{background:transparent;border:1px dashed var(--line-2)}
+.pill .sw-closed, .pill .sw-none{width:9px;height:9px;border-radius:2px;display:block;flex:none}
 .dot span{font-family:var(--mono);font-size:8.5px;color:var(--ink-3);white-space:nowrap}
 .kv{display:flex;justify-content:space-between;gap:12px;padding:6px 0;border-bottom:1px solid var(--line);font-size:13.5px}
 .kv:last-child{border-bottom:0}
@@ -278,6 +287,17 @@ tbody tr[aria-selected="true"]{background:var(--lapis-soft)}
 .trow .dt{font-family:var(--mono);font-size:10.5px;color:var(--ink-3)}
 .note{background:var(--surface-2);border:1px solid var(--line);border-radius:10px;padding:10px 12px;font-size:12.5px;color:var(--ink-2)}
 .legendrow{display:flex;gap:7px;flex-wrap:wrap;margin-top:10px}
+/* A register for a day that has not arrived yet. The roster and homework are
+   useful in advance; attendance is not, and the database refuses it anyway —
+   so the controls are put out of reach rather than left to fail on tap. */
+.aheadnote{background:var(--late-soft);color:var(--ink);
+  border:1px solid color-mix(in srgb,var(--late) 58%,transparent);
+  border-radius:11px;padding:10px 13px;margin-bottom:12px;
+  font-size:12.5px;line-height:1.5}
+.aheadnote[hidden]{display:none}
+.slist.ahead .seg3, .slist.ahead .heard{opacity:.4;pointer-events:none}
+.slist.ahead .seg3 button{cursor:default}
+
 @media (max-width:520px){ .ctx h1{font-size:18px} .irow .ar{font-size:17px} .seg3 button{width:31px} }
 
 /* ======================================================================

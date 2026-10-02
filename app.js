@@ -182,6 +182,13 @@
     if (!c) { $("slist").innerHTML = '<div class="empty">No classes yet.</div>'; return Promise.resolve(); }
     // today if today is a class day, otherwise the most recent one that ran
     var on = S.day || (c.today ? null : (c.last && c.last.held_on));
+    // A class whose first day has not arrived yet — one added midweek, say —
+    // still has a roster, and homework for it is set in advance. This used to
+    // dead-end on "has not met yet this year" with no way through, even
+    // though api_classes has been returning the next date all along. Opening
+    // it is safe: the database refuses attendance and recitation on a day
+    // that has not happened, so only homework can be set from here.
+    if (!c.today && !on && c.next && c.next.held_on) { on = c.next.held_on; }
     if (!c.today && !on) {
       $("clsTitle").textContent = c.name;
       $("clsDate").textContent = "—";
@@ -207,11 +214,25 @@
 
   function renderDay() {
     var d = S.dayData, ar = i18n.isAr();
+    var c = currentClass();
+    // Is the day on screen still ahead of us? c.last is the most recent day
+    // that has already run, so anything past it, with no class today, has not
+    // happened. ISO dates compare correctly as strings.
+    var ahead = !!c && !c.today && (!c.last || d.session.held_on > c.last.held_on);
+    // Today is not a class day and the register has quietly opened the last
+    // one that ran. That is the right thing to open — a teacher catching up
+    // on Saturday wants Friday — but the screen never said so, and a date in
+    // small grey type under the class name is easy to read straight past.
+    var behind = !!c && !c.today && !ahead;
     $("clsTitle").textContent = d["class"].name;
     $("clsDate").textContent = i18n.fmtDate(d.session.held_on, true) +
+      (behind ? " · " + T("lastHeld") : "") +
       " · " + d.students.length + " " + (ar ? "طُلَّاب" : "students") +
       (d.session.status === "cancelled" ? " · " + (ar ? "مُغْلَقَة" : "closed") : "");
 
+    $("slist").classList.toggle("ahead", ahead);
+    $("aheadNote").hidden = !ahead;
+    if (ahead) $("aheadNote").textContent = T("aheadNote");
     $("slist").innerHTML = d.students.map(function (s, i) {
       var reasonIdx = Math.max(0, REASONS.findIndex(function (r) { return r[0] === s.state; }));
       var flag = s.flags && s.flags.kind
@@ -281,7 +302,10 @@
         '</div></div>';
       $("allPresent").hidden = true;
     } else {
-      $("allPresent").hidden = false;
+      // Also hidden when the day has not arrived: the database would only
+      // refuse it. Homework stays available, because setting it in advance is
+      // the whole reason for opening a future day early.
+      $("allPresent").hidden = ahead;
     }
 
     // "3 of 8 not yet marked" — Tarek asked for this up top and very visible
@@ -291,8 +315,12 @@
     // the first evening and then cost 22px of the register every week after.
     // It moved to the hint under the list, where it is still there to be
     // found and is not in the way.
+    // Nothing can be "complete" on a day that has not happened, and the
+    // notice above already says so — the counter would just be noise. A
+    // CLOSED day is usually in the future too, and its own message is
+    // already in this element, so leave that one alone.
     if (d.session.status !== "cancelled")
-    $("doneBar").innerHTML = (tot && done >= tot)
+    $("doneBar").innerHTML = ahead ? "" : (tot && done >= tot)
       ? '<div class="donebar all"><span class="big">✓</span><div>' + esc(T("doneAll")) +
         ' <span style="font-weight:400;color:var(--ink-2)">· ' + T("doneAllSub", { n: tot }) + '</span></div></div>'
       : '<div class="donebar part"><span class="big">' + (tot - done) + '</span><div>' +
