@@ -851,8 +851,17 @@
         'a whole night\'s backup.</div>' +
         '<div class="tw"><table><thead><tr><th>When</th><th>Who</th><th>What</th><th></th></tr></thead><tbody>' +
         (rows.length ? rows.map(function (r) {
+          // The table used to print the bare table name — "attendance",
+          // "hifdh_state" — which told you nothing about WHICH child, WHICH
+          // day, or what actually changed. An undo button you cannot aim is
+          // worse than no undo button. The sentence comes from the database
+          // so the names never have to be shipped to the browser separately.
+          var what = r.summary
+            ? '<b style="font-weight:600">' + esc(r.summary) + '</b>' +
+              '<div class="m" style="color:var(--ink-3);font-size:11px;margin-top:2px">' + esc(r.entity) + '</div>'
+            : esc(r.entity);
           return '<tr><td class="n">' + esc(String(r.at).slice(0, 16).replace("T", " ")) + '</td>' +
-            '<td>' + esc(r.actor_name) + '</td><td>' + esc(r.entity) + '</td>' +
+            '<td>' + esc(r.actor_name) + '</td><td>' + what + '</td>' +
             '<td style="text-align:right">' + (r.before && r.entity !== "sessions"
               ? '<button class="mini lg-undo" data-id="' + r.id + '">Undo</button>' : '') + '</td></tr>';
         }).join("") : '<tr><td colspan="4" style="padding:18px;color:var(--ink-3)">Nothing changed yet.</td></tr>') +

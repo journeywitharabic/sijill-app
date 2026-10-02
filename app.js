@@ -677,7 +677,12 @@
               return '<div class="irow" style="align-items:flex-start"><div class="lab" style="gap:4px">' +
                 '<span class="tr" style="font-size:13.5px">' + i18n.fmtDate(h.held_on, true) +
                 (h.status === "cancelled" ? ' <span class="pill mute"><i></i>' + (ar ? "مُغْلَقَة" : "closed") + '</span>' : '') +
-                (h.attendance && h.attendance.indexOf("absent") === 0
+                // On a closed day every enrolled child is excused automatically,
+                // so an "absent" pill beside "closed" is an artefact of the
+                // closure, not something the child did. It read like a mark
+                // against them and could not be cleared without reopening the
+                // day. The closure is the whole story; show only that.
+                (h.status !== "cancelled" && h.attendance && h.attendance.indexOf("absent") === 0
                   ? ' <span class="pill ' + (h.attendance === "absent_unjustified" ? "crit" : "exc") + '"><i></i>' +
                     (ar ? "غَائِب" : "absent") + '</span>' : '') + '</span>' +
                 (recited ? '<span class="m">' + recited + '</span>' : '') +

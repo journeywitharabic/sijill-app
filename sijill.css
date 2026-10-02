@@ -228,7 +228,15 @@ button{font:inherit;color:inherit;cursor:pointer}
   background-image:repeating-linear-gradient(135deg,
     transparent 0 3px, color-mix(in srgb,var(--ink-3) 42%,transparent) 3px 4px)}
 .dot i.n, .sw-none{background:transparent;border:1px dashed var(--line-2)}
-.pill .sw-closed, .pill .sw-none{width:9px;height:9px;border-radius:2px;display:block;flex:none}
+/* In the key these sit on the pill's own beige, where a 9px square showed
+   almost no hatch and an "empty" swatch just looked like more beige. Bigger,
+   with the paper colour behind the empty one so empty reads as empty. */
+.pill.mute i.sw-closed, .pill.mute i.sw-none{width:14px;height:14px;
+  border-radius:3px;display:block;flex:none}
+.pill.mute i.sw-closed{background-color:var(--surface);
+  background-image:repeating-linear-gradient(135deg,
+    transparent 0 2px, color-mix(in srgb,var(--ink-2) 62%,transparent) 2px 3.5px)}
+.pill.mute i.sw-none{background:var(--surface);border:1px dashed var(--ink-3)}
 .dot span{font-family:var(--mono);font-size:8.5px;color:var(--ink-3);white-space:nowrap}
 .kv{display:flex;justify-content:space-between;gap:12px;padding:6px 0;border-bottom:1px solid var(--line);font-size:13.5px}
 .kv:last-child{border-bottom:0}
