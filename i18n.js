@@ -7,6 +7,15 @@
   "use strict";
 
   var EN = {
+    tajweed:"Tajwīd",
+    tajweedAsk:"pick a tajwīd grade",
+    adab:"Adab",
+    adabNotePh:"What happened? (needed for 1 or 2)",
+    adabClear:"Remove",
+    adabHint:"Optional. Most children will not have one — it is for when something is worth telling the family. A 1 or 2 needs a line saying what happened.",
+    adabNeedNote:"A 1 or 2 needs a line saying what happened.",
+    baselineSet:"marked solid",
+    baselineRev:"moved to review",
     schoolName:"Qur’an School",
     tagline:"Attendance · homework · memorization",
     lastHeld:"the last class that ran",
@@ -67,7 +76,7 @@
     mtClearBody:"It stops counting as memorized. If the child has forgotten it, mark it review instead — that keeps the history and puts it back in the rotation.",
     mtPagesSolid:"{n} pages solid across the mushaf",
     mtHelp:"Tap a juz to open it. You can mark a whole juz, a hizb, a page or a few ayat — whichever matches what you actually know. Nothing here says the child recited today; it records what they already have.",
-    heardAll:"heard", heardAllTip:"Heard everything they had open, all good",
+    heardAll:"heard", heardAllTip:"Heard everything they had open — memorisation and tajwīd both good (5/5)",
     heardDone:"{name} — {n} marked good",
     /* --- taking a mark back --- */
     undoMark:"Take back", undoMarkTitle:"Take this mark back?",
@@ -89,6 +98,15 @@
   };
 
   var AR = {
+    tajweed:"التَّجْوِيد",
+    tajweedAsk:"اخْتَرْ دَرَجَةَ التَّجْوِيد",
+    adab:"الأَدَب",
+    adabNotePh:"مَاذَا حَصَل؟ (مَطْلُوبٌ لِـ ١ أَوْ ٢)",
+    adabClear:"إِزَالَة",
+    adabHint:"اخْتِيَارِيّ. أَكْثَرُ الأَطْفَالِ لَنْ تَكُونَ لَهُمْ عَلَامَةٌ — إِنَّمَا هِيَ لِمَا يَسْتَحِقُّ إِبْلَاغَ الأُسْرَة. وَالدَّرَجَةُ ١ أَوْ ٢ تَحْتَاجُ سَطْرًا يُوَضِّحُ مَا حَصَل.",
+    adabNeedNote:"الدَّرَجَةُ ١ أَوْ ٢ تَحْتَاجُ سَطْرًا يُوَضِّحُ مَا حَصَل.",
+    baselineSet:"أُثْبِتَ مُتْقَنًا",
+    baselineRev:"نُقِلَ لِلْمُرَاجَعَة",
     schoolName:"مَدْرَسَةُ القُرْآنِ",
     tagline:"الحُضُورُ وَالوَاجِبَاتُ وَالحِفْظُ",
     lastHeld:"آخِرُ حَلْقَةٍ انْعَقَدَتْ",
@@ -149,7 +167,7 @@
     mtClearBody:"لَنْ يُحْسَبَ مَحْفُوظًا بَعْدَ الآن. إِنْ كَانَ الطَّالِبُ قَدْ نَسِيَهُ فَاخْتَرْ مُرَاجَعَة، فَذَلِكَ يَحْفَظُ التَّارِيخَ وَيُعِيدُهُ إِلَى دَوْرَةِ المُرَاجَعَة.",
     mtPagesSolid:"{n} صَفْحَةً مُتْقَنَةً فِي المُصْحَفِ كُلِّهِ",
     mtHelp:"اُنْقُرْ عَلَى جُزْءٍ لِفَتْحِه. يُمْكِنُكَ تَعْلِيمُ جُزْءٍ كَامِلٍ أَوْ حِزْبٍ أَوْ صَفْحَةٍ أَوْ بِضْعِ آيَاتٍ، بِحَسَبِ مَا تَعْرِفُهُ فِعْلًا. لَا شَيْءَ هُنَا يَقُولُ إِنَّ الطَّالِبَ تَلَا اليَوْم؛ هَذَا تَسْجِيلٌ لِمَا هُوَ حَافِظُهُ أَصْلًا.",
-    heardAll:"سَمِعْتُهُ", heardAllTip:"سَمِعْتُ كُلَّ مَا كَانَ عَلَيْهِ، وَكُلُّهُ جَيِّد",
+    heardAll:"سَمِعْتُهُ", heardAllTip:"سَمِعْتُ كُلَّ مَا كَانَ عَلَيْهِ — الحِفْظُ وَالتَّجْوِيدُ جَيِّدَان (٥/٥)",
     heardDone:"{name} — سُجِّلَ {n} بِنَجَاح",
     undoMark:"تَرَاجَعْ", undoMarkTitle:"هَلْ تَتَرَاجَعُ عَنْ هَذَا التَّسْجِيل؟",
     undoMarkBody:"تَبْقَى التِّلَاوَةُ فِي السِّجِلِّ مَعَ عَلَامَةِ السَّحْب. يَعُودُ حِفْظُ {who} إِلَى مَا كَانَ عَلَيْهِ، وَيُفْتَحُ الوَاجِبُ الَّذِي أُغْلِقَ مِنْ جَدِيد.",

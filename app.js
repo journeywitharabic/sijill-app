@@ -644,6 +644,14 @@
             }).join("") : '<div style="font-size:13.5px">' + esc(T("noneHw")) + '</div>') +
             '</div><div style="height:8px"></div><div class="note">' + T("hwHint") + '</div></div>';
 
+    // Adab for today's class. Optional, and placed after the recitation work
+    // rather than among it: conduct is a judgement made at the end of a
+    // lesson, not while a child is still reciting.
+    if (!S.readOnly && S.dayData && S.dayData.session) {
+      var me = (S.dayData.students || []).filter(function (x) { return x.id === S.student.id; })[0];
+      html += adabCard(me && me.adab);
+    }
+
     // recent classes
     html += '<div class="grp"><div class="grph"><h2>' + esc(T("recentCls")) + '</h2>' +
             '<span class="n">' + (d.history || []).length + '</span></div><div class="card">' +
@@ -664,7 +672,13 @@
                   '<span class="outc ' + tone + '">' + mark + ' ' + esc(word) + '</span>' +
                   '<span class="w">' + esc(r.name_en) +
                     (r.ayah_from ? " " + r.ayah_from + "–" + r.ayah_to : "") +
-                  '</span>' +
+                  '</span>' + starsRead(r.tajweed) +
+                  // What this recitation did to the mushaf. It has always
+                  // happened; nothing on the screen ever said so, so teachers
+                  // could not tell the audit was keeping itself up to date.
+                  (r.outcome === "good" ? '<span class="basel">' + esc(T("baselineSet")) + '</span>'
+                   : r.outcome === "repeat" ? '<span class="basel rev">' + esc(T("baselineRev")) + '</span>'
+                   : '') +
                   (S.readOnly || !r.id ? "" :
                     '<button class="undoRec" data-rec="' + esc(r.id) + '" data-what="' +
                     esc(r.name_en) + '">↶ ' + esc(T("undoMark")) + '</button>') +
@@ -687,6 +701,11 @@
                     (ar ? "غَائِب" : "absent") + '</span>' : '') + '</span>' +
                 (recited ? '<span class="m">' + recited + '</span>' : '') +
                 (notes || '') +
+                (h.adab && h.adab.stars
+                  ? '<span class="adabline">' + faceSvg(h.adab.stars) +
+                    '<span>' + esc(T("adab")) + ' ' + h.adab.stars + '/5' +
+                    (h.adab.note ? ' \u00b7 \u201c' + esc(h.adab.note) + '\u201d' : '') + '</span></span>'
+                  : '') +
                 (h.by ? '<span class="m" style="opacity:.8">' + (ar ? "سَجَّلَ" : "marked by") + ' ' + esc(h.by) + '</span>' : '') +
                 '</div></div>';
             }).join("") : '<div class="empty">' + esc(T("noneHist")) + '</div>') + '</div></div>';
@@ -764,31 +783,168 @@
         '<button class="gb g lab3 t-rev" data-g="repeat" title="' + esc(T("gAgainTip")) + '">' +
           '<span class="ic">↻</span><small>' + esc(T("gAgain")) + '</small></button>' +
         '<button class="gb g lab3 t-np" data-g="not_prepared" title="' + esc(T("gNotReadyTip")) + '">' +
-          '<span class="ic">–</span><small>' + esc(T("gNotReady")) + '</small></button>') +
+          '<span class="ic">–</span><small>' + esc(T("gNotReady")) + '</small></button>' +
+        // Second line: the tajwid grade for THIS passage. It belongs to the
+        // recitation, not to the child, so it lives on the row.
+        '<div class="tjline"><span class="tjlab">' + esc(T("tajweed")) + '</span>' +
+          starStrip(0) + '<span class="tjask">' + esc(T("tajweedAsk")) + '</span></div>') +
       '</div>';
   }
 
+  /* Adab, 1-5, drawn as faces. Deliberately NOT stars: tajwid is already
+     stars, and two five-point scales on one screen that mean different things
+     is how a teacher grades conduct by accident. The mouth carries the
+     meaning on its own, so the scale survives colour blindness and a bad
+     screen — the colour only reinforces it. */
+  var FACE_MOUTH = {
+    1: "M5.6 11.4a3.2 3.2 0 0 1 4.8 0",       // frown
+    2: "M5.6 10.9a3.4 3.4 0 0 1 4.8 .5",       // slight frown
+    3: "M5.5 10.8h5",                          // flat
+    4: "M5.6 10.3a3.4 3.4 0 0 0 4.8 .5",       // slight smile
+    5: "M5.4 9.9a3.4 3.4 0 0 0 5.2 0"          // smile
+  };
+  function faceSvg(n, extra) {
+    n = Math.min(5, Math.max(1, n || 3));
+    return '<svg class="face f' + n + ' ' + (extra || "") + '" viewBox="0 0 16 16" aria-hidden="true">' +
+      '<circle cx="8" cy="8" r="6.6"/><circle class="eye" cx="5.9" cy="6.3" r=".85"/>' +
+      '<circle class="eye" cx="10.1" cy="6.3" r=".85"/>' +
+      '<path d="' + FACE_MOUTH[n] + '"/></svg>';
+  }
+  /* The card. Optional by design: most children never get a mark, and the
+     empty state says so rather than inviting one. */
+  function adabCard(cur) {
+    var picked = cur && cur.stars ? cur.stars : 0;
+    var h = '<div class="grp"><div class="grph"><h2>' + esc(T("adab")) + '</h2>' +
+            '<span class="n">' + (picked ? picked + "/5" : "\u2014") + '</span></div>' +
+            '<div class="card adabcard">' +
+            '<div class="faces" role="group" aria-label="' + esc(T("adab")) + '">';
+    for (var i = 1; i <= 5; i++) {
+      h += '<button type="button" class="fb' + (picked === i ? " on" : "") +
+           '" data-adab="' + i + '" aria-label="' + i + ' / 5" aria-pressed="' + (picked === i) + '">' +
+           faceSvg(i) + '</button>';
+    }
+    h += '</div>' +
+      '<div class="adabnote"><input id="adabNote" type="text" maxlength="200" placeholder="' +
+        esc(T("adabNotePh")) + '" value="' + esc((cur && cur.note) || "") + '">' +
+      '<button class="mini" id="adabClear"' + (picked ? '' : ' hidden') + '>' + esc(T("adabClear")) + '</button></div>' +
+      '<div class="hint">' + esc(T("adabHint")) + '</div></div></div>';
+    return h;
+  }
+
+  /* Tajwīd, 1–5, on every recitation. Drawn as buttons rather than a slider
+     so a thumb can hit one in a noisy classroom, and labelled so a screen
+     reader says "tajwid 3 of 5" rather than "button". */
+  function starStrip(value, cls) {
+    var out = '<span class="stars ' + (cls || "") + '" role="group" aria-label="' + esc(T("tajweed")) + '">';
+    for (var i = 1; i <= 5; i++) {
+      out += '<button type="button" class="st' + (value && i <= value ? " on" : "") +
+             '" data-star="' + i + '" aria-label="' + i + ' / 5"><svg viewBox="0 0 16 16" aria-hidden="true">' +
+             '<path d="M8 1.6l1.9 3.9 4.3.6-3.1 3 .7 4.3L8 11.4l-3.8 2-.7-4.3-3.1-3 4.3-.6z"/></svg></button>';
+    }
+    return out + '</span>';
+  }
+  /* Read-only version for history and for a grade already given. */
+  function starsRead(value) {
+    if (!value) return "";
+    var out = '<span class="stars ro" aria-label="' + esc(T("tajweed")) + ' ' + value + '/5">';
+    for (var i = 1; i <= 5; i++) {
+      out += '<span class="st' + (i <= value ? " on" : "") + '"><svg viewBox="0 0 16 16" aria-hidden="true">' +
+             '<path d="M8 1.6l1.9 3.9 4.3.6-3.1 3 .7 4.3L8 11.4l-3.8 2-.7-4.3-3.1-3 4.3-.6z"/></svg></span>';
+    }
+    return out + '</span>';
+  }
+
   function wireStudent() {
+    /* One submit, used by both halves. The grade and the tajwid arrive in
+       either order: whichever the teacher taps second is the one that sends.
+       Tapping a grade is never thrown away for want of a star — the row just
+       asks for the missing half and waits. */
+    function sendGrade(row, outcome) {
+      var tj = row.dataset.tajweed ? +row.dataset.tajweed : null;
+      row.classList.remove("needtj");
+      return api.write("api_record", {
+        p_session: S.dayData.session.id,
+        p_student: S.student.id,
+        p_kind: row.dataset.kind === "new" ? "new" : "review",
+        p_surah: +row.dataset.surah,
+        p_from: row.dataset.from === "" ? null : +row.dataset.from,
+        p_to:   row.dataset.to   === "" ? null : +row.dataset.to,
+        p_outcome: outcome,
+        p_note: null,
+        p_tajweed: outcome === "not_prepared" ? null : tj
+      }, S.student.name).then(function () {
+        return api.read("api_student", { p_student: S.student.id, p_history: 4 });
+      }).then(function (d) { S.studentData = d; renderStudent(); }).catch(fail);
+    }
+
     $("stuBody").querySelectorAll(".gb.g").forEach(function (b) {
       b.onclick = function () {
         var row = b.closest(".irow");
         var cls = { good: "on-ok", repeat: "on-rev", not_prepared: "on-np" }[b.dataset.g];
         row.querySelectorAll(".gb").forEach(function (x) { x.classList.remove("on-ok","on-rev","on-np"); });
         b.classList.add(cls);
-        api.write("api_record", {
-          p_session: S.dayData.session.id,
-          p_student: S.student.id,
-          p_kind: row.dataset.kind === "new" ? "new" : "review",
-          p_surah: +row.dataset.surah,
-          p_from: row.dataset.from === "" ? null : +row.dataset.from,
-          p_to:   row.dataset.to   === "" ? null : +row.dataset.to,
-          p_outcome: b.dataset.g,
-          p_note: null
-        }, S.student.name).then(function () {
-          return api.read("api_student", { p_student: S.student.id, p_history: 4 });
-        }).then(function (d) { S.studentData = d; renderStudent(); }).catch(fail);
+        // Nothing was recited, so there is no reading to grade.
+        if (b.dataset.g === "not_prepared") return sendGrade(row, "not_prepared");
+        if (!row.dataset.tajweed) {           // ask for the other half
+          row.dataset.pending = b.dataset.g;
+          row.classList.add("needtj");
+          return;
+        }
+        sendGrade(row, b.dataset.g);
       };
     });
+
+    $("stuBody").querySelectorAll(".irow.grad .stars .st").forEach(function (b) {
+      b.onclick = function () {
+        var row = b.closest(".irow");
+        var v = +b.dataset.star;
+        row.dataset.tajweed = v;
+        row.querySelectorAll(".stars .st").forEach(function (x) {
+          x.classList.toggle("on", +x.dataset.star <= v);
+        });
+        if (row.dataset.pending) {
+          var out = row.dataset.pending; delete row.dataset.pending;
+          sendGrade(row, out);
+        }
+      };
+    });
+    /* Adab. A 1 or 2 must carry a sentence — the database refuses it
+       otherwise, and a teacher should find that out here, not as an error. */
+    var fbs = $("stuBody").querySelectorAll(".faces .fb");
+    function sendAdab(stars) {
+      var note = ($("adabNote") && $("adabNote").value || "").trim();
+      if (stars && stars <= 2 && !note) {
+        $("adabNote").classList.add("need");
+        $("adabNote").focus();
+        window.SijillToast(T("adabNeedNote"));
+        return;
+      }
+      api.write("api_set_behaviour", {
+        p_session: S.dayData.session.id,
+        p_student: S.student.id,
+        p_stars: stars,
+        p_note: note || null
+      }, S.student.name).then(function () {
+        return Promise.all([
+          api.read("api_student", { p_student: S.student.id, p_history: 4 }),
+          api.read("api_class_day", { p_class: S.clsId, p_on: S.dayData.session.held_on })
+        ]);
+      }).then(function (r) {
+        S.studentData = r[0]; S.dayData = r[1]; renderStudent();
+      }).catch(fail);
+    }
+    fbs.forEach(function (b) {
+      b.onclick = function () { sendAdab(+b.dataset.adab); };
+    });
+    if ($("adabClear")) $("adabClear").onclick = function () { sendAdab(null); };
+    if ($("adabNote")) {
+      $("adabNote").oninput = function () { this.classList.remove("need"); };
+      // A note typed after the face is tapped still has to reach the record.
+      $("adabNote").onblur = function () {
+        var on = $("stuBody").querySelector(".faces .fb.on");
+        if (on) sendAdab(+on.dataset.adab);
+      };
+    }
     $("stuBody").querySelectorAll('.gb.note[data-note]').forEach(function (b) {
       b.onclick = function () {
         var row = b.closest(".irow");

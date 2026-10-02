@@ -46,7 +46,7 @@
       helpHome:"Needs review — help at home", recent:"Recent classes",
       nothingYet:"Nothing set for this week yet.", noClasses:"No classes recorded yet.",
       contact:"Any question about homework or attendance — message the school on ClassDojo.",
-      wholeSurah:"whole surah", ayat:"ayat", notMarked:"not marked",
+      tajweed:"Tajwīd", adab:"Adab", wholeSurah:"whole surah", ayat:"ayat", notMarked:"not marked",
       noneRecorded:"Here — nothing recorded",
       notAssessed:"We haven't done this year's review with your child yet. Once their teacher has been through it — usually in the first few weeks — their progress appears here." 
     },
@@ -63,7 +63,7 @@
       helpHome:"يَحْتَاجُ مُرَاجَعَة — لِلْمُسَاعَدَةِ فِي البَيْت", recent:"الحِصَصُ الأَخِيرَة",
       nothingYet:"لَمْ يُحَدَّدْ شَيْءٌ لِهَذَا الأُسْبُوعِ بَعْد.", noClasses:"لَا حِصَصَ مُسَجَّلَةٌ بَعْد.",
       contact:"لِأَيِّ سُؤَالٍ حَوْلَ الوَاجِبِ أَوِ الحُضُور، رَاسِلِ المَدْرَسَةَ عَبْرَ ClassDojo.",
-      wholeSurah:"السُّورَةُ كَامِلَة", ayat:"آيَة", notMarked:"لَمْ يُسَجَّل",
+      tajweed:"التَّجْوِيد", adab:"الأَدَب", wholeSurah:"السُّورَةُ كَامِلَة", ayat:"آيَة", notMarked:"لَمْ يُسَجَّل",
       noneRecorded:"حَاضِر — لَمْ يُسَجَّلْ شَيْء",
       notAssessed:"لَمْ نُجْرِ جَرْدَ هَذَا العَامِ مَعَ اِبْنِكُمْ بَعْد. وَحَالَمَا يُنْجِزُهُ مُعَلِّمُهُ — عَادَةً فِي الأَسَابِيعِ الأُولَى — سَيَظْهَرُ تَقَدُّمُهُ هُنَا." 
     }
@@ -79,6 +79,18 @@
     absent_sick:"e", absent_travel:"e", absent_other:"e",
     closed:"c", "not marked":"n"
   };
+
+  /* Same five faces the teacher sees, so a parent and a teacher are looking
+     at the same thing. */
+  var MOUTH = { 1:"M5.6 11.4a3.2 3.2 0 0 1 4.8 0", 2:"M5.6 10.9a3.4 3.4 0 0 1 4.8 .5",
+                3:"M5.5 10.8h5", 4:"M5.6 10.3a3.4 3.4 0 0 0 4.8 .5",
+                5:"M5.4 9.9a3.4 3.4 0 0 0 5.2 0" };
+  function FACE(n) {
+    n = Math.min(5, Math.max(1, n || 3));
+    return '<svg class="face f' + n + '" viewBox="0 0 16 16" aria-hidden="true">' +
+      '<circle cx="8" cy="8" r="6.6"/><circle class="eye" cx="5.9" cy="6.3" r=".85"/>' +
+      '<circle class="eye" cx="10.1" cy="6.3" r=".85"/><path d="' + MOUTH[n] + '"/></svg>';
+  }
 
   /* --------------------------------------------------------------- render */
   function render() {
@@ -191,7 +203,12 @@
     h += '<div class="pcard"><h2>' + esc(t("recent")) + '</h2><div class="sess">' +
       ((c.recent_classes || []).length ? c.recent_classes.map(function (x) {
         var recited = (x.recited || []).map(function (r) {
-          return esc(r.name_en) + (r.ayah_from ? " " + r.ayah_from + "–" + r.ayah_to : "");
+          return esc(r.name_en) + (r.ayah_from ? " " + r.ayah_from + "–" + r.ayah_to : "") +
+                 (r.tajweed ? ' <span class="stars ro" aria-label="' + esc(t("tajweed")) + ' ' + r.tajweed + '/5">' +
+                   [1,2,3,4,5].map(function (i) {
+                     return '<span class="st' + (i <= r.tajweed ? " on" : "") + '">' +
+                       '<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 1.6l1.9 3.9 4.3.6-3.1 3 .7 4.3L8 11.4l-3.8 2-.7-4.3-3.1-3 4.3-.6z"/></svg></span>';
+                   }).join("") + '</span>' : "");
         }).join(" · ");
         var notes = (x.notes || []).map(function (n) {
           return '<div class="n">“' + esc(n.body) + '”' +
@@ -212,10 +229,15 @@
             : (st === "absent_sick" || st === "absent_travel" || st === "absent_other") ? t("excused")
             : t("notMarked"));
         }
+        var adab = x.adab && x.adab.stars
+          ? '<div class="adabline">' + FACE(x.adab.stars) + '<span>' + esc(t("adab")) + ' ' +
+            x.adab.stars + '/5' + (x.adab.note ? ' · “' + esc(x.adab.note) + '”' : '') +
+            '</span></div>'
+          : "";
         return '<div class="s"><div class="d">' + i18n.fmtDate(x.held_on, true) +
           (x.teacher ? ' · ' + esc(x.teacher) : '') + '</div>' +
           '<div class="w">' + line + '</div>' +
-          notes + '</div>';
+          adab + notes + '</div>';
       }).join("") : '<div class="empty" style="color:var(--ink-3);font-size:13.5px">' +
                      esc(t("noClasses")) + '</div>') +
       '</div><div style="height:10px"></div><div class="note">' + esc(t("contact")) + '</div></div>';
