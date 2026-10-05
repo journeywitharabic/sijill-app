@@ -387,7 +387,7 @@
   function addStudent() {
     api.read("api_classes").then(function (cs) {
       window.SijillSheet("Add a student",
-        '<input id="nsName" placeholder="First name and surname initial, e.g. Bilal N." ' +
+        '<input id="nsName" placeholder="' + esc(T("spNameHint")) + '" ' +
         'style="width:100%;padding:12px;font-size:16px;border:1px solid var(--line);border-radius:10px;' +
         'background:var(--surface);color:var(--ink)">' +
         '<div style="height:10px"></div><select id="nsClass" style="width:100%">' +
@@ -760,7 +760,7 @@
             '<td>' + linkStatus(g) + '</td>' +
             '<td style="white-space:nowrap">' + (g.sent_on
               ? '<button class="mini lk-unsent" data-id="' + esc(g.guardian_id) + '" ' +
-                'title="Mark this as not sent after all">✓ ' + esc(i18n.fmtDate(g.sent_on.slice(0,10))) + '</button>'
+                'title="' + esc(T("spUnsent")) + '">✓ ' + esc(i18n.fmtDate(g.sent_on.slice(0,10))) + '</button>'
               : '<button class="mini lk-sent" data-id="' + esc(g.guardian_id) + '">Mark sent</button>') + '</td>' +
             '<td class="n">' + g.opens_30d + '</td>' +
             '<td class="n">' + (g.last_opened ? i18n.fmtDate(g.last_opened.slice(0,10)) : "never") + '</td>' +
@@ -832,7 +832,7 @@
       '<div class="filters" style="margin:0 0 10px"><select id="nlLabel" class="mini">' +
       '<option>mother</option><option>father</option><option>grandmother</option>' +
       '<option>grandfather</option><option>guardian</option></select></div>' +
-      '<input id="nlFind" type="search" placeholder="Find a child" style="width:100%;padding:10px;margin-bottom:8px;' +
+      '<input id="nlFind" type="search" placeholder="' + esc(T("spFindChild")) + '" style="width:100%;padding:10px;margin-bottom:8px;' +
       'border:1px solid var(--line);border-radius:10px;background:var(--surface);color:var(--ink)">' +
       '<div class="tree" style="max-height:260px;overflow:auto" id="nlList">' +
       students.map(function (s) {

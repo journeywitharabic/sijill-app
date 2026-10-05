@@ -6,11 +6,11 @@
 <meta name="theme-color" content="#1D3B2C">
 <meta name="robots" content="noindex,nofollow">
 <title>Sijill — the teacher's guide</title>
-<link rel="icon" href="icon-192.png?v=3">
+<link rel="icon" href="icon-t-192.png?v=4">
 <!-- 180 is the size iOS actually wants, and ?v=2 gets past a cached copy of
      the old one. A shortcut already on a home screen keeps its picture until
      it is deleted and added again — nothing served from here can change it. -->
-<link rel="apple-touch-icon" sizes="180x180" href="icon-180.png?v=3">
+<link rel="apple-touch-icon" sizes="180x180" href="icon-t-180.png?v=4">
 <style>
 /* Self-contained on purpose: this page has to render identically whether it is
    opened from the app, saved to a phone, or printed to PDF, so it carries its
@@ -133,6 +133,8 @@ footer .ar{font-size:17px;display:block;margin-bottom:6px;color:var(--ink-2)}
   a{text-decoration:none}
   footer{page-break-before:avoid}
 }
+  /* the fourth mark, added when review gained a middle grade */
+  .btn.avg{background:#E7EFE1;border-color:rgba(63,107,49,.4);color:#3F6B31}
 </style>
 </head>
 <body>
@@ -251,17 +253,37 @@ attendance mark <strong>and</strong> a recitation. Green means you are finished.
 
 <h2>The child's page</h2>
 
-<h3>The three marks</h3>
+<h3>The marks</h3>
+<p>The rules are not the same for the two kinds of work, so the app prints the
+one that applies at the top of each section. You do not have to remember which
+is which.</p>
+
+<div class="note"><b>New memorization — one mistake a page.</b> More than that
+and it comes back next week. There is no middle mark here: either it is ready
+or it needs another week.</div>
+
 <div class="rows">
   <div class="row"><span class="k"><span class="btn ok">✓<small>good</small></span></span>
-    <span class="v"><b>good</b>Recited to standard. Three mistakes a page or fewer.</span></div>
+    <span class="v"><b>good</b>Recited to standard.</span></div>
   <div class="row"><span class="k"><span class="btn rev">↻<small>again</small></span></span>
-    <span class="v"><b>again</b>More than three mistakes. It comes back next week
-      <strong>by itself</strong> — you do not have to set it.</span></div>
+    <span class="v"><b>again</b>It comes back next week <strong>by itself</strong> —
+      you do not have to set it.</span></div>
   <div class="row"><span class="k"><span class="btn np">–<small>not ready</small></span></span>
     <span class="v"><b>not ready</b>Here, but hadn't worked on it. A conversation with
       the family, not a teaching problem, and it deliberately changes nothing.</span></div>
 </div>
+
+<div class="note"><b>Review — up to 3 mistakes is good, 4–5 is average, 6 or more
+comes back.</b></div>
+
+<div class="rows">
+  <div class="row"><span class="k"><span class="btn avg">≈<small>average</small></span></span>
+    <span class="v"><b>average · مُتَوَسِّط</b>Four or five mistakes. It <strong>counts</strong> —
+      the passage is memorised and the child's progress says so — but the surah
+      comes round again sooner than one marked good. You will see it near the
+      top of the review list, labelled <i>was average</i>.</span></div>
+</div>
+<p>The other three mean the same on review as they do on new memorization.</p>
 
 <h3>Getting through the class</h3>
 <p><strong>Next student ›</strong> at the bottom walks you through without going back to

@@ -136,7 +136,7 @@
   $("whoAdd").onclick = function () {
     sheet(T("whoAddTitle"),
       '<p style="margin:0 0 12px;font-size:13.5px;color:var(--ink-2)">' + esc(T("whoAddHelp")) + '</p>' +
-      '<input id="newName" type="text" placeholder="Full name" style="width:100%;padding:12px;font-size:16px;' +
+      '<input id="newName" type="text" placeholder="' + esc(T("spFullName")) + '" style="width:100%;padding:12px;font-size:16px;' +
       'border:1px solid var(--line);border-radius:10px;background:var(--surface);color:var(--ink)">',
       T("add"), function () {
         var n = ($("newName").value || "").trim();
@@ -498,6 +498,9 @@
 
   /* ------------------------------------------------------- student sheet */
   function openStudent(s) {
+    // A new child starts with nothing pulled forward from the last one, and
+    // with the rotation collapsed again.
+    S.pulled = {}; S.rotAll = false;
     S.student = s;
     show("v-student");
     window.scrollTo(0, 0);
@@ -593,6 +596,14 @@
      who has not been heard on it — which is worth seeing without having to
      work it out from a date. Weeks, not days: this school meets twice a week
      and nobody counts in days. */
+  function weeksSince(iso) {
+    if (!iso) return -1;
+    // The browser's own clock. There is no server "today" on this screen, and
+    // at week granularity a few hours of skew cannot change the answer.
+    var days = Math.floor((Date.now() - new Date(iso + "T12:00:00").getTime()) / 86400000);
+    return days < 0 ? 0 : Math.floor(days / 7);
+  }
+
   function hwAge(h) {
     if (!h.set_on) return "";
     // The browser's own clock. There is no server "today" on this screen, and
@@ -607,10 +618,17 @@
            (old ? ' · ' + esc(T("hwStillOpen")) : "") + '</div>';
   }
 
+  /* A range with no total is hard to judge: "1–12" could be most of a surah
+     or a tenth of it. The server sends the surah's length on every row that
+     carries a range, so say it. A range that IS the whole surah says nothing
+     extra — "1–4 of 4" is noise. */
   function rangeLabel(x) {
     if (x.ayah_from == null && x.ayah_to == null) return "";
     if (x.whole_surah) return "";
-    return " " + x.ayah_from + "–" + x.ayah_to;
+    var span = " " + x.ayah_from + "–" + x.ayah_to;
+    if (!x.ayat) return span;
+    if (x.ayah_from === 1 && x.ayah_to === x.ayat) return "";
+    return span + " " + T("ofAyat").split("{n}").join(x.ayat);
   }
 
   function renderStudent() {
@@ -635,13 +653,53 @@
               esc(f.message) + '.</b></div></div>';
     }
 
-    html += group(T("gDue"), d.due_back, "noneDue", "due");
-    /* CAREFUL: "memorise" and "new_memorisation" are spelled the British way
-       on purpose — they are not words here, they are a value stored in
-       homework.kind and a key the SQL builds. The visible English says
-       "memorization"; changing these to match it silently stops the app
-       matching its own database. */
-    html += group(T("gNew"), d.new_memorisation, "noneNew", "new");
+    /* The two sections used to be "due back" and "homework for next week",
+       split by KIND — and since both read "every open homework row", the same
+       surah appeared in both the moment it was assigned. Teachers could not
+       tell what they were meant to be hearing.
+
+       They are split by WHEN it was set instead. Homework set before today is
+       what the child took home and what this lesson is for; homework set
+       today goes home tonight and there is nothing to hear yet. One surah,
+       one place.
+
+       The exception is real and was asked for: a child was away, or no
+       teacher came, so the work was never set — the teacher assigns it and
+       hears it in the same lesson. "Hear it now" pulls a row forward, and
+       S.pulled remembers which, for as long as this child is on screen. */
+    if (!S.pulled) S.pulled = {};
+    var isNow = function (h) { return h.due_today || S.pulled[h.homework_id]; };
+    var todayRev = (d.due_back || []).filter(isNow);
+    var todayNew = (d.new_memorisation || []).filter(isNow);
+    var later    = (d.due_back || []).concat(d.new_memorisation || [])
+                     .filter(function (h) { return !isNow(h); });
+
+    html += '<div class="grp sect"><div class="grph"><h2>' + esc(T("gToday")) + '</h2>' +
+            '<span class="n">' + (todayRev.length + todayNew.length) + '</span></div>';
+    if (!todayRev.length && !todayNew.length) {
+      html += '<div class="card"><div class="empty">' + esc(T("gNothingToday")) + '</div></div>';
+    } else {
+      /* The rule lives inside the group it applies to. The thresholds differ
+         between the two now, so one line at the bottom of the screen would be
+         wrong for whichever section you were not looking at. */
+      if (todayRev.length) {
+        html += '<div class="subh">' + esc(T("gDueGroup")) + '</div>' +
+                '<div class="note rule">' + T("ruleReview") + '</div>' +
+                '<div class="card">' + todayRev.map(function (x) { return itemRow(x, "due"); }).join("") + '</div>';
+      }
+      /* CAREFUL: "memorise" and "new_memorisation" are spelled the British way
+         on purpose — they are not words here, they are a value stored in
+         homework.kind and a key the SQL builds. The visible English says
+         "memorization"; changing these to match it silently stops the app
+         matching its own database. */
+      if (todayNew.length) {
+        html += '<div class="subh">' + esc(T("gNew")) + '</div>' +
+                '<div class="note rule">' + T("ruleNew") + '</div>' +
+                '<div class="card">' + todayNew.map(function (x) { return itemRow(x, "new"); }).join("") + '</div>';
+      }
+    }
+    html += '</div>';
+
     html += (S.readOnly ? '<div class="note" style="margin-bottom:16px">Viewing from the coordinator ' +
               'screen, so nothing here can be marked. Open the class to record a recitation.</div>'
             : '<div class="actionrow" style="margin:-6px 0 14px">' +
@@ -649,9 +707,9 @@
               '<button class="btn ghost sm" id="addReview">' + esc(T("addReview")) + '</button></div>' +
               '<div class="note" style="margin-bottom:16px">' + T("markKey") + '</div>');
 
-    // homework for next week
-    var hw = (d.due_back || []).concat(d.new_memorisation || []);
-    html += '<div class="grp"><div class="grph"><h2>' + esc(T("nextWeek")) + '</h2>' +
+    // what goes home tonight
+    var hw = later;
+    html += '<div class="grp sect next"><div class="grph"><h2>' + esc(T("gNext")) + '</h2>' +
             '<span class="n">' + hw.length + '</span></div><div class="hwbox">' +
             (hw.length ? hw.map(function (h) {
               /* The control used to be a bare ✎, 38x26, with its only
@@ -669,10 +727,15 @@
                   (h.kind === "memorise" ? esc(ar ? "لِلْحِفْظ" : "Memorize") : esc(ar ? "لِلْمُرَاجَعَة" : "Review")) +
                 '</b> <span class="ar" style="font-family:var(--serif);font-size:18px;font-weight:700">' +
                 esc(h.name_ar) + '</span> <span style="color:var(--ink-2)">' + esc(h.name_en) + rangeLabel(h) + '</span>' +
-                hwAge(h) +
+                // Everything in this box was set today, so the age line that
+                // used to live here said "set this week" on every row.
+                '<div class="hwage">' + esc(T("gSetToday")) + '</div>' +
                 '</div><div class="hwside">' + (h.source === "auto"
                   ? '<span class="pill late"><i></i>' + (ar ? "مِنْ ↻ إِعَادَة" : "from ↻ repeat") + '</span>'
                   : '<span class="pill mute"><i></i>' + (ar ? "أَضَافَهُ المُعَلِّم" : "set by teacher") + '</span>') +
+                (S.readOnly ? '' :
+                  '<button class="btn ghost sm hw-now" data-hw="' + esc(h.homework_id) + '" title="' +
+                  esc(T("gHearNowTip")) + '">' + esc(T("gHearNow")) + '</button>') +
                 '<button class="btn ghost sm hw-edit" data-hw="' + esc(h.homework_id) + '">' +
                 esc(T("hwChange")) + '</button></div></div>';
             }).join("") : '<div style="font-size:13.5px">' + esc(T("noneHw")) + '</div>') +
@@ -697,20 +760,27 @@
                  which in practice meant it was never recovered. */
               var recited = (h.recited || []).map(function (r) {
                 var tone = r.outcome === "repeat" ? "t-rev"
+                         : r.outcome === "average" ? "t-avg"
                          : r.outcome === "not_prepared" ? "t-np" : "t-ok";
                 var mark = r.outcome === "repeat" ? "↻"
+                         : r.outcome === "average" ? "≈"
                          : r.outcome === "not_prepared" ? "–" : "✓";
                 var word = r.outcome === "repeat" ? T("gAgain")
+                         : r.outcome === "average" ? T("gAverage")
                          : r.outcome === "not_prepared" ? T("gNotReady") : T("gGood");
                 return '<span class="rec">' +
                   '<span class="outc ' + tone + '">' + mark + ' ' + esc(word) + '</span>' +
-                  '<span class="w">' + esc(r.name_en) +
-                    (r.ayah_from ? " " + r.ayah_from + "–" + r.ayah_to : "") +
+                  '<span class="w">' + esc(r.name_en) + rangeLabel(r) +
                   '</span>' + starsRead(r.tajweed) +
+                  // The teacher who actually heard this passage, on the
+                  // passage. Never one name standing for the whole day.
+                  (r.by ? '<span class="who">' + (ar ? "سَمِعَ" : "heard by") + ' ' +
+                          esc(r.by) + '</span>' : '') +
                   // What this recitation did to the mushaf. It has always
                   // happened; nothing on the screen ever said so, so teachers
                   // could not tell the audit was keeping itself up to date.
-                  (r.outcome === "good" ? '<span class="basel">' + esc(T("baselineSet")) + '</span>'
+                  (r.outcome === "good" || r.outcome === "average"
+                     ? '<span class="basel">' + esc(T("baselineSet")) + '</span>'
                    : r.outcome === "repeat" ? '<span class="basel rev">' + esc(T("baselineRev")) + '</span>'
                    : '') +
                   (S.readOnly || !r.id ? "" :
@@ -732,7 +802,12 @@
                 // day. The closure is the whole story; show only that.
                 (h.status !== "cancelled" && h.attendance && h.attendance.indexOf("absent") === 0
                   ? ' <span class="pill ' + (h.attendance === "absent_unjustified" ? "crit" : "exc") + '"><i></i>' +
-                    (ar ? "غَائِب" : "absent") + '</span>' : '') + '</span>' +
+                    (ar ? "غَائِب" : "absent") + '</span>' : '') +
+                // Whoever took the register, named next to the register and
+                // nowhere else.
+                (h.status !== "cancelled" && h.attendance_by
+                  ? ' <span class="who">' + (ar ? "الحُضُورَ سَجَّلَ" : "register by") + ' ' +
+                    esc(h.attendance_by) + '</span>' : '') + '</span>' +
                 (recited ? '<span class="m">' + recited + '</span>' : '') +
                 (notes || '') +
                 (h.adab && h.adab.stars
@@ -740,7 +815,14 @@
                     '<span>' + esc(T("adab")) + ' ' + h.adab.stars + '/5' +
                     (h.adab.note ? ' \u00b7 \u201c' + esc(h.adab.note) + '\u201d' : '') + '</span></span>'
                   : '') +
-                (h.by ? '<span class="m" style="opacity:.8">' + (ar ? "سَجَّلَ" : "marked by") + ' ' + esc(h.by) + '</span>' : '') +
+                /* This line used to sit here saying "marked by X" for the
+                   whole day, where X was whoever marked ATTENDANCE — so one
+                   teacher tapping "mark all present" was credited with every
+                   recitation under it. Each fact names its own teacher now,
+                   beside the fact itself. */
+                (h.adab && h.adab.stars && h.adab_by
+                  ? '<span class="m" style="opacity:.8">' + esc(T("adab")) + ' · ' +
+                    (ar ? "سَجَّلَ" : "by") + ' ' + esc(h.adab_by) + '</span>' : '') +
                 '</div></div>';
             }).join("") : '<div class="empty">' + esc(T("noneHist")) + '</div>') + '</div></div>';
 
@@ -769,14 +851,28 @@
               '<button class="btn ghost sm" id="noteAdd">' + esc(T("noteAdd")) + '</button></div>') +
             '</div>';
 
-    // rotation, oldest first
+    /* The rotation. For a child who knows most of juz 30 this was twelve
+       rows of four buttons each, and it sat between the teacher and the
+       bottom of the page every single time. Three now — and because the
+       order puts anything owed or average first, those three are the three
+       worth hearing. The rest is one tap away and stays open while you work
+       through it. */
+    var rot = d.rotation || [];
+    var rotN = S.rotAll ? rot.length : 3;
     html += '<div class="grp"><div class="grph"><h2>' + esc(T("gRot")) + '</h2>' +
-            '<span class="n">' + (d.rotation || []).length + '</span></div><div class="card">' +
-            ((d.rotation || []).length ? d.rotation.slice(0, 12).map(function (r) {
+            '<span class="n">' + rot.length + '</span></div><div class="card">' +
+            (rot.length ? rot.slice(0, rotN).map(function (r) {
               return itemRow(r, "rot");
-            }).join("") : '<div class="empty">—</div>') + '</div></div>';
+            }).join("") : '<div class="empty">—</div>') + '</div>' +
+            (rot.length > 3
+              ? '<div class="actionrow" style="margin-top:8px"><button class="btn ghost sm" id="rotMore">' +
+                esc(S.rotAll ? T("rotCollapse") : T("rotShowAll").split("{n}").join(rot.length)) +
+                '</button></div>'
+              : '') + '</div>';
 
     $("stuBody").innerHTML = html;
+    var rm = $("rotMore");
+    if (rm) rm.onclick = function () { S.rotAll = !S.rotAll; renderStudent(); };
     renderNav();
     wireStudent();
   }
@@ -797,27 +893,50 @@
           (x.weeks != null ? " · " + x.weeks + " " + T(x.weeks === 1 ? "week1" : "weeks") : "")
         : T("never");
     } else {
+      /* How long it has been waiting. This used to live in the homework box
+         below; that box now holds only what was set today, so the age had
+         nowhere to be — and "to hear today" is exactly where an item set five
+         weeks ago and never heard needs to stand out. */
       meta = (x.set_on ? i18n.fmtDate(x.set_on) : "") + (x.source === "auto" ? " · ↻" : "");
+      var wk = weeksSince(x.set_on);
+      if (wk >= 1) meta += " · " + (wk === 1 ? T("hwSetLast")
+                                             : T("hwSetWeeks").split("{n}").join(wk));
     }
+    var old = (kind !== "rot") && weeksSince(x.set_on) >= 3;
     var stale = (kind === "rot" && (x.weeks == null || x.weeks >= 4)) ? " stale" : "";
+    /* The rotation is no longer plain oldest-first, so a row near the top
+       that was heard recently needs to say why it is there. */
+    if (kind === "rot" && x.band === 1) meta = T("rotNeeds") + " · " + meta;
+    else if (kind === "rot" && x.band === 2) meta = T("rotAvg") + " · " + meta;
     // 'grad' marks a row that can be graded. The history rows below reuse
     // .irow for looks but carry no buttons, and without a separate class a
     // tap (or a test) can aim at the wrong one.
-    return '<div class="irow grad" data-surah="' + x.surah + '"' +
+    return '<div class="irow grad' + (kind === "new" ? "" : " g4") + '" data-surah="' + x.surah + '"' +
       ' data-from="' + (x.ayah_from == null ? "" : x.ayah_from) + '"' +
       ' data-to="' + (x.ayah_to == null ? "" : x.ayah_to) + '"' +
       ' data-kind="' + (kind === "new" ? "new" : "review") + '">' +
       '<div class="lab"><span class="ar" dir="rtl">' + esc(x.name_ar) + '</span>' +
       '<span class="tr">' + esc(x.name_en) + rangeLabel(x) + '</span>' +
-      '<span class="m' + stale + '">' + esc(meta) + '</span></div>' +
+      '<span class="m' + stale + (old ? " old" : "") + '">' + esc(meta) + '</span></div>' +
       (S.readOnly ? '' :
+        /* The note button and the grades travel together in one block. The
+           row already wraps so the tajwid line can have its own line; without
+           this the buttons wrapped among themselves too and "not ready" ended
+           up alone on a third line looking like a mistake. */
+        '<div class="gbrow">' +
         '<button class="gb note" data-note="1" title="' + esc(T("noteAdd")) + '">✎</button>' +
         '<button class="gb g lab3 t-ok" data-g="good" title="' + esc(T("gGoodTip")) + '">' +
           '<span class="ic">✓</span><small>' + esc(T("gGood")) + '</small></button>' +
+        /* Average sits between good and again because that is what it means,
+           and only on review. New memorisation allows one mistake a page —
+           there is no room for a middle grade between that and "again". */
+        (kind === "new" ? "" :
+          '<button class="gb g lab3 t-avg" data-g="average" title="' + esc(T("gAverageTip")) + '">' +
+            '<span class="ic">≈</span><small>' + esc(T("gAverage")) + '</small></button>') +
         '<button class="gb g lab3 t-rev" data-g="repeat" title="' + esc(T("gAgainTip")) + '">' +
           '<span class="ic">↻</span><small>' + esc(T("gAgain")) + '</small></button>' +
         '<button class="gb g lab3 t-np" data-g="not_prepared" title="' + esc(T("gNotReadyTip")) + '">' +
-          '<span class="ic">–</span><small>' + esc(T("gNotReady")) + '</small></button>' +
+          '<span class="ic">–</span><small>' + esc(T("gNotReady")) + '</small></button></div>' +
         // Second line: the tajwid grade for THIS passage. It belongs to the
         // recitation, not to the child, so it lives on the row.
         '<div class="tjline"><span class="tjlab">' + esc(T("tajweed")) + '</span>' +
@@ -914,8 +1033,8 @@
     $("stuBody").querySelectorAll(".gb.g").forEach(function (b) {
       b.onclick = function () {
         var row = b.closest(".irow");
-        var cls = { good: "on-ok", repeat: "on-rev", not_prepared: "on-np" }[b.dataset.g];
-        row.querySelectorAll(".gb").forEach(function (x) { x.classList.remove("on-ok","on-rev","on-np"); });
+        var cls = { good: "on-ok", average: "on-avg", repeat: "on-rev", not_prepared: "on-np" }[b.dataset.g];
+        row.querySelectorAll(".gb").forEach(function (x) { x.classList.remove("on-ok","on-avg","on-rev","on-np"); });
         b.classList.add(cls);
         // Nothing was recited, so there is no reading to grade.
         if (b.dataset.g === "not_prepared") return sendGrade(row, "not_prepared");
@@ -997,6 +1116,16 @@
     /* The pencil on a homework line. It was a button that did nothing, which
        is worse than no button — a teacher taps it, nothing happens, and they
        stop trusting the rest of the screen. */
+    $("stuBody").querySelectorAll(".hw-now").forEach(function (b) {
+      b.onclick = function () {
+        /* Client-side only, and deliberately. Nothing about the homework has
+           changed — the teacher has simply decided to hear it today — so
+           there is nothing to write down. It lasts until they leave this
+           child, which is longer than the decision needs to. */
+        S.pulled[b.dataset.hw] = true;
+        renderStudent();
+      };
+    });
     $("stuBody").querySelectorAll(".hw-edit").forEach(function (b) {
       b.onclick = function (ev) {
         ev.stopPropagation();
@@ -1200,16 +1329,29 @@
       });
   }
 
-  /* Pick a surah to assign. Loads the real mushaf from the database. */
+  /* Pick what to assign. Loads the real mushaf from the database.
+
+     Review takes several surahs at once — teachers set five old surahs in a
+     sweep and were doing it five times. New memorisation stays one at a time,
+     because it is one passage by nature and because the ayah range below only
+     means anything for a single surah.
+
+     The narrowing block appears only when exactly one surah is chosen. Pages
+     are a second way of saying the same thing: they resolve to ayat before
+     they are sent, so nothing downstream has to know pages exist. */
   function pickSurah(kind) {
+    var multi = (kind === "review");
+    var detail = null;            // api_surah_pages for the single chosen surah
     sheet(kind === "memorise" ? T("assignNew") : T("addReview"),
       '<div class="loading"><span class="spin"></span></div>', null, null, T("cancel"));
     api.read("api_mushaf", { p_student: S.student.id, p_juz: null }).then(function (list) {
       var rows = list.map(function (x) {
         // The number matters: teachers say "surah 78", parents' mushafs are
         // numbered, and it is also the fastest thing to type into the filter.
-        return '<label class="trow" style="cursor:pointer"><input type="radio" name="sp" value="' + x.surah +
-          '" style="width:18px;height:18px"><span class="snum">' + x.surah + '</span>' +
+        return '<label class="trow" style="cursor:pointer">' +
+          '<input type="' + (multi ? "checkbox" : "radio") + '" name="sp" value="' + x.surah +
+          '" data-ayat="' + x.ayat + '" style="width:18px;height:18px">' +
+          '<span class="snum">' + x.surah + '</span>' +
           '<span class="lbl"><span class="ar" dir="rtl">' + esc(x.name_ar) +
           '</span><span>' + esc(x.name_en) + '</span></span><span class="dt">' + x.ayat + ' ' + T("ayat") +
           (x.status && x.status !== "not_started" ? ' · ' + esc(x.status) : '') + '</span></label>';
@@ -1217,43 +1359,136 @@
       $("shBody").innerHTML =
         '<input id="spFilter" type="search" placeholder="' + esc(T("findSurah")) + '" style="width:100%;padding:10px;margin-bottom:10px;' +
         'border:1px solid var(--line);border-radius:10px;background:var(--surface);color:var(--ink);font-size:15px">' +
-        '<div class="filters" style="margin:0 0 8px"><input id="spFrom" class="mini" style="width:90px" placeholder="from ayah">' +
-        '<input id="spTo" class="mini" style="width:90px" placeholder="to ayah">' +
-        '<span class="mini" style="border:0;background:none">' + esc(T("wholeSurah")) + ' = leave blank</span></div>' +
-        '<div class="tree" style="max-height:300px;overflow:auto" id="spList">' + rows + '</div>';
+        (multi ? '<div class="note" style="margin:0 0 8px;font-size:12.5px">' + esc(T("spMulti")) + '</div>' : '') +
+        '<div class="tree" style="max-height:260px;overflow:auto" id="spList">' + rows + '</div>' +
+        /* Labels, not placeholders. A placeholder disappears the moment you
+           type, so you cannot check afterwards which box you put which number
+           in — and until now these two said "from ayah" and "to ayah" in
+           English even when the whole app was in Arabic, which is how
+           An-Naba came to be assigned as 20-1. */
+        '<div id="spNarrow" hidden>' +
+          '<div class="narrowh">' + esc(T("spNarrow")) + '</div>' +
+          '<div class="fieldrow">' +
+            '<label class="fld"><span>' + esc(T("spFromAyah")) + '</span>' +
+              '<input id="spFrom" type="number" min="1" inputmode="numeric"></label>' +
+            '<label class="fld"><span>' + esc(T("spToAyah")) + '</span>' +
+              '<input id="spTo" type="number" min="1" inputmode="numeric"></label>' +
+          '</div>' +
+          '<div class="fieldrow" id="spPageRow">' +
+            '<label class="fld"><span>' + esc(T("spFromPage")) + '</span>' +
+              '<select id="spPageFrom"></select></label>' +
+            '<label class="fld"><span>' + esc(T("spToPage")) + '</span>' +
+              '<select id="spPageTo"></select></label>' +
+          '</div>' +
+          '<div class="note" id="spSum" style="margin:2px 0 0;font-size:12.5px"></div>' +
+        '</div>';
       $("shOk").hidden = false;
       $("shOk").textContent = T("add");
+
+      function chosen() {
+        return Array.prototype.slice.call($("spList").querySelectorAll('input[name=sp]:checked'));
+      }
+      /* Everything the narrowing block shows is derived from one place: the
+         ayah boxes. The page dropdowns write into them and then this runs, so
+         the two can never say different things. */
+      function refresh() {
+        var sel = chosen();
+        var one = sel.length === 1 ? sel[0] : null;
+        $("spNarrow").hidden = !one;
+        if (!one) return;
+        var ayat = +one.dataset.ayat;
+        var lo = +$("spFrom").value || 1, hi = +$("spTo").value || ayat;
+        var bad = lo < 1 || hi > ayat || lo > hi;
+        $("spSum").className = "note" + (bad ? " warn" : "");
+        $("spSum").textContent = bad
+          ? T("spBad").split("{n}").join(ayat)
+          : (lo === 1 && hi === ayat ? T("wholeSurah") + " · " + ayat + " " + T("ayat")
+             : lo + "–" + hi + " " + T("ofAyat").split("{n}").join(ayat));
+      }
+      function loadPages(surah, ayat) {
+        api.read("api_surah_pages", { p_surah: +surah }).then(function (d) {
+          detail = d;
+          var opts = (d.pages || []).map(function (pg) {
+            return '<option value="' + pg.page + '" data-lo="' + pg.ayah_from +
+                   '" data-hi="' + pg.ayah_to + '">' + T("spPage") + " " + pg.page + '</option>';
+          }).join("");
+          $("spPageFrom").innerHTML = opts;
+          $("spPageTo").innerHTML = opts;
+          if (d.pages && d.pages.length) {
+            $("spPageTo").selectedIndex = d.pages.length - 1;
+          }
+          // One page means a page picker that can only say one thing.
+          $("spPageRow").hidden = !(d.pages && d.pages.length > 1);
+        }).catch(function () { $("spPageRow").hidden = true; });
+      }
+      function fromPages() {
+        var a = $("spPageFrom").selectedOptions[0], b2 = $("spPageTo").selectedOptions[0];
+        if (!a || !b2) return;
+        // Picked backwards: take what they span rather than refusing.
+        var lo = Math.min(+a.dataset.lo, +b2.dataset.lo);
+        var hi = Math.max(+a.dataset.hi, +b2.dataset.hi);
+        $("spFrom").value = lo; $("spTo").value = hi;
+        refresh();
+      }
+
       $("spFilter").oninput = function () {
         var q = this.value.toLowerCase();
         $("spList").querySelectorAll(".trow").forEach(function (r) {
           r.style.display = r.textContent.toLowerCase().indexOf(q) >= 0 ? "" : "none";
         });
       };
-      /* Scrolling a list of 114 and tapping one leaves you unsure what you
-         picked by the time you reach the ayah boxes. Choosing a surah now
-         writes its name into the search box — which both confirms the choice
-         and collapses the list to it — and the row itself stays marked, so
-         clearing the box shows you where you are. */
       $("spList").onchange = function (e) {
         var r = e.target.closest(".trow");
-        if (!r) return;
-        $("spList").querySelectorAll(".trow").forEach(function (x) { x.classList.remove("on"); });
-        r.classList.add("on");
-        var name = r.querySelector(".lbl span:last-child");
-        if (name) { $("spFilter").value = name.textContent.trim(); $("spFilter").oninput(); }
+        if (r) {
+          $("spList").querySelectorAll(".trow").forEach(function (x) {
+            var i = x.querySelector("input"); x.classList.toggle("on", !!(i && i.checked));
+          });
+        }
+        var sel = chosen();
+        if (sel.length === 1) {
+          $("spFrom").value = ""; $("spTo").value = "";
+          loadPages(sel[0].value, +sel[0].dataset.ayat);
+          /* Choosing a surah writes its name into the search box, which both
+             confirms the choice and collapses the list to it. Only for the
+             single-pick case: collapsing the list while someone is ticking
+             five surahs would hide the four they already have. */
+          if (!multi) {
+            var name = sel[0].closest(".trow").querySelector(".lbl span:last-child");
+            if (name) { $("spFilter").value = name.textContent.trim(); $("spFilter").oninput(); }
+          }
+        }
+        refresh();
       };
+      ["spFrom", "spTo"].forEach(function (id) { $(id).oninput = refresh; });
+      ["spPageFrom", "spPageTo"].forEach(function (id) { $(id).onchange = fromPages; });
+
       $("shOk").onclick = function () {
-        var sel = $("shBody").querySelector('input[name=sp]:checked');
-        if (!sel) { toast("Pick a surah first."); return; }
-        var from = $("spFrom").value ? +$("spFrom").value : null;
-        var to   = $("spTo").value   ? +$("spTo").value   : null;
+        var sel = chosen();
+        if (!sel.length) { toast(T("spPickOne")); return; }
+        var surahs = sel.map(function (x) { return +x.value; });
+        var from = null, to = null;
+        if (sel.length === 1) {
+          var ayat = +sel[0].dataset.ayat;
+          from = $("spFrom").value ? +$("spFrom").value : null;
+          to   = $("spTo").value   ? +$("spTo").value   : null;
+          if (from != null || to != null) {
+            var lo = from == null ? 1 : from, hi = to == null ? ayat : to;
+            // The server refuses this too — this is so the teacher is told
+            // before the sheet closes, next to the boxes they typed into.
+            if (lo < 1 || hi > ayat || lo > hi) {
+              $("spSum").className = "note warn";
+              $("spSum").textContent = T("spBad").split("{n}").join(ayat);
+              return;
+            }
+            from = lo; to = hi;
+            if (lo === 1 && hi === ayat) { from = null; to = null; }
+          }
+        }
         assignHomework({
-          p_students: [S.student.id], p_kind: kind, p_surah: +sel.value,
-          p_from: from, p_to: to, p_note: null
-        }, S.student.name, function () {
-          closeSheet();
-          reloadStudent().catch(fail);
-        }).catch(fail);
+          p_students: [S.student.id], p_kind: kind,
+          p_surahs: surahs, p_from: from, p_to: to
+        }, S.student.name, function () { closeSheet(); reloadStudent(); });
+        return false;
       };
     }).catch(fail);
   }
@@ -1326,9 +1561,9 @@
         '<div class="filters" style="margin:0 0 10px">' +
         '<select id="bkKind" class="mini"><option value="memorise">' + (i18n.isAr() ? "حِفْظٌ جَدِيد" : "New memorization") +
         '</option><option value="review">' + (i18n.isAr() ? "مُرَاجَعَة" : "Review") + '</option></select>' +
-        '<input id="bkFrom" class="mini" style="width:86px" placeholder="from ayah">' +
-        '<input id="bkTo" class="mini" style="width:86px" placeholder="to ayah"></div>' +
-        '<input id="bkFilter" type="search" placeholder="Find a surah" style="width:100%;padding:10px;margin-bottom:8px;' +
+        '<label class="fld"><span>' + esc(T("spFromAyah")) + '</span><input id="bkFrom" class="mini" type="number" min="1" inputmode="numeric"></label>' +
+        '<label class="fld"><span>' + esc(T("spToAyah")) + '</span><input id="bkTo" class="mini" type="number" min="1" inputmode="numeric"></label></div>' +
+        '<input id="bkFilter" type="search" placeholder="' + esc(T("findSurah")) + '" style="width:100%;padding:10px;margin-bottom:8px;' +
         'border:1px solid var(--line);border-radius:10px;background:var(--surface);color:var(--ink)">' +
         '<div class="tree" style="max-height:220px;overflow:auto" id="bkList">' +
         list.map(function (x) {
@@ -1346,9 +1581,12 @@
       $("shOk").textContent = T("add") + " (" + ids.length + ")";
       $("shOk").onclick = function () {
         var sel = $("shBody").querySelector('input[name=bk]:checked');
-        if (!sel) { toast("Pick a surah first."); return; }
+        if (!sel) { toast(T("spPickOne")); return; }
         assignHomework({
-          p_students: ids, p_kind: $("bkKind").value, p_surah: +sel.value,
+          // p_surahs, plural, since the function took the array. One surah
+          // here: the whole class getting five at once is not a thing anyone
+          // asked for and would be a lot of homework to undo.
+          p_students: ids, p_kind: $("bkKind").value, p_surahs: [+sel.value],
           p_from: $("bkFrom").value ? +$("bkFrom").value : null,
           p_to: $("bkTo").value ? +$("bkTo").value : null, p_note: null
         }, T("bulkHw"), function () { closeSheet(); toast(T("savedAll")); refreshDay(); })
@@ -1487,6 +1725,7 @@
      progress there, so nothing can be graded — the sheet opens read-only and
      the grade buttons are left off rather than shown and then failing. */
   window.SijillOpenStudentById = function (id) {
+    S.pulled = {};
     S.readOnly = true;
     openStudent({ id: id, name: "…" });
   };
