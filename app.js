@@ -925,7 +925,14 @@
            up alone on a third line looking like a mistake. */
         '<div class="gbrow">' +
         '<button class="gb note" data-note="1" title="' + esc(T("noteAdd")) + '">✎</button>' +
-        '<button class="gb g lab3 t-ok" data-g="good" title="' + esc(T("gGoodTip")) + '">' +
+        /* The tooltips have to follow the kind too. Round 23 split the rules
+           in two and left these behind saying "three mistakes a page or
+           fewer" on both — which is now wrong on a new-memorisation row (one
+           a page) and wrong on a review row (good is up to 3, again is 6+).
+           A tooltip that contradicts the rule printed above it is worse than
+           no tooltip, because a teacher trusts the one under their thumb. */
+        '<button class="gb g lab3 t-ok" data-g="good" title="' +
+          esc(T(kind === "new" ? "gGoodTipNew" : "gGoodTipRev")) + '">' +
           '<span class="ic">✓</span><small>' + esc(T("gGood")) + '</small></button>' +
         /* Average sits between good and again because that is what it means,
            and only on review. New memorisation allows one mistake a page —
@@ -933,7 +940,8 @@
         (kind === "new" ? "" :
           '<button class="gb g lab3 t-avg" data-g="average" title="' + esc(T("gAverageTip")) + '">' +
             '<span class="ic">≈</span><small>' + esc(T("gAverage")) + '</small></button>') +
-        '<button class="gb g lab3 t-rev" data-g="repeat" title="' + esc(T("gAgainTip")) + '">' +
+        '<button class="gb g lab3 t-rev" data-g="repeat" title="' +
+          esc(T(kind === "new" ? "gAgainTipNew" : "gAgainTipRev")) + '">' +
           '<span class="ic">↻</span><small>' + esc(T("gAgain")) + '</small></button>' +
         '<button class="gb g lab3 t-np" data-g="not_prepared" title="' + esc(T("gNotReadyTip")) + '">' +
           '<span class="ic">–</span><small>' + esc(T("gNotReady")) + '</small></button></div>' +

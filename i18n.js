@@ -84,11 +84,21 @@
     /* --- one tap from the class list, and the labels under the marks --- */
     mHere:"here", mLate:"late", mAway:"away",
     gGood:"good", gAgain:"again", gNotReady:"not ready",
-    gGoodTip:"Recited to standard — three mistakes a page or fewer",
-    gAgainTip:"More than three mistakes a page. It comes back next week by itself.",
+    /* One tooltip per kind, because round 23 made the rules different. The
+       tooltip must never say something the rule printed above the section
+       contradicts — a teacher trusts whichever one is under their thumb. */
+    gGoodTipNew:"Recited to standard — one mistake a page or fewer",
+    gGoodTipRev:"Recited to standard — up to three mistakes",
+    gAgainTipNew:"More than one mistake a page. It comes back next week by itself.",
+    gAgainTipRev:"Six mistakes or more. It comes back next week by itself.",
     gNotReadyTip:"Here, but had not worked on it. A conversation with the family, not a teaching problem.",
     week1:"week ago",
     mtSolid:"solid", mtReview:"review", mtClear:"clear",
+    /* The audit judges a page, not a recitation, so it has no mistake count
+       to quote. It used to borrow the grading tooltips and talk about
+       mistakes a page, which is not the question being asked here. */
+    mtSolidTip:"Memorised and holding — no need to come back to it soon",
+    mtReviewTip:"Memorised once but slipping. It joins the review rotation.",
     findSurah:"Find a surah — name or number",
     trend:"Trend",
     tr_up:"moving forward", tr_flat:"standing still",
@@ -197,11 +207,15 @@
 
     mHere:"حَاضِر", mLate:"مُتَأَخِّر", mAway:"غَائِب",
     gGood:"جَيِّد", gAgain:"أَعِدْ", gNotReady:"لَمْ يُحَضِّرْ",
-    gGoodTip:"تَلَا عَلَى المُسْتَوَى المَطْلُوب — ثَلَاثَةُ أَخْطَاءٍ فِي الصَّفْحَةِ أَوْ أَقَلّ",
-    gAgainTip:"أَكْثَرُ مِنْ ثَلَاثَةِ أَخْطَاءٍ فِي الصَّفْحَة. يَعُودُ الأُسْبُوعَ القَادِمَ تِلْقَائِيًّا.",
+    gGoodTipNew:"تَلَا عَلَى المُسْتَوَى المَطْلُوب — خَطَأٌ وَاحِدٌ فِي الصَّفْحَةِ أَوْ أَقَلّ",
+    gGoodTipRev:"تَلَا عَلَى المُسْتَوَى المَطْلُوب — حَتَّى ثَلَاثَةِ أَخْطَاء",
+    gAgainTipNew:"أَكْثَرُ مِنْ خَطَإٍ وَاحِدٍ فِي الصَّفْحَة. يَعُودُ الأُسْبُوعَ القَادِمَ تِلْقَائِيًّا.",
+    gAgainTipRev:"سِتَّةُ أَخْطَاءٍ أَوْ أَكْثَر. يَعُودُ الأُسْبُوعَ القَادِمَ تِلْقَائِيًّا.",
     gNotReadyTip:"حَاضِرٌ لَكِنَّهُ لَمْ يَعْمَلْ عَلَيْه. هَذَا حَدِيثٌ مَعَ الأُسْرَة، لَا مُشْكِلَةٌ تَعْلِيمِيَّة.",
     week1:"أُسْبُوعٌ مَضَى",
     mtSolid:"مُتْقَن", mtReview:"مُرَاجَعَة", mtClear:"مَسْح",
+    mtSolidTip:"مَحْفُوظٌ وَثَابِت — لَا حَاجَةَ لِلْعَوْدَةِ إِلَيْهِ قَرِيبًا",
+    mtReviewTip:"حُفِظَ مِنْ قَبْلُ لَكِنَّهُ يَضْعُف. يَدْخُلُ فِي دَوْرَةِ المُرَاجَعَة.",
     findSurah:"ابْحَثْ عَنْ سُورَة — بِالاِسْمِ أَوْ بِالرَّقَم",
     trend:"الاِتِّجَاه",
     tr_up:"يَتَقَدَّم", tr_flat:"ثَابِتٌ بِلَا تَقَدُّم",

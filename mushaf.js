@@ -86,9 +86,9 @@
   function setters(scope, number, extra) {
     return '<span class="setg" data-scope="' + scope + '" data-n="' + number + '"' +
       (extra || "") + '>' +
-      '<button class="gb lab3 sv t-ok" data-grade="1" title="' + esc(T("gGoodTip")) + '">' +
+      '<button class="gb lab3 sv t-ok" data-grade="1" title="' + esc(T("mtSolidTip")) + '">' +
         '<span class="ic">✓</span><small>' + esc(T("mtSolid")) + '</small></button>' +
-      '<button class="gb lab3 sv t-rev" data-grade="2" title="' + esc(T("gAgainTip")) + '">' +
+      '<button class="gb lab3 sv t-rev" data-grade="2" title="' + esc(T("mtReviewTip")) + '">' +
         '<span class="ic">↻</span><small>' + esc(T("mtReview")) + '</small></button>' +
       '<button class="gb lab3 sv t-np" data-grade="0" title="' + esc(T("mtClearTip")) + '">' +
         '<span class="ic">–</span><small>' + esc(T("mtClear")) + '</small></button>' +
