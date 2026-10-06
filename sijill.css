@@ -1059,3 +1059,37 @@ html[lang="ar"] .narrowh{letter-spacing:0;text-transform:none;font-size:12.5px}
 /* A ticked row in the multi-select list. */
 .tree .trow.on{background:var(--lapis-soft);border-color:var(--lapis)}
 .rec .who{margin-inline-start:6px}
+
+/* ---------------------------------------------------------------- class note
+   What the class did together, written by a teacher and read by every family
+   in that class. Given its own block rather than folded into .note, because
+   .note is advice to the teacher and this is content going out of the
+   building — it should not look like the hints around it. */
+.cnote{background:var(--surface);border:1px solid var(--line-2);border-radius:13px;
+  padding:12px 13px;margin:0 0 14px}
+.cnote h2{margin:0 0 6px;font-size:11px;font-weight:700;letter-spacing:.12em;
+  text-transform:uppercase;color:var(--ink-3)}
+html[lang="ar"] .cnote h2{letter-spacing:0;text-transform:none;font-size:13px}
+/* The warning is a line of the form, not a tooltip: there are no tooltips on
+   a phone, and this is the only text in Sijill one person writes and
+   thirty-five families read. */
+.cnote p.warn{margin:0 0 8px;font-size:12.5px;line-height:1.5;color:var(--late);
+  background:var(--late-soft);border:1px solid color-mix(in srgb,var(--late) 30%,transparent);
+  border-radius:9px;padding:7px 9px}
+.cnote textarea{width:100%;box-sizing:border-box;font:inherit;font-size:15px;
+  line-height:1.5;padding:9px 10px;border:1px solid var(--line);border-radius:9px;
+  background:var(--paper);color:var(--ink);resize:vertical;min-height:72px}
+.cnote textarea:focus{outline:2px solid var(--lapis);outline-offset:1px}
+.cnote .row{display:flex;align-items:center;gap:8px;margin-top:8px;flex-wrap:wrap}
+.cnote .row .sp{flex:1}
+.cnote .count{font-family:var(--mono);font-size:11px;color:var(--ink-3)}
+.cnote .count.over{color:var(--crit);font-weight:700}
+.cnote .who{margin-top:7px;font-size:11.5px;color:var(--ink-3)}
+/* The class note as a family reads it: the day it happened, then what was
+   done. Each entry separated by a rule, so three weeks do not read as one
+   paragraph. */
+.cn{padding:9px 0;border-top:1px solid var(--line)}
+.cn:first-of-type{border-top:0;padding-top:2px}
+.cn-when{font-size:11.5px;color:var(--ink-3);margin-bottom:3px}
+.cn-txt{font-size:14.5px;line-height:1.55}
+html[lang="ar"] .cn-txt{font-size:15.5px;line-height:1.85}

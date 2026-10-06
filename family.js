@@ -42,6 +42,9 @@
          to their child yet is the start of an argument nobody needs. For a
          parent the useful fact is simply that it has not been heard, and
          that it should keep being practised. */
+      /* The class note. A family reads it as "here is what the lesson was",
+         so it is headed by what it is, not by the word "note". */
+      classNotes:"In class", cnBy:"with {t}",
       stillToHear:"Still to be heard", forNextClass:"To practise for",
       noNextClass:"the next class",
       setOnBy:"set {d} by {t}",
@@ -61,6 +64,7 @@
       notAssessed:"We haven't done this year's review with your child yet. Once their teacher has been through it — usually in the first few weeks — their progress appears here." 
     },
     ar: {
+      classNotes:"فِي الحَلْقَة", cnBy:"مَعَ {t}",
       stillToHear:"لَمْ يُسْمَعْ بَعْد", forNextClass:"لِلتَّحْضِيرِ لِـ",
       noNextClass:"الحِصَّةِ القَادِمَة",
       setOnBy:"حُدِّدَ {d} بِوَاسِطَةِ {t}",
@@ -208,6 +212,21 @@
          (next.length ? hwLines(next)
            : '<div class="line"><span>' + esc(t("nothingYet")) + '</span></div>') +
          '</div>';
+
+    /* What the class did together, newest first. Shown only when a teacher
+       has written one — an empty "nothing from the class" card every week
+       would tell a family their teacher is not bothering, which is both
+       unkind and usually untrue. */
+    var cn = c.class_notes || [];
+    if (cn.length) {
+      h += '<div class="pcard"><h2>' + esc(t("classNotes")) + '</h2>' +
+        cn.map(function (x) {
+          return '<div class="cn">' +
+            '<div class="cn-when">' + esc(i18n.fmtDate(x.held_on, true)) +
+              (x.by ? ' · ' + esc(t("cnBy", { t: x.by })) : '') + '</div>' +
+            '<div class="cn-txt">' + esc(x.note) + '</div></div>';
+        }).join("") + '</div>';
+    }
 
     // attendance
     var a = c.attendance_summary || {};

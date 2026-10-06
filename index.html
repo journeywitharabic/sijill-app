@@ -225,6 +225,21 @@
     <!-- The key to the trend arrows in front of each name. They have no room
          for words up there, so the words go here. -->
     <div id="trendKey"></div>
+    <!-- What the class did together, read by every family in it. Below the
+         register, because the register is the job and this is the write-up
+         that follows it. -->
+    <div class="cnote" id="cnoteBox" hidden>
+      <h2 data-t="cnTitle">What the class did today</h2>
+      <p class="warn" data-t="cnHint">Every parent in this class sees this. Write about the class, never about a child by name.</p>
+      <textarea id="cnoteText" rows="3" maxlength="600"></textarea>
+      <div class="row">
+        <span class="count" id="cnoteCount"></span>
+        <span class="sp"></span>
+        <button class="btn ghost sm" id="cnoteClear" data-t="cnClear" hidden>Remove note</button>
+        <button class="btn sm" id="cnoteSave" data-t="cnSave">Save note</button>
+      </div>
+      <div class="who" id="cnoteBy"></div>
+    </div>
     <div class="note" data-t="clsHint">Tap a name to record recitation. Everything saves as you tap.</div>
   </div>
 </section>

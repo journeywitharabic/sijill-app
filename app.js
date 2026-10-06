@@ -347,6 +347,59 @@
       (c.late ? '<span class="pill late"><i></i>' + c.late + " " + T("late") + "</span>" : "") +
       (c.exc ? '<span class="pill exc"><i></i>' + c.exc + " " + T("excused") + "</span>" : "") +
       (c.crit ? '<span class="pill crit"><i></i>' + c.crit + " " + T("noreason") + "</span>" : "");
+
+    renderClassNote(ahead);
+  }
+
+  /* ------------------------------------------------------------ class note
+     What the class did together, written once and read by every family in
+     it. It belongs to the class DAY, which is what keeps it honest: it is
+     dated, so it cannot go stale, and nobody has to remember to take it
+     down — next Sunday's note simply becomes the latest one.
+
+     Not shown on a cancelled day (nothing happened), on a day still AHEAD
+     of us (nothing has happened YET — the register is locked for the same
+     reason), or to a coordinator looking in read-only, who is not the one
+     who taught it. */
+  function renderClassNote(ahead) {
+    var box = $("cnoteBox");
+    if (!box) return;
+    var d = S.dayData, sess = d && d.session;
+    var show = !!sess && sess.status !== "cancelled" && !S.readOnly && !ahead;
+    box.hidden = !show;
+    if (!show) return;
+
+    var txt = sess.class_note || "";
+    $("cnoteText").value = txt;
+    $("cnoteText").placeholder = T("cnPlaceholder");
+    $("cnoteClear").hidden = !txt;
+    $("cnoteBy").textContent = (txt && sess.class_note_by)
+      ? T("cnBy", { t: sess.class_note_by })
+      : (txt ? "" : T("cnEmpty"));
+    cnoteCount();
+  }
+
+  function cnoteCount() {
+    var n = ($("cnoteText").value || "").length;
+    var el = $("cnoteCount");
+    el.textContent = n + "/600";
+    el.classList.toggle("over", n > 600);
+  }
+
+  function saveClassNote(text) {
+    var sess = S.dayData && S.dayData.session;
+    if (!sess) return;
+    api.write("api_class_note",
+      { p_session: sess.id, p_note: text },
+      T("cnTitle")
+    ).then(function () {
+      // Keep the local copy in step rather than refetching the whole day:
+      // a teacher mid-register must not have the list redrawn under them.
+      sess.class_note = text || null;
+      sess.class_note_by = text ? ((S.me && S.me.teacher) || sess.class_note_by) : null;
+      renderClassNote();
+      toast(T("cnSaved"));
+    });
   }
 
   /* ------------------------------------------------------- marking people */
@@ -442,6 +495,29 @@
     if (!S.undo) return;
     var u = S.undo; S.undo = null; hideUndo();
     Promise.resolve(u.fn()).then(refreshDay);
+  };
+
+  /* ------------------------------------------------- the class note's buttons */
+  $("cnoteText").oninput = cnoteCount;
+  $("cnoteSave").onclick = function () {
+    var t = ($("cnoteText").value || "").trim();
+    if (t.length > 600) { toast(T("cnTooLong", { n: t.length })); return; }
+    if (!t) {
+      // An empty box and Save means "take it down". Route it through the
+      // same confirmation as Remove rather than deleting on a stray tap.
+      if (!(S.dayData && S.dayData.session && S.dayData.session.class_note)) return;
+      $("cnoteClear").onclick();
+      return;
+    }
+    saveClassNote(t);
+  };
+  $("cnoteClear").onclick = function () {
+    sheet(T("cnClearAsk"), '<p>' + esc(T("cnClearBody")) + '</p>', T("cnClear"), function () {
+      closeSheet();
+      $("cnoteText").value = "";
+      saveClassNote("");
+    }, T("cancel"));
+    $("shOk").classList.add("danger");
   };
 
   /* ---------------------------------------------------------- the trend */
@@ -1764,7 +1840,12 @@
     }).catch(function () { show("v-gate"); });
   }
 
-  window.SijillApp   = { S: S, startup: startup, openClasses: openClasses, refreshDay: refreshDay };
+  window.SijillApp   = { S: S, startup: startup, openClasses: openClasses,
+                       refreshDay: refreshDay,
+                       // exposed so the suite can put a day into a state the
+                       // fixture cannot easily reach (a cancelled one) and see
+                       // what the screen decides
+                       renderClassNote: renderClassNote };
   window.SijillSheet = sheet;
   window.SijillCloseSheet = closeSheet;
   window.SijillToast = toast;

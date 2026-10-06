@@ -46,6 +46,18 @@
        however old it is. The second heading names a real day and date,
        because "next week" is wrong at a school that meets Friday AND
        Sunday — the next class is usually two or five days away. */
+    /* The class note — the one thing in Sijill that one teacher writes and
+       every family in the class reads. The warning is part of the label,
+       not a tooltip, because a tooltip does not exist on a phone and this
+       is the only place where getting it wrong reaches thirty-five homes. */
+    cnTitle:"What the class did today",
+    cnHint:"Every parent in this class sees this. Write about the class, never about a child by name.",
+    cnPlaceholder:"e.g. We revised Surat Al-Mulk together and went through the rules of madd.",
+    cnSave:"Save note", cnClear:"Remove note", cnSaved:"Saved",
+    cnBy:"written by {t}", cnEmpty:"No note for this class yet.",
+    cnTooLong:"That is {n} characters — the limit is 600.",
+    cnClearAsk:"Remove this class note?",
+    cnClearBody:"The families in this class will stop seeing it. You can write a new one at any time.",
     gDueGrade:"Previous homework due for grading",
     gNextClass:"Homework for the next class",
     gNoNextClass:"no class scheduled yet",
@@ -176,6 +188,14 @@
     donePart:"مِنْ {n} لَمْ تَكْتَمِلْ بَيَانَاتُهُمْ",
     donePartSub:"سَجِّلِ الحُضُورَ <b>وَ</b> تِلَاوَةَ كُلِّ طَالِبٍ — كِلَاهُمَا مَطْلُوب",
     gDue:"لِلسَّمَاعِ اليَوْم", gNew:"الحِفْظُ الجَدِيد", gRot:"المُرَاجَعَة — الأَقْدَمُ أَوَّلًا",
+    cnTitle:"مَا قَامَتْ بِهِ الحَلْقَةُ اليَوْم",
+    cnHint:"يَرَى هَذَا كُلُّ وَلِيِّ أَمْرٍ فِي الحَلْقَة. اُكْتُبْ عَنِ الحَلْقَة، وَلَا تَذْكُرِ اسْمَ طَالِبٍ أَبَدًا.",
+    cnPlaceholder:"مِثَال: رَاجَعْنَا سُورَةَ المُلْكِ مَعًا وَمَرَرْنَا عَلَى أَحْكَامِ المَدّ.",
+    cnSave:"حِفْظُ المُلَاحَظَة", cnClear:"إِزَالَةُ المُلَاحَظَة", cnSaved:"حُفِظَتْ",
+    cnBy:"كَتَبَهَا {t}", cnEmpty:"لَا مُلَاحَظَةَ لِهَذِهِ الحَلْقَةِ بَعْد.",
+    cnTooLong:"هَذَا {n} حَرْفًا — وَالحَدُّ سِتُّمِائَة.",
+    cnClearAsk:"هَلْ تُزِيلُ مُلَاحَظَةَ الحَلْقَة؟",
+    cnClearBody:"سَيَتَوَقَّفُ أَوْلِيَاءُ الأُمُورِ فِي هَذِهِ الحَلْقَةِ عَنْ رُؤْيَتِهَا. وَيُمْكِنُكَ كِتَابَةُ وَاحِدَةٍ جَدِيدَةٍ مَتَى شِئْت.",
     gDueGrade:"وَاجِبٌ سَابِقٌ مُسْتَحَقٌّ لِلتَّقْيِيم",
     gNextClass:"وَاجِبُ الحِصَّةِ القَادِمَة",
     gNoNextClass:"لَمْ تُجْدَوَلْ حِصَّةٌ بَعْد",
