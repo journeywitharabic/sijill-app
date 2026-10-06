@@ -674,10 +674,25 @@
     var later    = (d.due_back || []).concat(d.new_memorisation || [])
                      .filter(function (h) { return !isNow(h); });
 
-    html += '<div class="grp sect"><div class="grph"><h2>' + esc(T("gToday")) + '</h2>' +
-            '<span class="n">' + (todayRev.length + todayNew.length) + '</span></div>';
+    /* The day this screen is marking, and the day the work it sets is due
+       back. Both come from the server so a parent's page cannot disagree
+       with a teacher's about which section a surah is in. nextClass is null
+       at the end of the year, which every use below has to survive. */
+    var classDay  = d.class_day || null;
+    var nextClass = d.next_class || null;
+    var nextLabel = nextClass ? i18n.fmtDate(nextClass, true) : T("gNoNextClass");
+
+    /* No date on this heading, deliberately. Its rows can come from several
+       different classes, and the usual reason one is sitting here is that
+       nobody got to hear the child — sometimes for weeks. Naming a class day
+       would be wrong in exactly the case that matters most. Each row carries
+       its own date and goes amber once it is three weeks old. */
+    html += '<div class="grp sect"><div class="grph"><h2>' + esc(T("gDueGrade")) + '</h2>' +
+            (todayRev.length + todayNew.length
+              ? '<span class="n">' + (todayRev.length + todayNew.length) + '</span>' : '') +
+            '</div>';
     if (!todayRev.length && !todayNew.length) {
-      html += '<div class="card"><div class="empty">' + esc(T("gNothingToday")) + '</div></div>';
+      html += '<div class="card"><div class="empty">' + esc(T("gNothingDue")) + '</div></div>';
     } else {
       /* The rule lives inside the group it applies to. The thresholds differ
          between the two now, so one line at the bottom of the screen would be
@@ -709,8 +724,10 @@
 
     // what goes home tonight
     var hw = later;
-    html += '<div class="grp sect next"><div class="grph"><h2>' + esc(T("gNext")) + '</h2>' +
-            '<span class="n">' + hw.length + '</span></div><div class="hwbox">' +
+    html += '<div class="grp sect next"><div class="grph"><h2>' + esc(T("gNextClass")) +
+            '<span class="when">' + esc(nextLabel) + '</span></h2>' +
+            (hw.length ? '<span class="n">' + hw.length + '</span>' : '') +
+            '</div><div class="hwbox">' +
             (hw.length ? hw.map(function (h) {
               /* The control used to be a bare ✎, 38x26, with its only
                  explanation in a title= tooltip — which does not exist on a
@@ -727,9 +744,12 @@
                   (h.kind === "memorise" ? esc(ar ? "لِلْحِفْظ" : "Memorize") : esc(ar ? "لِلْمُرَاجَعَة" : "Review")) +
                 '</b> <span class="ar" style="font-family:var(--serif);font-size:18px;font-weight:700">' +
                 esc(h.name_ar) + '</span> <span style="color:var(--ink-2)">' + esc(h.name_en) + rangeLabel(h) + '</span>' +
-                // Everything in this box was set today, so the age line that
-                // used to live here said "set this week" on every row.
-                '<div class="hwage">' + esc(T("gSetToday")) + '</div>' +
+                /* The date it was set, not "today". A teacher finishing
+                   Sunday's register on the Monday is not setting it today,
+                   and a line that says so is the kind of small untruth that
+                   makes a teacher stop trusting the rest of the screen. */
+                '<div class="hwage">' +
+                  esc(T("gSetOn").split("{d}").join(i18n.fmtDate(h.set_on))) + '</div>' +
                 '</div><div class="hwside">' + (h.source === "auto"
                   ? '<span class="pill late"><i></i>' + (ar ? "مِنْ ↻ إِعَادَة" : "from ↻ repeat") + '</span>'
                   : '<span class="pill mute"><i></i>' + (ar ? "أَضَافَهُ المُعَلِّم" : "set by teacher") + '</span>') +
@@ -738,8 +758,15 @@
                   esc(T("gHearNowTip")) + '">' + esc(T("gHearNow")) + '</button>') +
                 '<button class="btn ghost sm hw-edit" data-hw="' + esc(h.homework_id) + '">' +
                 esc(T("hwChange")) + '</button></div></div>';
-            }).join("") : '<div style="font-size:13.5px">' + esc(T("noneHw")) + '</div>') +
-            '</div><div style="height:8px"></div><div class="note">' + T("hwHint") + '</div></div>';
+            }).join("")
+              : '<div style="font-size:13.5px">' +
+                esc(T("gNothingNext").split("{d}").join(nextLabel)) + '</div>') +
+            '</div>' +
+            // The key explains the two pills on the rows. With no rows it is
+            // explaining something that is not on the screen.
+            (hw.length ? '<div style="height:8px"></div><div class="note">' +
+                         T("hwHint") + '</div>' : '') +
+            '</div>';
 
     // Adab for today's class. Optional, and placed after the recitation work
     // rather than among it: conduct is a judgement made at the end of a
@@ -1388,6 +1415,8 @@
             '<label class="fld"><span>' + esc(T("spToPage")) + '</span>' +
               '<select id="spPageTo"></select></label>' +
           '</div>' +
+          '<div class="note warn" id="spPageWhy" hidden ' +
+            'style="margin:2px 0 6px;font-size:12.5px"></div>' +
           '<div class="note" id="spSum" style="margin:2px 0 0;font-size:12.5px"></div>' +
         '</div>';
       $("shOk").hidden = false;
@@ -1427,7 +1456,18 @@
           }
           // One page means a page picker that can only say one thing.
           $("spPageRow").hidden = !(d.pages && d.pages.length > 1);
-        }).catch(function () { $("spPageRow").hidden = true; });
+          $("spPageWhy").hidden = true;
+        }).catch(function (e) {
+          /* This used to hide the row and say nothing. The whole feature
+             then vanished with no clue as to why — which is how it went
+             unexplained for two weeks of real use. A failure that tells
+             nobody is worse than a failure. The ayah boxes still work, so
+             say that too rather than leaving a teacher stuck. */
+          $("spPageRow").hidden = true;
+          $("spPageWhy").hidden = false;
+          $("spPageWhy").textContent = T("spPageFail") + " " +
+            ((e && (e.message || e.hint)) || T("spPageFailWhy"));
+        });
       }
       function fromPages() {
         var a = $("spPageFrom").selectedOptions[0], b2 = $("spPageTo").selectedOptions[0];

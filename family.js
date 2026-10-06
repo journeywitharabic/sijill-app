@@ -36,7 +36,16 @@
   /* -------------------------------------------------------------- strings */
   var L = {
     en: {
-      thisWeek:"This week", memorize:"Memorize", review:"Review", setBy:"Set {d} by {t}",
+      /* Two sections, the same split the teachers see. The wording is not
+         theirs: a teacher reads "due for grading", which is about their own
+         work, and a parent reading that about a volunteer who has not got
+         to their child yet is the start of an argument nobody needs. For a
+         parent the useful fact is simply that it has not been heard, and
+         that it should keep being practised. */
+      stillToHear:"Still to be heard", forNextClass:"To practise for",
+      noNextClass:"the next class",
+      setOnBy:"set {d} by {t}",
+      memorize:"Memorize", review:"Review", setBy:"Set {d} by {t}",
       attendance:"Attendance", rate:"Attendance this year",
       breakdown:"Present / late / excused / no reason",
       present:"Present", late:"Late", excused:"Excused", noreason:"No reason", closed:"Class closed",
@@ -45,14 +54,17 @@
       ofWhole:"in the whole Qur\u2019an",
       scope:"The pages are counted inside juz {j} \u2014 the part {n} is memorising now. The two lines under it count the whole Qur\u2019an. Pages are a fairer measure than surahs, because surah lengths vary enormously.",
       helpHome:"Needs review — help at home", recent:"Recent classes",
-      nothingYet:"Nothing set for this week yet.", noClasses:"No classes recorded yet.",
+      nothingYet:"Nothing set yet.", noClasses:"No classes recorded yet.",
       contact:"Any question about homework or attendance — message the school on ClassDojo.",
       tajweed:"Tajwīd", adab:"Adab", tr_up:"moving forward", tr_flat:"standing still", tr_down:"needs attention", tr_away:"not enough to say", trHelp:"over the last few classes", wholeSurah:"whole surah", ayat:"ayat", notMarked:"not marked",
       noneRecorded:"Here — nothing recorded", guideLink:"A short guide to this page",
       notAssessed:"We haven't done this year's review with your child yet. Once their teacher has been through it — usually in the first few weeks — their progress appears here." 
     },
     ar: {
-      thisWeek:"هَذَا الأُسْبُوع", memorize:"لِلْحِفْظ", review:"لِلْمُرَاجَعَة",
+      stillToHear:"لَمْ يُسْمَعْ بَعْد", forNextClass:"لِلتَّحْضِيرِ لِـ",
+      noNextClass:"الحِصَّةِ القَادِمَة",
+      setOnBy:"حُدِّدَ {d} بِوَاسِطَةِ {t}",
+      memorize:"لِلْحِفْظ", review:"لِلْمُرَاجَعَة",
       setBy:"حُدِّدَ {d} بِوَاسِطَةِ {t}",
       attendance:"الحُضُور", rate:"الحُضُورُ هَذَا العَام",
       breakdown:"حَاضِر / مُتَأَخِّر / بِعُذْر / بِدُونِ عُذْر",
@@ -63,7 +75,7 @@
       ofWhole:"فِي القُرْآنِ كُلِّه",
       scope:"الصَّفَحَاتُ مَحْسُوبَةٌ ضِمْنَ الجُزْءِ {j} — القِسْمِ الَّذِي يَحْفَظُهُ {n} الآنَ. أَمَّا السَّطْرَانِ تَحْتَهُ فَيَشْمَلَانِ القُرْآنَ كُلَّه. وَالصَّفَحَاتُ مِقْيَاسٌ أَدَقُّ مِنَ السُّوَرِ لِأَنَّ أَطْوَالَ السُّوَرِ مُتَفَاوِتَة.",
       helpHome:"يَحْتَاجُ مُرَاجَعَة — لِلْمُسَاعَدَةِ فِي البَيْت", recent:"الحِصَصُ الأَخِيرَة",
-      nothingYet:"لَمْ يُحَدَّدْ شَيْءٌ لِهَذَا الأُسْبُوعِ بَعْد.", noClasses:"لَا حِصَصَ مُسَجَّلَةٌ بَعْد.",
+      nothingYet:"لَمْ يُحَدَّدْ شَيْءٌ بَعْد.", noClasses:"لَا حِصَصَ مُسَجَّلَةٌ بَعْد.",
       contact:"لِأَيِّ سُؤَالٍ حَوْلَ الوَاجِبِ أَوِ الحُضُور، رَاسِلِ المَدْرَسَةَ عَبْرَ ClassDojo.",
       tajweed:"التَّجْوِيد", adab:"الأَدَب", tr_up:"يَتَقَدَّم", tr_flat:"ثَابِت", tr_down:"يَحْتَاجُ انْتِبَاهًا", tr_away:"لَا يُمْكِنُ الحُكْمُ بَعْد", trHelp:"خِلَالَ الحِصَصِ الأَخِيرَة", wholeSurah:"السُّورَةُ كَامِلَة", ayat:"آيَة", notMarked:"لَمْ يُسَجَّل",
       noneRecorded:"حَاضِر — لَمْ يُسَجَّلْ شَيْء", guideLink:"دَلِيلٌ مُخْتَصَرٌ لِهَذِهِ الصَّفْحَة",
@@ -158,26 +170,44 @@
            esc(c.flags.message) + '.</b></div></div>';
     }
 
-    // this week
+    /* Homework, in the same two sections the teachers see, from the same
+       server-side test — a parent and a teacher looking at the same child on
+       a Monday evening must not see the work in different places.
+
+       Each row carries its OWN date and teacher. One line for the whole card
+       taken from the first item, which is what this card used to do, is
+       wrong the moment two items were set on different days — and in the
+       overdue section they almost always were. */
     var hw = c.homework || [];
-    h += '<div class="pcard hero"><h2>' + esc(t("thisWeek")) + '</h2>';
-    if (!hw.length) {
-      h += '<div class="line"><span>' + esc(t("nothingYet")) + '</span></div>';
-    } else {
-      hw.forEach(function (x) {
-        h += '<div class="line"><span class="k">' +
-             esc(x.kind === "memorise" ? t("memorize") : t("review")) + '</span>' +
-             '<span class="ar" dir="rtl">' + esc(x.name_ar) + '</span>' +
-             '<span>' + esc(x.name_en) + (x.whole_surah ? "" :
-                (x.ayah_from ? " " + x.ayah_from + "–" + x.ayah_to : "")) + '</span></div>';
-      });
-      var first = hw[0];
-      if (first.set_by || first.set_on) {
-        h += '<div class="line" style="opacity:.78;font-size:12px">' +
-             esc(t("setBy", { d: i18n.fmtDate(first.set_on), t: first.set_by || "—" })) + '</div>';
-      }
+    var owed = hw.filter(function (x) { return x.overdue; });
+    var next = hw.filter(function (x) { return !x.overdue; });
+    var nextLabel = c.next_class ? i18n.fmtDate(c.next_class, true) : t("noNextClass");
+
+    function hwLines(list) {
+      return list.map(function (x) {
+        return '<div class="line"><span class="k">' +
+          esc(x.kind === "memorise" ? t("memorize") : t("review")) + '</span>' +
+          '<span class="ar" dir="rtl">' + esc(x.name_ar) + '</span>' +
+          '<span>' + esc(x.name_en) + (x.whole_surah ? "" :
+             (x.ayah_from ? " " + x.ayah_from + "–" + x.ayah_to : "")) + '</span></div>' +
+          ((x.set_on || x.set_by)
+            ? '<div class="line sub">' + esc(t("setOnBy", {
+                d: i18n.fmtDate(x.set_on), t: x.set_by || "—" })) + '</div>' : '');
+      }).join("");
     }
-    h += '</div>';
+
+    // What is owed. Shown first, and only when there is something in it —
+    // an empty "still to be heard" card every week is just noise.
+    if (owed.length) {
+      h += '<div class="pcard hero"><h2>' + esc(t("stillToHear")) + '</h2>' +
+           hwLines(owed) + '</div>';
+    }
+    // What is coming, always shown: this is the one a family acts on.
+    h += '<div class="pcard hero"><h2>' + esc(t("forNextClass")) + ' ' +
+         esc(nextLabel) + '</h2>' +
+         (next.length ? hwLines(next)
+           : '<div class="line"><span>' + esc(t("nothingYet")) + '</span></div>') +
+         '</div>';
 
     // attendance
     var a = c.attendance_summary || {};
