@@ -187,16 +187,23 @@
     var next = hw.filter(function (x) { return !x.overdue; });
     var nextLabel = c.next_class ? i18n.fmtDate(c.next_class, true) : t("noNextClass");
 
+    /* One .hwitem per piece of homework, wrapping its surah line and its
+       "set when, by whom" line. The two lines used to be siblings, and the
+       dividing rule belonged to the FIRST of them — so it landed between a
+       surah and its own provenance, and sat on the text. A rule separates
+       entries, not the halves of one entry; owning it at the entry is the
+       only way to say that without a previous-sibling selector. */
     function hwLines(list) {
       return list.map(function (x) {
-        return '<div class="line"><span class="k">' +
+        return '<div class="hwitem"><div class="line"><span class="k">' +
           esc(x.kind === "memorise" ? t("memorize") : t("review")) + '</span>' +
           '<span class="ar" dir="rtl">' + esc(x.name_ar) + '</span>' +
           '<span>' + esc(x.name_en) + (x.whole_surah ? "" :
              (x.ayah_from ? " " + x.ayah_from + "–" + x.ayah_to : "")) + '</span></div>' +
           ((x.set_on || x.set_by)
             ? '<div class="line sub">' + esc(t("setOnBy", {
-                d: i18n.fmtDate(x.set_on), t: x.set_by || "—" })) + '</div>' : '');
+                d: i18n.fmtDate(x.set_on), t: x.set_by || "—" })) + '</div>' : '') +
+          '</div>';
       }).join("");
     }
 
