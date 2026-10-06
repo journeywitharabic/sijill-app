@@ -909,7 +909,15 @@
                 // Whoever took the register, named next to the register and
                 // nowhere else.
                 (h.status !== "cancelled" && h.attendance_by
-                  ? ' <span class="who">' + (ar ? "الحُضُورَ سَجَّلَ" : "register by") + ' ' +
+                  /* "register taken by", not "register by". The latter was
+                     meant as a credit line — "photo by" — but it sits
+                     directly beside "heard by", which sets up a verb and
+                     then breaks it, so it reads as an instruction to go and
+                     register something. Not "registered by" either: at a
+                     school that means enrolled, which is a different fact
+                     about a different thing. The Arabic was never ambiguous
+                     and is unchanged. */
+                  ? ' <span class="who">' + (ar ? "الحُضُورَ سَجَّلَ" : "register taken by") + ' ' +
                     esc(h.attendance_by) + '</span>' : '') + '</span>' +
                 (recited ? '<span class="m">' + recited + '</span>' : '') +
                 (notes || '') +
