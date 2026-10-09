@@ -29,6 +29,18 @@
     whoAddTitle:"Add your name",
     whoAddHelp:"You will be able to teach straight away. A coordinator confirms your name afterwards.",
     markAll:"Mark all present", bulkHw:"+ Homework for the class",
+    /* The class-wide assign. It used to be a cut-down picker of its own —
+       a radio list, no page numbers, no running total — which is how it
+       came to be missing the multi-select that the student page had. It now
+       opens the SAME picker, so the kind is asked first instead of hiding
+       in a dropdown inside it. */
+    bulkKind:"What kind of homework?",
+    bulkKindNew:"New memorization", bulkKindRev:"Review",
+    bulkTitleNew:"New memorization for the whole class",
+    bulkTitleRev:"Review for the whole class",
+    bulkWho:"the whole class",
+    bulkNote:"A separate homework item is created for each student, so you can still change any one of them afterwards. Absent students are included \u2014 they keep the same homework.",
+
     undo:"↶ Undo last change", clsHint:"Tap <b>✓ heard</b> when a child recites everything they had open and there is nothing to add — it records every item as good with <b>tajwīd 5/5</b>. If the tajwīd was not 5/5, tap their <b>name</b> and grade the items one at a time. Both attendance <b>and</b> recitation are needed before the day counts as complete. Everything saves as you tap.",
     coordMode:"Coordinator tools", signOut:"Sign out",
     back:"‹ Back", fullMushaf:"☰ Mushaf",
@@ -107,7 +119,10 @@
     weeks:"weeks ago", never:"not yet heard", thisTerm:"this term",
 
     /* --- one tap from the class list, and the labels under the marks --- */
-    mHere:"here", mLate:"late", mAway:"away",
+    /* "absent", not "away". The Arabic has always said غَائِب — absent —
+       so the two languages were naming the same button differently, and
+       "away" reads as a softer, vaguer thing than the register records. */
+    mHere:"here", mLate:"late", mAway:"absent",
     gGood:"good", gAgain:"again", gNotReady:"not ready",
     /* One tooltip per kind, because round 23 made the rules different. The
        tooltip must never say something the rule printed above the section
@@ -177,6 +192,13 @@
     whoAddTitle:"أَضِفِ اسْمَك",
     whoAddHelp:"يُمْكِنُكَ التَّدْرِيسُ فَوْرًا. يُؤَكِّدُ المُنَسِّقُ اسْمَكَ لَاحِقًا.",
     markAll:"تَسْجِيلُ الجَمِيعِ حَاضِرِين", bulkHw:"+ وَاجِبٌ لِلْحَلْقَةِ كُلِّهَا",
+    bulkKind:"مَا نَوْعُ الوَاجِب؟",
+    bulkKindNew:"حِفْظٌ جَدِيد", bulkKindRev:"مُرَاجَعَة",
+    bulkTitleNew:"حِفْظٌ جَدِيدٌ لِلْحَلْقَةِ كُلِّهَا",
+    bulkTitleRev:"مُرَاجَعَةٌ لِلْحَلْقَةِ كُلِّهَا",
+    bulkWho:"الحَلْقَةُ كُلُّهَا",
+    bulkNote:"يُنْشَأُ وَاجِبٌ مُنْفَصِلٌ لِكُلِّ طَالِب، فَيُمْكِنُ تَعْدِيلُ أَيِّ وَاحِدٍ لَاحِقًا. وَالغَائِبُونَ مَشْمُولُون — لَهُمُ الوَاجِبُ نَفْسُه.",
+
     undo:"↶ تَرَاجُعٌ عَنْ آخِرِ تَغْيِير",
     clsHint:"انْقُرْ <b>سَمِعْتُهُ</b> إِذَا سَمِعْتَ كُلَّ مَا عَلَيْهِ وَلَا شَيْءَ تُضِيفُه — وَيُسَجَّلُ كُلُّ بَنْدٍ جَيِّدًا مَعَ <b>تَجْوِيد ٥/٥</b>. وَإِنْ لَمْ يَكُنِ التَّجْوِيدُ ٥/٥ فَانْقُرْ <b>اسْمَه</b> وَقَيِّمْ البُنُودَ وَاحِدًا وَاحِدًا. وَيَلْزَمُ الحُضُورُ <b>وَ</b> التِّلَاوَةُ لِيُعَدَّ اليَوْمُ كَامِلًا. وَكُلُّ شَيْءٍ يُحْفَظُ فَوْرًا.",
     coordMode:"أَدَوَاتُ المُنَسِّق", signOut:"تَسْجِيلُ الخُرُوج",

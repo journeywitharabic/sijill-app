@@ -829,11 +829,18 @@
                 '</div><div class="hwside">' + (h.source === "auto"
                   ? '<span class="pill late"><i></i>' + (ar ? "مِنْ ↻ إِعَادَة" : "from ↻ repeat") + '</span>'
                   : '<span class="pill mute"><i></i>' + (ar ? "أَضَافَهُ المُعَلِّم" : "set by teacher") + '</span>') +
+                /* Both buttons behind the same guard. Change sat outside it,
+                   so the coordinator's read-only view — the one that says in
+                   plain words that nothing here can be marked — still offered
+                   a working homework editor, and the server would have taken
+                   the write, because a coordinator's session is a teacher's
+                   session. A screen that promises it cannot change anything
+                   must not hand you a button that does. */
                 (S.readOnly ? '' :
                   '<button class="btn ghost sm hw-now" data-hw="' + esc(h.homework_id) + '" title="' +
-                  esc(T("gHearNowTip")) + '">' + esc(T("gHearNow")) + '</button>') +
-                '<button class="btn ghost sm hw-edit" data-hw="' + esc(h.homework_id) + '">' +
-                esc(T("hwChange")) + '</button></div></div>';
+                  esc(T("gHearNowTip")) + '">' + esc(T("gHearNow")) + '</button>' +
+                  '<button class="btn ghost sm hw-edit" data-hw="' + esc(h.homework_id) + '">' +
+                  esc(T("hwChange")) + '</button>') + '</div></div>';
             }).join("")
               : '<div style="font-size:13.5px">' +
                 esc(T("gNothingNext").split("{d}").join(nextLabel)) + '</div>') +
@@ -1458,12 +1465,31 @@
      The narrowing block appears only when exactly one surah is chosen. Pages
      are a second way of saying the same thing: they resolve to ayat before
      they are sent, so nothing downstream has to know pages exist. */
-  function pickSurah(kind) {
+  /* One picker for one child and for a whole class.
+     The class used to have a picker of its own — a radio list, no page
+     numbers, no running total, no multi-select — which is exactly how it
+     came to be missing the thing the student page had. Two pickers for one
+     job will always drift; there is now one, and `target` is the only
+     difference between the two callers.
+
+     target === null  → the child currently open
+     target === { ids, label, title, note, onDone } → everyone in the class */
+  function pickSurah(kind, target) {
     var multi = (kind === "review");
     var detail = null;            // api_surah_pages for the single chosen surah
-    sheet(kind === "memorise" ? T("assignNew") : T("addReview"),
+    var ids   = target ? target.ids : [S.student.id];
+    var who   = target ? target.label : S.student.name;
+    var done  = target ? target.onDone
+                       : function () { closeSheet(); reloadStudent(); };
+    sheet(target ? target.title
+                 : (kind === "memorise" ? T("assignNew") : T("addReview")),
       '<div class="loading"><span class="spin"></span></div>', null, null, T("cancel"));
-    api.read("api_mushaf", { p_student: S.student.id, p_juz: null }).then(function (list) {
+    /* api_mushaf annotates each surah with ONE child's status. That is the
+       point for a child and meaningless for a class, so the class borrows
+       the first student's list for its names and hides the status. Showing
+       one child's "needs review" against everyone's homework would be a
+       quiet lie. */
+    api.read("api_mushaf", { p_student: ids[0], p_juz: null }).then(function (list) {
       var rows = list.map(function (x) {
         // The number matters: teachers say "surah 78", parents' mushafs are
         // numbered, and it is also the fastest thing to type into the filter.
@@ -1473,9 +1499,11 @@
           '<span class="snum">' + x.surah + '</span>' +
           '<span class="lbl"><span class="ar" dir="rtl">' + esc(x.name_ar) +
           '</span><span>' + esc(x.name_en) + '</span></span><span class="dt">' + x.ayat + ' ' + T("ayat") +
-          (x.status && x.status !== "not_started" ? ' · ' + esc(x.status) : '') + '</span></label>';
+          ((!target && x.status && x.status !== "not_started") ? ' · ' + esc(x.status) : '') + '</span></label>';
       }).join("");
       $("shBody").innerHTML =
+        (target && target.note
+          ? '<div class="note" style="margin:0 0 10px">' + esc(target.note) + '</div>' : '') +
         '<input id="spFilter" type="search" placeholder="' + esc(T("findSurah")) + '" style="width:100%;padding:10px;margin-bottom:10px;' +
         'border:1px solid var(--line);border-radius:10px;background:var(--surface);color:var(--ink);font-size:15px">' +
         (multi ? '<div class="note" style="margin:0 0 8px;font-size:12.5px">' + esc(T("spMulti")) + '</div>' : '') +
@@ -1504,7 +1532,8 @@
           '<div class="note" id="spSum" style="margin:2px 0 0;font-size:12.5px"></div>' +
         '</div>';
       $("shOk").hidden = false;
-      $("shOk").textContent = T("add");
+      // The count on the button is the number of CHILDREN this will reach.
+      $("shOk").textContent = T("add") + (target ? " (" + ids.length + ")" : "");
 
       function chosen() {
         return Array.prototype.slice.call($("spList").querySelectorAll('input[name=sp]:checked'));
@@ -1617,9 +1646,9 @@
           }
         }
         assignHomework({
-          p_students: [S.student.id], p_kind: kind,
+          p_students: ids, p_kind: kind,
           p_surahs: surahs, p_from: from, p_to: to
-        }, S.student.name, function () { closeSheet(); reloadStudent(); });
+        }, who, done);
         return false;
       };
     }).catch(fail);
@@ -1679,52 +1708,38 @@
   };
 
   /* ------------------------------------------------------------ whole class */
+  /* Homework for everyone. The kind is asked first, as two buttons, rather
+     than hidden in a dropdown inside the picker — partly because two big
+     targets beat a select on a phone, and mostly because it lets the class
+     open the SAME picker the student page opens, multi-select and page
+     numbers and all, instead of a second one that has to be kept in step. */
   $("bulkHw").onclick = function () {
-    if (!S.dayData) return;
+    if (!S.dayData || !S.dayData.students || !S.dayData.students.length) return;
     var ids = S.dayData.students.map(function (s) { return s.id; });
+
+    function open(kind) {
+      pickSurah(kind, {
+        ids: ids,
+        label: T("bulkWho"),
+        // The count lives on the Add button, where the thumb is, and not
+        // also in the title: two identical numbers on one sheet invite the
+        // reading that one of them counts surahs.
+        title: (kind === "memorise" ? T("bulkTitleNew") : T("bulkTitleRev")),
+        note: T("bulkNote"),
+        onDone: function () { closeSheet(); toast(T("savedAll")); refreshDay(); }
+      });
+    }
+
     sheet(T("bulkHw").replace("+ ", ""),
-      '<div class="note" style="margin-bottom:10px">' +
-      (i18n.isAr()
-        ? "يُنْشَأُ وَاجِبٌ مُنْفَصِلٌ لِكُلِّ طَالِب، فَيُمْكِنُ تَعْدِيلُ أَيِّ وَاحِدٍ لَاحِقًا."
-        : "This creates a separate homework item for each student, so you can still change any one of them afterwards. Absent students are included — they keep the same homework.") +
-      '</div><div class="loading"><span class="spin"></span></div>', null, null, T("cancel"));
-    api.read("api_mushaf", { p_student: S.dayData.students[0].id, p_juz: null }).then(function (list) {
-      $("shBody").innerHTML =
-        '<div class="filters" style="margin:0 0 10px">' +
-        '<select id="bkKind" class="mini"><option value="memorise">' + (i18n.isAr() ? "حِفْظٌ جَدِيد" : "New memorization") +
-        '</option><option value="review">' + (i18n.isAr() ? "مُرَاجَعَة" : "Review") + '</option></select>' +
-        '<label class="fld"><span>' + esc(T("spFromAyah")) + '</span><input id="bkFrom" class="mini" type="number" min="1" inputmode="numeric"></label>' +
-        '<label class="fld"><span>' + esc(T("spToAyah")) + '</span><input id="bkTo" class="mini" type="number" min="1" inputmode="numeric"></label></div>' +
-        '<input id="bkFilter" type="search" placeholder="' + esc(T("findSurah")) + '" style="width:100%;padding:10px;margin-bottom:8px;' +
-        'border:1px solid var(--line);border-radius:10px;background:var(--surface);color:var(--ink)">' +
-        '<div class="tree" style="max-height:220px;overflow:auto" id="bkList">' +
-        list.map(function (x) {
-          return '<label class="trow" style="cursor:pointer"><input type="radio" name="bk" value="' + x.surah +
-            '" style="width:18px;height:18px"><span class="lbl"><span class="ar" dir="rtl">' + esc(x.name_ar) +
-            '</span><span>' + esc(x.name_en) + '</span></span></label>';
-        }).join("") + '</div>';
-      $("bkFilter").oninput = function () {
-        var q = this.value.toLowerCase();
-        $("bkList").querySelectorAll(".trow").forEach(function (r) {
-          r.style.display = r.textContent.toLowerCase().indexOf(q) >= 0 ? "" : "none";
-        });
-      };
-      $("shOk").hidden = false;
-      $("shOk").textContent = T("add") + " (" + ids.length + ")";
-      $("shOk").onclick = function () {
-        var sel = $("shBody").querySelector('input[name=bk]:checked');
-        if (!sel) { toast(T("spPickOne")); return; }
-        assignHomework({
-          // p_surahs, plural, since the function took the array. One surah
-          // here: the whole class getting five at once is not a thing anyone
-          // asked for and would be a lot of homework to undo.
-          p_students: ids, p_kind: $("bkKind").value, p_surahs: [+sel.value],
-          p_from: $("bkFrom").value ? +$("bkFrom").value : null,
-          p_to: $("bkTo").value ? +$("bkTo").value : null, p_note: null
-        }, T("bulkHw"), function () { closeSheet(); toast(T("savedAll")); refreshDay(); })
-          .catch(fail);
-      };
-    }).catch(fail);
+      '<div class="note" style="margin-bottom:12px">' + esc(T("bulkNote")) + '</div>' +
+      '<div class="kindpick">' +
+        '<button class="btn" id="bkNew">' + esc(T("bulkKindNew")) + '</button>' +
+        '<button class="btn" id="bkRev">' + esc(T("bulkKindRev")) + '</button>' +
+      '</div>',
+      null, null, T("cancel"));
+    $("shTitle").textContent = T("bulkKind");
+    $("bkNew").onclick = function () { open("memorise"); };
+    $("bkRev").onclick = function () { open("review"); };
   };
 
   /* ------------------------------------------------------------ chrome */
