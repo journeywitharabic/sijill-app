@@ -349,6 +349,50 @@
       (c.crit ? '<span class="pill crit"><i></i>' + c.crit + " " + T("noreason") + "</span>" : "");
 
     renderClassNote(ahead);
+    renderGaps(ahead);
+  }
+
+  /* --------------------------------------------------- what is still missing
+     Three counts, in the teacher's own words, for the day on screen. The
+     doneBar above already says how many children are untouched; this says
+     WHAT is untouched, which is the difference between knowing there is work
+     left and knowing what it is.
+
+     Not shown on a day still ahead (nothing can be missing from a class that
+     has not happened), on a cancelled day, or in the coordinator's read-only
+     view, where none of it can be acted on anyway. */
+  function gapCounts(d) {
+    var att = 0, mark = 0, next = 0;
+    (d.students || []).forEach(function (s) {
+      if (!s.state) att++;
+      // Marked absent? They cannot be heard, so this is not a gap for them.
+      else if ((s.state === "present" || s.state === "late") &&
+               s.due_back > 0 && !s.recited) mark++;
+      // The next-week box, blank however it came to be blank — a repeat
+      // fills it by itself, and that counts.
+      if (!s.for_next) next++;
+    });
+    return { att: att, mark: mark, next: next };
+  }
+
+  function renderGaps(ahead) {
+    var bar = $("gapBar");
+    if (!bar) return;
+    var d = S.dayData, sess = d && d.session;
+    if (!sess || sess.status === "cancelled" || ahead || S.readOnly) {
+      bar.hidden = true; return;
+    }
+    var g = gapCounts(d);
+    var lines = [];
+    function line(n, one, many) {
+      if (!n) return;
+      lines.push('<li>' + esc(n === 1 ? T(one) : T(many).split("{n}").join(n)) + '</li>');
+    }
+    line(g.att,  "gapAtt1",  "gapAtt");
+    line(g.mark, "gapMark1", "gapMark");
+    line(g.next, "gapNext1", "gapNext");
+    bar.hidden = !lines.length;
+    bar.innerHTML = lines.length ? '<ul class="gaps">' + lines.join("") + '</ul>' : "";
   }
 
   /* ------------------------------------------------------------ class note
@@ -1868,7 +1912,8 @@
                        // exposed so the suite can put a day into a state the
                        // fixture cannot easily reach (a cancelled one) and see
                        // what the screen decides
-                       renderClassNote: renderClassNote };
+                       renderClassNote: renderClassNote,
+                       renderGaps: renderGaps };
   window.SijillSheet = sheet;
   window.SijillCloseSheet = closeSheet;
   window.SijillToast = toast;

@@ -9,7 +9,7 @@
   "use strict";
   var $ = function (id) { return document.getElementById(id); };
   var T = i18n.t;
-  var C = { tab: "dash", dash: null, stats: null, mtab: "students", dclass: "", cal: null, calMsg: "" };
+  var C = { tab: "gaps", dash: null, stats: null, mtab: "students", dclass: "", cal: null, calMsg: "" };
 
   function esc(s) {
     return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) {
@@ -76,7 +76,11 @@
   }
 
   function renderTabs() {
-    var tabs = [["dash", T("tabDash")], ["manage", T("tabManage")], ["stats", T("tabStats")]];
+    /* "To chase" leads, and it is what opens first. The whole point of the
+       screen is to be the thing you look at before anything else; behind a
+       tab you have to remember to press, it is a report nobody reads. */
+    var tabs = [["gaps", T("tabGaps")], ["dash", T("tabDash")],
+                ["manage", T("tabManage")], ["stats", T("tabStats")]];
     $("ctabs").innerHTML = tabs.map(function (x) {
       return '<button data-c="' + x[0] + '" aria-pressed="' + (C.tab === x[0]) + '">' + esc(x[1]) + '</button>';
     }).join("");
@@ -87,6 +91,7 @@
 
   function openTab(t) {
     var body = $("cbody"); busy(body);
+    if (t === "gaps")  return loadGaps();
     if (t === "dash")  return loadDash();
     if (t === "stats") return loadStats();
     return renderManage();
@@ -108,6 +113,112 @@
   });
 
   /* ---------------------------------------------------------- 1. the school */
+
+  /* ------------------------------------------------------------- to chase
+     What was left half-done, by class day. Three gaps, deliberately kept
+     apart rather than summed: a register nobody opened, a child who was
+     there and owed work and had nothing recorded, and a child who walked
+     out with an empty next-week box are three different conversations.
+
+     The class is named. The teacher is not, except as "last worked on by"
+     when you open the day — there is no class-to-teacher table, and a
+     running per-teacher miss count would be a scorecard. These are
+     volunteers; the screen is a list of things to do, not a league table. */
+  var GAPDAYS = 2;
+
+  function loadGaps() {
+    api.read("api_gaps", { p_days: GAPDAYS }).then(function (d) {
+      C.gaps = d; renderGapsTab();
+    }).catch(err);
+  }
+
+  function gapLine(n, one, many) {
+    return n === 1 ? T(one) : T(many).split("{n}").join(n);
+  }
+
+  /* The message that actually gets sent. The follow-up happens in WhatsApp,
+     not in here, and a list you have to retype is a second job. */
+  function gapMessage(c) {
+    var bits = [];
+    if (c.roll > 0 && c.needs_attendance.length === c.roll) {
+      return c.class_name + " \u2014 " + i18n.fmtDate(c.held_on, true) + "\n" +
+             T("gapNotStarted").split("{n}").join(c.roll);
+    }
+    if (c.needs_attendance.length)
+      bits.push("\u2022 " + gapLine(c.needs_attendance.length, "gapAtt1", "gapAtt") +
+                ": " + c.needs_attendance.map(function (x) { return x.name; }).join(", "));
+    if (c.needs_marking.length)
+      bits.push("\u2022 " + gapLine(c.needs_marking.length, "gapMark1", "gapMark") +
+                ": " + c.needs_marking.map(function (x) { return x.name; }).join(", "));
+    if (c.no_next.length)
+      bits.push("\u2022 " + gapLine(c.no_next.length, "gapNext1", "gapNext") +
+                ": " + c.no_next.map(function (x) { return x.name; }).join(", "));
+    return c.class_name + " \u2014 " + i18n.fmtDate(c.held_on, true) + "\n" + bits.join("\n");
+  }
+
+  function renderGapsTab() {
+    var d = C.gaps, ar = i18n.isAr();
+    var list = d.classes || [];
+    var h = '<div class="note" style="margin:0 0 12px">' +
+            esc(T("gapWindow").split("{n}").join(d.days)) + ' ' +
+            esc(T("gapTodaySkipped")) + '</div>';
+
+    if (!list.length) {
+      h += '<div class="pcard"><div class="empty">' + esc(T("gapNone")) + '</div></div>';
+      $("cbody").innerHTML = h;
+      return;
+    }
+
+    h += list.map(function (c, i) {
+      function names(arr, n1, nn) {
+        if (!arr.length) return "";
+        return '<div class="gapgrp"><b>' + esc(gapLine(arr.length, n1, nn)) + '</b>' +
+               '<div class="gapnames">' +
+               arr.map(function (x) { return '<span class="chip">' + esc(x.name) + '</span>'; }).join("") +
+               '</div></div>';
+      }
+      /* A day nobody has touched: every child needs attendance AND every
+         child has nothing for next week, so the two lists are the same
+         names printed twice. One line says it better. */
+      var untouched = c.roll > 0 && c.needs_attendance.length === c.roll;
+      return '<div class="gapcard' + (untouched ? ' cold' : '') + '">' +
+        '<div class="gaphead"><b>' + esc(c.class_name) + '</b>' +
+          '<span class="when">' + esc(i18n.fmtDate(c.held_on, true)) + '</span>' +
+          '<span class="sp"></span>' +
+          '<button class="mini gapcopy" data-i="' + i + '">' + esc(T("gapCopy")) + '</button>' +
+        '</div>' +
+        (untouched
+          ? '<div class="gapgrp"><b>' +
+              esc(T("gapNotStarted").split("{n}").join(c.roll)) + '</b></div>'
+          : names(c.needs_attendance, "gapAtt1", "gapAtt") +
+            names(c.needs_marking, "gapMark1", "gapMark") +
+            names(c.no_next, "gapNext1", "gapNext")) +
+        /* On an untouched day the headline already says nobody opened it,
+           so the footer does not say it again — just the size of the roll,
+           which is the bit the headline does not carry. */
+        '<div class="gapfoot">' +
+          (c.touched_by
+            ? esc(T("gapTouched").split("{t}").join(c.touched_by)) + ' \u00b7 '
+            : (untouched ? '' : esc(T("gapUntouched")) + ' \u00b7 ')) +
+          esc(T("gapRoll").split("{n}").join(c.roll)) +
+        '</div></div>';
+    }).join("");
+
+    $("cbody").innerHTML = h;
+    $("cbody").querySelectorAll(".gapcopy").forEach(function (b) {
+      b.onclick = function () {
+        var msg = gapMessage(list[+b.dataset.i]);
+        try { navigator.clipboard.writeText(msg); }
+        catch (e) {
+          var ta = document.createElement("textarea");
+          ta.value = msg; document.body.appendChild(ta); ta.select();
+          document.execCommand("copy"); document.body.removeChild(ta);
+        }
+        b.textContent = T("gapCopied");
+      };
+    });
+  }
+
   function loadDash() {
     api.read("api_dashboard", { p_class: null, p_search: null }).then(function (d) {
       C.dash = d; renderDash();
@@ -1100,5 +1211,9 @@
     window.SijillToast(e.message || String(e));
   }
 
-  window.SijillCoord = { enter: enter, open: openCoord };
+  window.SijillCoord = { enter: enter, open: openCoord,
+    // exposed so the suite can check the WhatsApp message a Copy
+    // button produces without reading the clipboard, which a
+    // headless browser will not hand over
+    gapMessage: gapMessage, gapsData: function () { return C.gaps; } };
 })();
