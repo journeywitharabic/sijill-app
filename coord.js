@@ -741,14 +741,30 @@
           '<th>' + esc(ar ? "طُلَّاب" : "Students") + '</th>' +
           '<th>' + esc(ar ? "حِصَص" : "Sessions") + '</th><th></th></tr></thead><tbody>' +
         (r.classes.length ? r.classes.map(function (c) {
-          return '<tr><td><b>' + esc(c.name) + '</b></td>' +
+          /* An archived class stays in this table — that is what makes
+             archiving safe to offer — but it has to look archived, and the
+             button on it has to be the one that brings it back. */
+          // Same idiom the teachers table above already uses for a row
+          // that is switched off, rather than a second way of saying it.
+          return '<tr' + (c.active ? '' : ' style="opacity:.55"') + '><td><b>' + esc(c.name) + '</b>' +
+            (c.active ? '' : ' <span class="pill mute"><i></i>' +
+                             esc(ar ? "مُؤَرْشَفَة" : "archived") + '</span>') + '</td>' +
             '<td>' + esc((c.meets || []).map(function (m) {
                 return ar ? (m === "friday" ? "الجُمُعَة" : "الأَحَد")
                           : (m.charAt(0).toUpperCase() + m.slice(1));
               }).join(" · ")) + '</td>' +
             '<td class="n">' + c.students + '</td><td class="n">' + c.sessions + '</td>' +
-            '<td style="text-align:right"><button class="mini cl-ren" data-id="' + esc(c.id) +
-              '" data-name="' + esc(c.name) + '">' + esc(ar ? "تَعْدِيل" : "Rename") + '</button></td></tr>';
+            '<td style="text-align:right">' +
+              (c.active
+                ? '<button class="mini cl-ren" data-id="' + esc(c.id) +
+                    '" data-name="' + esc(c.name) + '">' + esc(ar ? "تَعْدِيل" : "Rename") + '</button> ' +
+                  '<button class="mini cl-rm" data-id="' + esc(c.id) +
+                    '" data-name="' + esc(c.name) + '" data-students="' + c.students + '">' +
+                    esc(ar ? "إِزَالَة" : "Remove") + '</button>'
+                : '<button class="mini cl-back" data-id="' + esc(c.id) +
+                    '" data-name="' + esc(c.name) + '">' +
+                    esc(ar ? "إِعَادَة" : "Bring back") + '</button>') +
+            '</td></tr>';
         }).join("") : '<tr><td colspan="5" style="padding:18px;color:var(--ink-3)">—</td></tr>') +
         '</tbody></table></div>' +
         '<div class="note" style="margin-top:10px">' +
@@ -794,6 +810,54 @@
                 .then(function () { window.SijillCloseSheet(); renderManage(); }).catch(err);
               return false;
             });
+        };
+      });
+
+      body.querySelectorAll(".cl-rm").forEach(function (b) {
+        b.onclick = function () {
+          var nm = b.dataset.name, here = +b.dataset.students;
+          /* Children still in it: nothing to confirm, because nothing is
+             going to happen. Say what to do instead. A hidden class with
+             students in it is a register nobody can reach. */
+          if (here > 0) {
+            window.SijillSheet((ar ? "إِزَالَةُ حَلْقَة" : "Remove a class") + " — " + nm,
+              '<div class="note warn" style="margin:0">' + esc(ar
+                ? "مَا زَالَ فِي هَذِهِ الحَلْقَةِ " + here + " مِنَ الطُّلَّاب. اِنْقُلْهُمْ إِلَى حَلْقَةٍ أُخْرَى مِنْ تَبْوِيبِ الطُّلَّابِ أَوَّلًا."
+                : "There are still " + here + " students in this class. Move them to another class from the Students tab first.") +
+              '</div>', null, null, T("close"));
+            return;
+          }
+          /* Two outcomes behind one button, so the question has to say which
+             one this class is getting — "Remove" that might mean "archive"
+             is how someone presses it expecting the other thing. */
+          window.SijillSheet((ar ? "إِزَالَةُ حَلْقَة" : "Remove a class") + " — " + nm,
+            '<div style="font-size:13.5px;line-height:1.6">' + esc(ar
+              ? "إِنْ لَمْ يُسَجَّلْ فِي هَذِهِ الحَلْقَةِ شَيْءٌ قَطّ — لَا حُضُورَ وَلَا تِلَاوَةَ وَلَا طَالِبَ — فَسَتُحْذَفُ تَمَامًا. وَإِنْ كَانَ فِيهَا سِجِلّ، فَسَتُؤَرْشَفُ بَدَلَ ذَلِك: تَخْتَفِي مِنْ قَائِمَةِ المُعَلِّمِينَ وَيَبْقَى كُلُّ مَا سُجِّلَ فِيهَا كَمَا هُوَ، وَيُمْكِنُ إِعَادَتُهَا مِنْ هُنَا."
+              : "If nothing was ever recorded in this class — no register, no recitation, no student — it is deleted outright. If it holds any record, it is archived instead: it disappears from the teachers' list, everything recorded in it stays exactly where it is, and you can bring it back from this table.") +
+            '</div>',
+            ar ? "إِزَالَة" : "Remove", function () {
+              api.write("api_class_remove", { p_class: b.dataset.id }, nm)
+                .then(function (r) {
+                  window.SijillCloseSheet();
+                  if (r && r.ok === false && r.error === "has_students") {
+                    window.SijillToast(ar ? "مَا زَالَ فِيهَا طُلَّاب" : "It still has students");
+                  } else if (r && r.deleted) {
+                    window.SijillToast(ar ? "حُذِفَتِ الحَلْقَة" : "Class deleted");
+                  } else {
+                    window.SijillToast(ar ? "أُرْشِفَتِ الحَلْقَة" : "Class archived");
+                  }
+                  renderManage();
+                }).catch(err);
+              return false;
+            });
+          /* It can delete, so it is not the colour of Save. */
+          var ok = $("shOk"); if (ok) ok.classList.add("danger");
+        };
+      });
+      body.querySelectorAll(".cl-back").forEach(function (b) {
+        b.onclick = function () {
+          api.write("api_class_restore", { p_class: b.dataset.id }, b.dataset.name)
+            .then(function () { renderManage(); }).catch(err);
         };
       });
 
