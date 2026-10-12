@@ -1146,3 +1146,17 @@ html[lang="ar"] .gapgrp b,html[lang="ar"] .gapnames .chip{font-size:13.5px}
    attendance square is dashed: nothing has been recorded here yet, as
    opposed to recorded and incomplete. */
 .gapcard.cold{border-style:dashed}
+
+/* A text-weight control on a meta line: the Change link beside a homework's
+   date, where a sixth button would wrap the grade row into nonsense on a
+   320px phone. Underlined, because an unadorned coloured word on a line of
+   grey metadata is not discoverable as something you can press. */
+.lnk{position:relative;background:none;border:0;padding:0 0 0 2px;margin:0;
+  font:inherit;font-family:var(--sans);font-size:11px;color:var(--lapis);
+  cursor:pointer;text-decoration:underline;text-underline-offset:2px}
+.lnk:hover{color:var(--ink)}
+/* The tap target is bigger than the ink: a thumb needs more than 11px of
+   underlined text, and padding here would push the metadata line apart.
+   Positioned on the LINK, not on the line — anchored to .m it would have
+   made the whole date press Change. */
+.lnk::after{content:"";position:absolute;inset:-10px -8px}

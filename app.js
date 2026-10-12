@@ -1079,7 +1079,23 @@
       ' data-kind="' + (kind === "new" ? "new" : "review") + '">' +
       '<div class="lab"><span class="ar" dir="rtl">' + esc(x.name_ar) + '</span>' +
       '<span class="tr">' + esc(x.name_en) + rangeLabel(x) + '</span>' +
-      '<span class="m' + stale + (old ? " old" : "") + '">' + esc(meta) + '</span></div>' +
+      '<span class="m' + stale + (old ? " old" : "") + '">' + esc(meta) +
+        /* Change lives here too, not only in the next-class box.
+           Round 24 split the homework in two and left the editor behind in
+           one half — so the moment a piece of work was a class old it moved
+           into this section and became uneditable. That is exactly backwards:
+           the homework most likely to need correcting is the one set weeks
+           ago with the wrong range on it, and a teacher reasonably reported
+           the button as simply "gone".
+
+           A link on the meta line rather than a sixth button: this row
+           already carries a note button, four grades and five stars, and at
+           320px a sixth control wraps them into nonsense. Rotation rows have
+           no homework behind them, so they get no link. */
+        ((!S.readOnly && kind !== "rot" && x.homework_id)
+          ? ' <button class="lnk hw-edit" data-hw="' + esc(x.homework_id) + '">' +
+            esc(T("hwChange")) + '</button>' : '') +
+      '</span></div>' +
       (S.readOnly ? '' :
         /* The note button and the grades travel together in one block. The
            row already wraps so the tajwid line can have its own line; without

@@ -115,6 +115,7 @@
     coordHelp:"This is the second passphrase, the one only the two coordinators have.",
     tabDash:"School", tabManage:"Manage", tabStats:"Statistics",
     tabGaps:"To chase",
+    dowFriday:"Fridays", dowSunday:"Sundays",
     /* The three gaps, named as the question a coordinator is actually
        asking. Counts on the register, names on the coordinator's list. */
     gapAtt:"{n} still need attendance",
@@ -124,7 +125,11 @@
     gapMark1:"1 still needs their homework marked",
     gapNext1:"1 has no homework for next week",
     gapNone:"Nothing outstanding \u2014 every class is up to date.",
-    gapTodaySkipped:"Today\u2019s classes are not listed: they are still in progress. Teachers see those on their own register.",
+    /* A class joins the list once it has FINISHED, which is not the same
+       as the day being over — see class_day_finished. The times come from
+       the server so this line cannot drift from the real setting. */
+    gapCutoff:"A class appears here once it has finished \u2014 {t}. One still in progress is not listed; teachers see those on their own register.",
+    gapCutoffOne:"{d} after {h}",
     gapWindow:"The last {n} class days of each class.",
     gapTouched:"last worked on by {t}", gapUntouched:"nobody has opened this day",
     gapCopy:"Copy for WhatsApp", gapCopied:"Copied",
@@ -284,6 +289,7 @@
     coordHelp:"هَذِهِ هِيَ الكَلِمَةُ الثَّانِيَة، الَّتِي لَا يَمْلِكُهَا إِلَّا المُنَسِّقَان.",
     tabDash:"المَدْرَسَة", tabManage:"الإِدَارَة", tabStats:"الإِحْصَاءَات",
     tabGaps:"لِلْمُتَابَعَة",
+    dowFriday:"الجُمُعَة", dowSunday:"الأَحَد",
     gapAtt:"{n} لَمْ يُسَجَّلْ حُضُورُهُم",
     gapMark:"{n} لَمْ يُقَيَّمْ وَاجِبُهُم",
     gapNext:"{n} بِلَا وَاجِبٍ لِلْأُسْبُوعِ القَادِم",
@@ -291,7 +297,8 @@
     gapMark1:"طَالِبٌ وَاحِدٌ لَمْ يُقَيَّمْ وَاجِبُه",
     gapNext1:"طَالِبٌ وَاحِدٌ بِلَا وَاجِبٍ لِلْأُسْبُوعِ القَادِم",
     gapNone:"لَا شَيْءَ مُعَلَّق — كُلُّ الحَلْقَاتِ مُكْتَمِلَة.",
-    gapTodaySkipped:"حِصَصُ اليَوْمِ غَيْرُ مَذْكُورَة: فَهِيَ مَا زَالَتْ جَارِيَة. وَيَرَاهَا المُعَلِّمُونَ فِي كَشْفِهِم.",
+    gapCutoff:"تَظْهَرُ الحِصَّةُ هُنَا بَعْدَ انْتِهَائِهَا — {t}. وَمَا زَالَ جَارِيًا لَا يُذْكَر، وَيَرَاهُ المُعَلِّمُونَ فِي كَشْفِهِم.",
+    gapCutoffOne:"{d} بَعْدَ {h}",
     gapWindow:"آخِرُ {n} مِنْ أَيَّامِ كُلِّ حَلْقَة.",
     gapTouched:"آخِرُ مَنْ عَمِلَ عَلَيْهِ {t}", gapUntouched:"لَمْ يَفْتَحْ أَحَدٌ هَذَا اليَوْم",
     gapCopy:"نَسْخٌ لِلْوَاتْسَاب", gapCopied:"نُسِخَ",

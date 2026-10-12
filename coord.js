@@ -159,9 +159,17 @@
   function renderGapsTab() {
     var d = C.gaps, ar = i18n.isAr();
     var list = d.classes || [];
+    /* "Fridays after 22:00 · Sundays after 15:00", built from what the
+       server actually has rather than two numbers typed in here that would
+       stop being true the first time the term's times moved. */
+    var cut = Object.keys(d.cutoffs || {}).sort().map(function (k) {
+      var dow = T("dow" + k.charAt(0).toUpperCase() + k.slice(1));
+      return T("gapCutoffOne").split("{d}").join(dow === "dow" + k ? k : dow)
+                              .split("{h}").join(d.cutoffs[k].slice(0, 5));
+    }).join(" \u00b7 ");
     var h = '<div class="note" style="margin:0 0 12px">' +
-            esc(T("gapWindow").split("{n}").join(d.days)) + ' ' +
-            esc(T("gapTodaySkipped")) + '</div>';
+            esc(T("gapWindow").split("{n}").join(d.days)) +
+            (cut ? ' ' + esc(T("gapCutoff").split("{t}").join(cut)) : '') + '</div>';
 
     if (!list.length) {
       h += '<div class="pcard"><div class="empty">' + esc(T("gapNone")) + '</div></div>';
