@@ -41,7 +41,11 @@
     bulkWho:"the whole class",
     bulkNote:"A separate homework item is created for each student, so you can still change any one of them afterwards. Absent students are included \u2014 they keep the same homework.",
 
-    undo:"↶ Undo last change", clsHint:"Tap <b>✓ heard</b> when a child recites everything they had open and there is nothing to add — it records every item as good with <b>tajwīd 5/5</b>. If the tajwīd was not 5/5, tap their <b>name</b> and grade the items one at a time. Both attendance <b>and</b> recitation are needed before the day counts as complete. Everything saves as you tap.",
+    /* The toast's own button. It used to be `undo` with the "\u21b6 " sliced
+       off in code, which read as "Undo last change" on a 7-second toast where
+       "Undo" is the whole of what is meant — and would have silently stopped
+       working the day either language's `undo` lost its arrow. */
+    undo:"\u21b6 Undo last change", undoShort:"Undo", clsHint:"Tap <b>✓ heard</b> when a child recites everything they had open and there is nothing to add — it records every item as good with <b>tajwīd 5/5</b>. If the tajwīd was not 5/5, tap their <b>name</b> and grade the items one at a time. Both attendance <b>and</b> recitation are needed before the day counts as complete. Everything saves as you tap.",
     coordMode:"Coordinator tools", signOut:"Sign out",
     back:"‹ Back", fullMushaf:"☰ Mushaf",
     present:"present", late:"late", excused:"excused", noreason:"no reason",
@@ -94,7 +98,20 @@
     ofAyat:"of {n}", rotShowAll:"Show all {n}", rotCollapse:"Show fewer",
     rotNeeds:"needs attention", rotAvg:"was average",
     nextWeek:"Homework for next week", recentCls:"Recent classes",
-    assignNew:"+ Assign new memorization", addReview:"+ Add old memorization to review",
+    /* The two buttons teachers were mixing up. They were identical ghost
+       buttons whose distinguishing word arrived third, so a glance saw the
+       same thing twice. Fixed without colour, deliberately: green and amber
+       are GRADES here, and borrowing them for a pair of buttons that grade
+       nothing would have made them read as a pass and a fail.
+
+       What distinguishes them instead: the word that differs comes first,
+       the "+" belongs to only one of them so it means something, ↻ is the
+       app's existing mark for "comes round again", and each carries a line
+       saying what it is for. */
+    assignNew:"New memorization", addReview:"Review \u2014 old memorization",
+    assignNewSub:"ground they have not learned yet",
+    addReviewSub:"something learned before, coming round again",
+    hwAdded:"{k} added", hwUndone:"Undone",
     markKey:"<b>–</b> means the child was present but hadn\u2019t prepared it. Nothing is recorded against the passage.",
     hwHint:"<b>from ↻ repeat</b> means it landed here by itself. <b>set by teacher</b> means you chose it.",
     hwChange:"Change", hwSetThis:"set this week", hwSetWeeks:"set {n} weeks ago",
@@ -225,7 +242,7 @@
     bulkWho:"الحَلْقَةُ كُلُّهَا",
     bulkNote:"يُنْشَأُ وَاجِبٌ مُنْفَصِلٌ لِكُلِّ طَالِب، فَيُمْكِنُ تَعْدِيلُ أَيِّ وَاحِدٍ لَاحِقًا. وَالغَائِبُونَ مَشْمُولُون — لَهُمُ الوَاجِبُ نَفْسُه.",
 
-    undo:"↶ تَرَاجُعٌ عَنْ آخِرِ تَغْيِير",
+    undo:"↶ تَرَاجُعٌ عَنْ آخِرِ تَغْيِير", undoShort:"تَرَاجُع",
     clsHint:"انْقُرْ <b>سَمِعْتُهُ</b> إِذَا سَمِعْتَ كُلَّ مَا عَلَيْهِ وَلَا شَيْءَ تُضِيفُه — وَيُسَجَّلُ كُلُّ بَنْدٍ جَيِّدًا مَعَ <b>تَجْوِيد ٥/٥</b>. وَإِنْ لَمْ يَكُنِ التَّجْوِيدُ ٥/٥ فَانْقُرْ <b>اسْمَه</b> وَقَيِّمْ البُنُودَ وَاحِدًا وَاحِدًا. وَيَلْزَمُ الحُضُورُ <b>وَ</b> التِّلَاوَةُ لِيُعَدَّ اليَوْمُ كَامِلًا. وَكُلُّ شَيْءٍ يُحْفَظُ فَوْرًا.",
     coordMode:"أَدَوَاتُ المُنَسِّق", signOut:"تَسْجِيلُ الخُرُوج",
     back:"‹ رُجُوع", fullMushaf:"☰ المُصْحَف",
@@ -268,7 +285,10 @@
     ofAyat:"مِنْ {n}", rotShowAll:"أَظْهِرِ الكُلَّ ({n})", rotCollapse:"أَظْهِرْ أَقَلَّ",
     rotNeeds:"يَحْتَاجُ انْتِبَاهًا", rotAvg:"كَانَ مُتَوَسِّطًا",
     nextWeek:"وَاجِبُ الأُسْبُوعِ القَادِم", recentCls:"الحِصَصُ الأَخِيرَة",
-    assignNew:"+ إِسْنَادُ حِفْظٍ جَدِيد", addReview:"+ إِضَافَةُ حِفْظٍ قَدِيمٍ لِلْمُرَاجَعَة",
+    assignNew:"حِفْظٌ جَدِيد", addReview:"مُرَاجَعَة — حِفْظٌ قَدِيم",
+    assignNewSub:"مَا لَمْ يَحْفَظْهُ بَعْد",
+    addReviewSub:"شَيْءٌ حَفِظَهُ مِنْ قَبْلُ وَعَادَ دَوْرُه",
+    hwAdded:"أُضِيفَ: {k}", hwUndone:"تَمَّ التَّرَاجُع",
     markKey:"<b>–</b> تَعْنِي أَنَّ الطَّالِبَ كَانَ حَاضِرًا لَكِنَّهُ لَمْ يُحَضِّرْ. وَلَا يُسَجَّلُ شَيْءٌ عَلَى المَقْطَع.",
     hwHint:"<b>مِنْ ↻ إِعَادَة</b> يَعْنِي أَنَّهُ أُضِيفَ تِلْقَائِيًّا. <b>أَضَافَهُ المُعَلِّم</b> يَعْنِي أَنَّكَ اخْتَرْتَه.",
     hwChange:"تَعْدِيل", hwSetThis:"حُدِّدَ هَذَا الأُسْبُوع", hwSetWeeks:"حُدِّدَ قَبْلَ {n} أَسَابِيع",

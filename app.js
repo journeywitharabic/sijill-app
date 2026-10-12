@@ -38,7 +38,7 @@
     $("toastMsg").textContent = msg;
     var b = $("toastUndo");
     b.hidden = !undoFn;
-    b.textContent = T("undo").replace("↶ ", "");
+    b.textContent = T("undoShort");
     b.onclick = function () { t.hidden = true; if (undoFn) undoFn(); };
     t.hidden = false;
     clearTimeout(toast._t);
@@ -837,9 +837,19 @@
 
     html += (S.readOnly ? '<div class="note" style="margin-bottom:16px">Viewing from the coordinator ' +
               'screen, so nothing here can be marked. Open the class to record a recitation.</div>'
-            : '<div class="actionrow" style="margin:-6px 0 14px">' +
-              '<button class="btn ghost sm" id="assignNew">' + esc(T("assignNew")) + '</button>' +
-              '<button class="btn ghost sm" id="addReview">' + esc(T("addReview")) + '</button></div>' +
+            /* Stacked full width, not side by side. Position is the one
+               separator left once colour is ruled out — and it cannot come
+               from putting each under its own section heading, because a
+               section is often empty and the button would vanish exactly
+               when it was needed. Two-line buttons are also a bigger
+               target for a thumb in a classroom. */
+            : '<div class="addhw">' +
+              '<button class="btn ghost addhw-b" id="assignNew">' +
+                '<span class="ic">+</span><span class="t"><b>' + esc(T("assignNew")) +
+                '</b><small>' + esc(T("assignNewSub")) + '</small></span></button>' +
+              '<button class="btn ghost addhw-b" id="addReview">' +
+                '<span class="ic">\u21bb</span><span class="t"><b>' + esc(T("addReview")) +
+                '</b><small>' + esc(T("addReviewSub")) + '</small></span></button></div>' +
               '<div class="note" style="margin-bottom:16px">' + T("markKey") + '</div>');
 
     // what goes home tonight
@@ -1539,8 +1549,29 @@
     var detail = null;            // api_surah_pages for the single chosen surah
     var ids   = target ? target.ids : [S.student.id];
     var who   = target ? target.label : S.student.name;
-    var done  = target ? target.onDone
-                       : function () { closeSheet(); reloadStudent(); };
+    /* Undo rather than a confirmation step. A confirm taxes every correct
+       assignment to catch an occasional wrong one, and within a fortnight
+       people tap through it without reading — leaving the same mistakes
+       plus an extra tap. An Undo costs nothing when the tap was right and
+       fixes it in one when it was not, and the toast already supports it
+       with a seven-second window. The message names the KIND, which is the
+       fact that was got wrong in the first place. */
+    var kindWord = (kind === "memorise" ? T("assignNew") : T("addReview"));
+    function undoable(r) {
+      var ids = (r && r.ids) || [];
+      toast(T("hwAdded").split("{k}").join(kindWord),
+        ids.length ? function () {
+          Promise.all(ids.map(function (id) {
+            return api.write("api_edit_homework", { p_id: id, p_remove: true }, who);
+          })).then(function () {
+            toast(T("hwUndone"));
+            if (target) { refreshDay(); } else { reloadStudent(); }
+          }).catch(fail);
+        } : null);
+    }
+    var done  = target
+      ? function (r) { target.onDone(r); undoable(r); }
+      : function (r) { closeSheet(); reloadStudent(); undoable(r); };
     sheet(target ? target.title
                  : (kind === "memorise" ? T("assignNew") : T("addReview")),
       '<div class="loading"><span class="spin"></span></div>', null, null, T("cancel"));
@@ -1742,12 +1773,14 @@
             for (var k in args) if (args.hasOwnProperty(k)) again[k] = args[k];
             again.p_confirm = true;
             api.write("api_assign_homework", again, label)
-              .then(function () { if (onDone) onDone(); }).catch(fail);
+              .then(function (r2) { if (onDone) onDone(r2); }).catch(fail);
             return false;
           });
         return null;
       }
-      if (onDone) onDone();
+      // The response carries the ids of the rows it created, which is what
+      // an Undo needs — so it is handed on rather than swallowed.
+      if (onDone) onDone(r);
       return r;
     });
   }
@@ -1786,7 +1819,10 @@
         // reading that one of them counts surahs.
         title: (kind === "memorise" ? T("bulkTitleNew") : T("bulkTitleRev")),
         note: T("bulkNote"),
-        onDone: function () { closeSheet(); toast(T("savedAll")); refreshDay(); }
+        // No toast here: undoable() shows one naming the kind, and two
+        // toasts in a row means the second replaces the first before it
+        // has been read.
+        onDone: function () { closeSheet(); refreshDay(); }
       });
     }
 
