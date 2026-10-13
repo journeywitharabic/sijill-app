@@ -109,8 +109,8 @@
        app's existing mark for "comes round again", and each carries a line
        saying what it is for. */
     assignNew:"New memorization", addReview:"Review \u2014 old memorization",
-    assignNewSub:"ground they have not learned yet",
-    addReviewSub:"something learned before, coming round again",
+    assignNewSub:"assign a new portion of Qur\u2019an to memorize",
+    addReviewSub:"review a surah that was learned before",
     hwAdded:"{k} added", hwUndone:"Undone",
     markKey:"<b>–</b> means the child was present but hadn\u2019t prepared it. Nothing is recorded against the passage.",
     hwHint:"<b>from ↻ repeat</b> means it landed here by itself. <b>set by teacher</b> means you chose it.",
@@ -286,8 +286,8 @@
     rotNeeds:"يَحْتَاجُ انْتِبَاهًا", rotAvg:"كَانَ مُتَوَسِّطًا",
     nextWeek:"وَاجِبُ الأُسْبُوعِ القَادِم", recentCls:"الحِصَصُ الأَخِيرَة",
     assignNew:"حِفْظٌ جَدِيد", addReview:"مُرَاجَعَة — حِفْظٌ قَدِيم",
-    assignNewSub:"مَا لَمْ يَحْفَظْهُ بَعْد",
-    addReviewSub:"شَيْءٌ حَفِظَهُ مِنْ قَبْلُ وَعَادَ دَوْرُه",
+    assignNewSub:"إِسْنَادُ مَقْطَعٍ جَدِيدٍ مِنَ القُرْآنِ لِلْحِفْظ",
+    addReviewSub:"مُرَاجَعَةُ سُورَةٍ حُفِظَتْ مِنْ قَبْل",
     hwAdded:"أُضِيفَ: {k}", hwUndone:"تَمَّ التَّرَاجُع",
     markKey:"<b>–</b> تَعْنِي أَنَّ الطَّالِبَ كَانَ حَاضِرًا لَكِنَّهُ لَمْ يُحَضِّرْ. وَلَا يُسَجَّلُ شَيْءٌ عَلَى المَقْطَع.",
     hwHint:"<b>مِنْ ↻ إِعَادَة</b> يَعْنِي أَنَّهُ أُضِيفَ تِلْقَائِيًّا. <b>أَضَافَهُ المُعَلِّم</b> يَعْنِي أَنَّكَ اخْتَرْتَه.",

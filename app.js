@@ -844,11 +844,11 @@
                when it was needed. Two-line buttons are also a bigger
                target for a thumb in a classroom. */
             : '<div class="addhw">' +
-              '<button class="btn ghost addhw-b" id="assignNew">' +
+              '<button class="btn ghost addhw-b new" id="assignNew">' +
                 '<span class="ic">+</span><span class="t"><b>' + esc(T("assignNew")) +
                 '</b><small>' + esc(T("assignNewSub")) + '</small></span></button>' +
-              '<button class="btn ghost addhw-b" id="addReview">' +
-                '<span class="ic">\u21bb</span><span class="t"><b>' + esc(T("addReview")) +
+              '<button class="btn ghost addhw-b rev" id="addReview">' +
+                '<span class="ic">\u25a4</span><span class="t"><b>' + esc(T("addReview")) +
                 '</b><small>' + esc(T("addReviewSub")) + '</small></span></button></div>' +
               '<div class="note" style="margin-bottom:16px">' + T("markKey") + '</div>');
 

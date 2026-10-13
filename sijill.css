@@ -14,7 +14,9 @@
   --lapis:#1D3B2C; --lapis-ink:#FFFFFF; --lapis-soft:#E4EBE3;
   /* Brass is an ACCENT only — never a button. It sits 1 degree of hue from
      the "late" amber below, so a brass button would read as a late marker. */
-  --brass:#BAA168; --brass-ink:#826939;
+  --brass:#BAA168; --brass-ink:#826939; --brass-soft:#F3EBD8;
+  --hw-new:#0F6B73; --hw-new-soft:#DCEDEF;   /* teal      — not a grade */
+  --hw-rev:#9A4B2A; --hw-rev-soft:#F6E4DB;   /* terracotta — not a grade */
   /* 'average' shipped green, because it is a PASS and the semantics said
      green. Two classes in, teachers reported it reads as 'good' — which it
      does: two greens side by side, a thumb moving fast, and the meaning
@@ -57,7 +59,9 @@
   --ink:#ECE8DB; --ink-2:#C9C4B6; --ink-3:#9F9B91;
   --line:#2B3830; --line-2:#3B4A40;
   --lapis:#8FC9A6; --lapis-ink:#0C1710; --lapis-soft:#1B2E23;
-  --brass:#D9B44A; --brass-ink:#E3C46E;
+  --brass:#D9B44A; --brass-ink:#E3C46E; --brass-soft:#2E2714;
+  --hw-new:#6FC8D2; --hw-new-soft:#11292D;
+  --hw-rev:#E8A183; --hw-rev-soft:#2F1A12;
   --avg:#7FB6DE; --avg-soft:#13232F; --avg-ink:#07131C;
   --ok:#5FCFA2;   --ok-soft:#13291F;   --ok-ink:#07150F;
   --late:#EFB840; --late-fill:#EFB840; --late-soft:#332612; --late-ink:#1E1407;
@@ -75,7 +79,9 @@
   --ink:#ECE8DB; --ink-2:#C9C4B6; --ink-3:#9F9B91;
   --line:#2B3830; --line-2:#3B4A40;
   --lapis:#8FC9A6; --lapis-ink:#0C1710; --lapis-soft:#1B2E23;
-  --brass:#D9B44A; --brass-ink:#E3C46E;
+  --brass:#D9B44A; --brass-ink:#E3C46E; --brass-soft:#2E2714;
+  --hw-new:#6FC8D2; --hw-new-soft:#11292D;
+  --hw-rev:#E8A183; --hw-rev-soft:#2F1A12;
   --avg:#7FB6DE; --avg-soft:#13232F; --avg-ink:#07131C;
   --ok:#5FCFA2;   --ok-soft:#13291F;   --ok-ink:#07150F;
   --late:#EFB840; --late-fill:#EFB840; --late-soft:#332612; --late-ink:#1E1407;
@@ -1171,13 +1177,26 @@ html[lang="ar"] .gapgrp b,html[lang="ar"] .gapnames .chip{font-size:13.5px}
    them instead is position (stacked, full width, not neighbours), a mark
    that belongs to one each, and a line saying what each is for. */
 .addhw{display:flex;flex-direction:column;gap:8px;margin:-6px 0 14px}
+/* Colour on these two, after teachers asked for it. The rule everywhere else
+   in this app is that colour means a GRADE, so these borrow neither palette:
+   they take the school's own two colours — the deep green the app is built
+   in, and the brass of the wordmark — which say "this is the app asking you
+   to do something", not "this is a pass" or "this is a fail". And they wear
+   it the way a button does rather than the way a grade does: the face stays
+   white, the colour sits in the edge and the mark. A grade is a filled pill
+   you tap to record a fact; these are cards you tap to open a picker, and
+   they should not look like each other OR like a verdict. */
 .addhw-b{width:100%;display:flex;align-items:center;gap:11px;text-align:start;
-  padding:10px 13px;min-height:54px}
+  padding:10px 13px;min-height:54px;position:relative;overflow:hidden}
+.addhw-b::before{content:"";position:absolute;inset-inline-start:0;top:0;bottom:0;
+  width:4px;background:var(--edge)}
 .addhw-b .ic{flex:none;width:26px;height:26px;border-radius:50%;
   display:flex;align-items:center;justify-content:center;font-size:15px;
-  background:var(--surface-2);border:1px solid var(--line-2);color:var(--ink-2)}
+  background:var(--chip);border:1px solid var(--edge);color:var(--edge)}
+.addhw-b.new{--edge:var(--hw-new); --chip:var(--hw-new-soft)}
+.addhw-b.rev{--edge:var(--hw-rev); --chip:var(--hw-rev-soft)}
 .addhw-b .t{display:flex;flex-direction:column;gap:1px;min-width:0}
-.addhw-b .t b{font-size:14.5px;line-height:1.3}
+.addhw-b .t b{font-size:14.5px;line-height:1.3;color:var(--edge)}
 .addhw-b .t small{font-size:11.5px;font-weight:400;color:var(--ink-3);line-height:1.35}
 html[lang="ar"] .addhw-b .t b{font-size:15.5px}
 html[lang="ar"] .addhw-b .t small{font-size:12.5px}
