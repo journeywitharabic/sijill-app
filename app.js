@@ -175,7 +175,7 @@
     }).catch(fail);
   }
 
-  $("classPick").onchange = function () { S.clsId = this.value; S.day = null; refreshDay(); };
+  $("classPick").onchange = function () { S.clsId = this.value; S.day = null; S.gapFilter = null; refreshDay(); };
 
   function currentClass() {
     return S.classes.filter(function (c) { return c.id === S.clsId; })[0] || null;
@@ -237,7 +237,13 @@
     $("slist").classList.toggle("ahead", ahead);
     $("aheadNote").hidden = !ahead;
     if (ahead) $("aheadNote").textContent = T("aheadNote");
-    $("slist").innerHTML = d.students.map(function (s, i) {
+    /* When a gap line is tapped, the register shows only those children.
+       Index i still comes from the FULL list, because every handler below
+       addresses children by it. */
+    var shown = (d.students || []).map(function (s, i) { return { s: s, i: i }; })
+      .filter(function (x) { return !S.gapFilter || inGap(x.s, S.gapFilter); });
+    $("slist").innerHTML = shown.map(function (x) {
+      var s = x.s, i = x.i;
       var reasonIdx = Math.max(0, REASONS.findIndex(function (r) { return r[0] === s.state; }));
       var flag = s.flags && s.flags.kind
         ? '<span class="pill ' + s.flags.kind + '"><i></i>' + esc(s.flags.message) + '</span>' : "";
@@ -252,6 +258,13 @@
         ? '<button class="heard" data-heard="' + i + '" title="' + esc(T("heardAllTip")) + '">' +
             '<span class="ic">✓</span><small>' + esc(T("heardAll")) + '</small></button>'
         : "";
+      /* A quiet marker, so a teacher scanning the register sees who is
+         carrying unheard work without reading a count at the top and doing
+         the arithmetic. This is the other half of the "5 have nothing for
+         Friday" problem: the number was never the useful part. */
+      var openMark = (s.due_back > 0)
+        ? '<span class="openmark">' + esc(T("hwOpenMark").split("{n}").join(s.due_back)) + '</span>'
+        : "";
       return '' +
       '<div class="srow ' + (isAbsent(s.state) ? "absent" : "") + '" data-i="' + i + '">' +
         // The name gets its own element. With the trend arrow and the chevron
@@ -261,6 +274,7 @@
         '<button class="nmb"><span class="nm">' + tr +
           '<span class="nmtext">' + esc(s.name) + '</span>' +
           '<span class="chev" aria-hidden="true">›</span></span><span class="meta">' +
+          openMark +
           (s.due ? s.due + " " + T("dueback") + " · " : "") +
           (s.last_heard ? T("heard") + " " + i18n.fmtDate(s.last_heard) : T("never")) +
           (isAbsent(s.state) ? ' <span class="pill ' + (isExcused(s.state) ? "exc" : "crit") + '"><i></i>' +
@@ -287,7 +301,9 @@
             (s.state === r[0]) + '">' + esc(ar ? r[2] : r[1]) + '</button>';
         }).join("") +
       '</div>';
-    }).join("") || '<div class="empty">Nobody is enrolled in this class.</div>';
+    }).join("") || '<div class="empty">' +
+      (S.gapFilter ? esc(T("gapNoneLeft")) : "Nobody is enrolled in this class.") +
+      '</div>';
 
     /* A closed day looks almost identical to an open one, and a teacher who
        cannot tell will keep tapping and keep failing. Say what happened, and
@@ -349,6 +365,7 @@
       (c.crit ? '<span class="pill crit"><i></i>' + c.crit + " " + T("noreason") + "</span>" : "");
 
     renderClassNote(ahead);
+    renderNotices(ahead);
     renderGaps(ahead);
   }
 
@@ -380,20 +397,56 @@
     if (!bar) return;
     var d = S.dayData, sess = d && d.session;
     if (!sess || sess.status === "cancelled" || ahead || S.readOnly) {
-      bar.hidden = true; return;
+      bar.hidden = true; S.gapFilter = null; return;
     }
     var g = gapCounts(d);
+    var nextLabel = d.next_class ? i18n.fmtDate(d.next_class, true) : T("gNoNextClass");
     var lines = [];
-    function line(n, one, many) {
+    /* Each line is a button now. "5 have nothing for Friday" was a riddle:
+       it counts children with nothing due at the NEXT class, which is not the
+       same as children with nothing to do — several of them are carrying work
+       that was never heard. Teachers were opening all five to find out which.
+       Tapping the line filters the register to exactly those children, so the
+       count answers its own question in one tap instead of five. */
+    function line(key, n, one, many, sub) {
       if (!n) return;
-      lines.push('<li>' + esc(n === 1 ? T(one) : T(many).split("{n}").join(n)) + '</li>');
+      var txt = (n === 1 ? T(one) : T(many).split("{n}").join(n));
+      if (sub) txt = txt.split("{d}").join(sub);
+      lines.push('<li><button type="button" class="gapline' +
+        (S.gapFilter === key ? " on" : "") + '" data-gap="' + key + '">' +
+        esc(txt) + '</button></li>');
     }
-    line(g.att,  "gapAtt1",  "gapAtt");
-    line(g.mark, "gapMark1", "gapMark");
-    line(g.next, "gapNext1", "gapNext");
+    line("att",  g.att,  "gapAtt1",  "gapAtt");
+    line("mark", g.mark, "gapMark1", "gapMark");
+    if (d.next_class) line("next", g.next, "gapNext1", "gapNext", nextLabel);
+    else              line("next", g.next, "gapNextNone1", "gapNextNone");
     bar.hidden = !lines.length;
-    bar.innerHTML = lines.length ? '<ul class="gaps">' + lines.join("") + '</ul>' : "";
+    if (!lines.length) { S.gapFilter = null; return; }
+    bar.innerHTML = '<ul class="gaps">' + lines.join("") + '</ul>' +
+      (S.gapFilter
+        ? '<button type="button" class="btn ghost gapall" id="gapAll">' +
+            esc(T("gapAll")) + '</button>'
+        : '<div class="gaphint">' + esc(T("gapTapHint")) + '</div>');
+    bar.querySelectorAll(".gapline").forEach(function (b) {
+      b.onclick = function () {
+        S.gapFilter = (S.gapFilter === b.dataset.gap) ? null : b.dataset.gap;
+        renderDay();
+      };
+    });
+    if ($("gapAll")) $("gapAll").onclick = function () { S.gapFilter = null; renderDay(); };
   }
+
+  /* Which children a gap line is about. One function so the count and the
+     filter can never disagree — two copies of this rule is how you get a
+     line that says five and a list that shows four. */
+  function inGap(s, key) {
+    if (key === "att")  return !s.state;
+    if (key === "mark") return (s.state === "present" || s.state === "late") &&
+                               s.due_back > 0 && !s.recited;
+    if (key === "next") return !s.for_next;
+    return true;
+  }
+
 
   /* ------------------------------------------------------------ class note
      What the class did together, written once and read by every family in
@@ -421,6 +474,88 @@
       ? T("cnBy", { t: sess.class_note_by })
       : (txt ? "" : T("cnEmpty"));
     cnoteCount();
+  }
+
+  /* ------------------------------------------------------------ notices
+
+     A short message to families, class-wide from any teacher. School-wide
+     ones are a coordinator's to write — the same message reaching every
+     family at once is a different size of mistake — but they are SHOWN here
+     too, because a teacher asked "what have the families been told?" should
+     not have to ask a coordinator.
+
+     Nothing is permanent. Every notice carries a day it stops showing,
+     defaulting to a week out. That is the same reasoning as the class note
+     being dated: a notice that can sit on a parent's page forever is a
+     notice that is wrong by March and nobody remembers to take down. */
+  function renderNotices(ahead) {
+    var box = $("noticeBox");
+    if (!box) return;
+    var d = S.dayData, sess = d && d.session;
+    var show = !!sess && !S.readOnly && !ahead;
+    box.hidden = !show;
+    if (!show) return;
+    var list = (d.notices || []);
+    $("noticeList").innerHTML = list.length
+      ? list.map(function (n) {
+          return '<div class="ntrow' + (n.scope === "school" ? " school" : "") + '">' +
+            '<div class="ntb">' + esc(n.body) + '</div>' +
+            '<div class="ntm">' +
+              '<span class="pill mute"><i></i>' +
+              esc(n.scope === "school" ? T("ntSchool") : T("ntClass")) + '</span> ' +
+              esc(T("ntUntilShort").split("{d}").join(i18n.fmtDate(n.until, true))) +
+              (n.by ? " \u00b7 " + esc(T("ntBy").split("{w}").join(n.by)) : "") +
+            '</div>' +
+            '<button class="btn ghost sm ntdel" data-n="' + esc(n.id) + '">' +
+              esc(T("ntRemove")) + '</button></div>';
+        }).join("")
+      : '<div class="ntnone">' + esc(T("ntNone")) + '</div>';
+    $("noticeList").querySelectorAll(".ntdel").forEach(function (b) {
+      b.onclick = function () {
+        sheet(T("ntRemoveQ"), "", T("ntRemove"), function () {
+          api.write("api_notice_remove", { p_id: b.dataset.n }, T("ntTitle"))
+            .then(function () { toast(T("ntTookDown")); refreshDay(); }).catch(fail);
+        });
+        $("shOk").classList.add("danger");
+      };
+    });
+    $("noticeAdd").onclick = function () { noticeSheet(); };
+  }
+
+  function noticeSheet() {
+    var d = S.dayData || {};
+    // A week out, which is the next class but one — long enough to be seen
+    // by a family that only opens the page at the weekend.
+    var until = new Date(Date.now() + 7 * 86400000).toISOString().slice(0, 10);
+    var coord = !!(S.me && S.me.coordinator);
+    sheet(T("ntTitle"),
+      '<div class="note warn" style="margin:0 0 9px;font-size:12.5px">' +
+        esc(T("cnHint")) + '</div>' +
+      '<label class="fld"><span>' + esc(T("ntBody")) + '</span>' +
+        '<textarea id="ntBody" rows="3" maxlength="600" style="width:100%;padding:9px;' +
+        'border:1px solid var(--line);border-radius:9px;background:var(--surface);' +
+        'color:var(--ink);font-size:15px"></textarea></label>' +
+      '<div class="fieldrow" style="margin-top:10px">' +
+        '<label class="fld"><span>' + esc(T("ntUntil")) + '</span>' +
+          '<input id="ntUntil" type="date" value="' + esc(until) + '"></label>' +
+        '<label class="fld"><span>' + esc(T("ntTitle")) + '</span>' +
+          '<select id="ntScope">' +
+            '<option value="class">' + esc(T("ntClass")) + '</option>' +
+            (coord ? '<option value="school">' + esc(T("ntSchool")) + '</option>' : '') +
+          '</select></label>' +
+      '</div>' +
+      (coord ? '' : '<div class="note" style="margin:9px 0 0;font-size:12px">' +
+        esc(T("ntSchoolOnly")) + '</div>'),
+      T("ntSave"), function () {
+        var body = ($("ntBody").value || "").trim();
+        if (!body) { toast(T("ntBody")); return false; }
+        api.write("api_notice_set", {
+          p_scope: $("ntScope").value, p_body: body,
+          p_until: $("ntUntil").value, p_class: S.clsId
+        }, T("ntTitle")).then(function () {
+          toast(T("ntPosted")); refreshDay();
+        }).catch(fail);
+      });
   }
 
   function cnoteCount() {
@@ -742,6 +877,26 @@
      or a tenth of it. The server sends the surah's length on every row that
      carries a range, so say it. A range that IS the whole surah says nothing
      extra — "1–4 of 4" is noise. */
+  /* Just the ayat, for the one-line "already set" mark in the picker. The
+     full label carries "of 40" and a leading space, which is right in a row
+     of its own and noise inside a parenthesis. */
+  /* The family page, inside a sheet, in preview mode. An iframe rather than
+     a new tab: a teacher mid-register who is sent to another tab loses their
+     place, and the back button here puts them exactly where they were. */
+  function openFamilyPreview(id, name) {
+    sheet(T("pvTitle"),
+      '<div class="note" style="margin:0 0 9px;font-size:12.5px">' +
+        esc(T("pvNote").split("{w}").join(name)) + '</div>' +
+      '<iframe class="pvframe" title="' + esc(T("pvTitle")) +
+        '" src="family.html#preview=' + encodeURIComponent(id) + '"></iframe>',
+      null, null, T("close"));
+  }
+
+  function rangeOnly(x) {
+    if (x.ayah_from == null && x.ayah_to == null) return "";
+    return x.ayah_from + "\u2013" + x.ayah_to;
+  }
+
   function rangeLabel(x) {
     if (x.ayah_from == null && x.ayah_to == null) return "";
     if (x.whole_surah) return "";
@@ -753,6 +908,14 @@
 
   function renderStudent() {
     var d = S.studentData, ar = i18n.isAr();
+    /* The family's own page, opened in preview mode with the teacher's
+       session. Not shown on the coordinator's read-only route, where the
+       point is the records rather than the family's view of them. */
+    var pv = $("pvOpen");
+    if (pv) {
+      pv.hidden = !!S.readOnly;
+      pv.onclick = function () { openFamilyPreview(d.student.id, d.student.name); };
+    }
     var f = d.flags || {};
     $("stuName").textContent = d.student.name;
     $("stuSub").textContent = [
@@ -879,7 +1042,10 @@
                    and a line that says so is the kind of small untruth that
                    makes a teacher stop trusting the rest of the screen. */
                 '<div class="hwage">' +
-                  esc(T("gSetOn").split("{d}").join(i18n.fmtDate(h.set_on))) + '</div>' +
+                  esc(T("gSetOn").split("{d}").join(i18n.fmtDate(h.set_on))) +
+                  (h.due_on ? ' \u00b7 ' +
+                    esc(T("gDueOn").split("{d}").join(i18n.fmtDate(h.due_on))) : '') +
+                  '</div>' +
                 '</div><div class="hwside">' + (h.source === "auto"
                   ? '<span class="pill late"><i></i>' + (ar ? "مِنْ ↻ إِعَادَة" : "from ↻ repeat") + '</span>'
                   : '<span class="pill mute"><i></i>' + (ar ? "أَضَافَهُ المُعَلِّم" : "set by teacher") + '</span>') +
@@ -897,7 +1063,17 @@
                   esc(T("hwChange")) + '</button>') + '</div></div>';
             }).join("")
               : '<div style="font-size:13.5px">' +
-                esc(T("gNothingNext").split("{d}").join(nextLabel)) + '</div>') +
+                /* "Nothing set yet" on a child holding three unheard items
+                   reads as "this child has nothing to do", and it is what
+                   sent a parent to Tarek asking why their son had been given
+                   nothing. Both halves are true and only saying one of them
+                   is what made it wrong. */
+                esc((todayRev.length + todayNew.length)
+                      ? T((todayRev.length + todayNew.length) === 1
+                            ? "gNothingNextBut1" : "gNothingNextBut")
+                          .split("{d}").join(nextLabel)
+                          .split("{n}").join(todayRev.length + todayNew.length)
+                      : T("gNothingNext").split("{d}").join(nextLabel)) + '</div>') +
             '</div>' +
             // The key explains the two pills on the rows. With no rows it is
             // explaining something that is not on the screen.
@@ -1580,6 +1756,21 @@
        the first student's list for its names and hides the status. Showing
        one child's "needs review" against everyone's homework would be a
        quiet lie. */
+    /* What this child already has open, by surah, so the picker can say so
+       ON the row instead of a dialog saying so afterwards. The server still
+       refuses silent duplicates — that check covers the whole-class case the
+       app cannot see — but a warning you meet after choosing is a warning
+       you tap through, and that is exactly what happened: At-Taghaabun was
+       set as new memorisation 6–10 and as review 1–18 on the same child on
+       the same evening, through the dialog. */
+    var openBy = {};
+    if (!target && S.studentData) {
+      ((S.studentData.due_back || []).concat(S.studentData.new_memorisation || []))
+        .forEach(function (h) {
+          (openBy[h.surah] = openBy[h.surah] || []).push(
+            (h.kind === "memorise" ? T("gNew") : T("gDueGroup")) + " " + rangeOnly(h));
+        });
+    }
     api.read("api_mushaf", { p_student: ids[0], p_juz: null }).then(function (list) {
       var rows = list.map(function (x) {
         // The number matters: teachers say "surah 78", parents' mushafs are
@@ -1590,7 +1781,11 @@
           '<span class="snum">' + x.surah + '</span>' +
           '<span class="lbl"><span class="ar" dir="rtl">' + esc(x.name_ar) +
           '</span><span>' + esc(x.name_en) + '</span></span><span class="dt">' + x.ayat + ' ' + T("ayat") +
-          ((!target && x.status && x.status !== "not_started") ? ' · ' + esc(x.status) : '') + '</span></label>';
+          ((!target && x.status && x.status !== "not_started") ? ' · ' + esc(x.status) : '') + '</span>' +
+          (openBy[x.surah]
+            ? '<span class="hasopen">' +
+                esc(T("spHas").split("{w}").join(openBy[x.surah].join(", "))) + '</span>'
+            : '') + '</label>';
       }).join("");
       $("shBody").innerHTML =
         (target && target.note
@@ -1621,10 +1816,41 @@
           '<div class="note warn" id="spPageWhy" hidden ' +
             'style="margin:2px 0 6px;font-size:12.5px"></div>' +
           '<div class="note" id="spSum" style="margin:2px 0 0;font-size:12.5px"></div>' +
+        '</div>' +
+        /* The day it is due back, chosen before the work is set rather than
+           inferred from the calendar afterwards. It sits outside the
+           narrowing block because it applies whether one surah is picked or
+           six. The default differs by kind: review comes back at the next
+           class, new memorisation gets a class day at least three days out,
+           because Friday evening to Sunday morning is about thirty-six
+           hours. The teacher can change it to any class day; nothing here
+           refuses anything. */
+        '<div class="duepick" id="spDueWrap">' +
+          '<span class="lab">' + esc(T("gDueLabel")) + '</span>' +
+          '<select id="spDue"></select>' +
         '</div>';
       $("shOk").hidden = false;
       // The count on the button is the number of CHILDREN this will reach.
       $("shOk").textContent = T("add") + (target ? " (" + ids.length + ")" : "");
+
+      /* The class days to choose between come from the server with the day,
+         so the list cannot contain a day the class does not meet. proposed
+         is the one the server would pick on its own; it is preselected, and
+         picking anything earlier than it for new memorisation gets a word
+         of warning later, not a refusal. */
+      var dd = S.dayData || {};
+      var days = (dd.upcoming || []).slice();
+      var proposed = (kind === "memorise" ? dd.memorise_due : dd.review_due) || days[0] || null;
+      if (proposed && days.indexOf(proposed) < 0) days.push(proposed);
+      days.sort();
+      if (!days.length) {
+        $("spDueWrap").hidden = true;
+      } else {
+        $("spDue").innerHTML = days.map(function (d0) {
+          return '<option value="' + esc(d0) + '"' + (d0 === proposed ? " selected" : "") +
+                 '>' + esc(i18n.fmtDate(d0, true)) + '</option>';
+        }).join("");
+      }
 
       function chosen() {
         return Array.prototype.slice.call($("spList").querySelectorAll('input[name=sp]:checked'));
@@ -1683,10 +1909,45 @@
         refresh();
       }
 
+      /* Searching in Arabic used to be impossible and nobody could see why.
+         The surah names carry full tashkeel — الْمُلْك — and the filter was a
+         raw substring match, so a teacher typing الملك, which is how anyone
+         types, matched nothing at all and the list just sat there. toLowerCase
+         does nothing for Arabic either.
+
+         So both sides are normalised: harakat and tatweel removed, the alef
+         forms folded together, ى to ي, ة to ه. A leading ال is optional too,
+         so ملك finds الملك — and on the Latin side case and hyphens are
+         ignored, because teachers type "al-mulk", "Al Mulk" and "almulk" and
+         all three are the same request. */
+      var normArab = function (t) {
+        return t.replace(/[\u064B-\u0652\u0670\u0640]/g, "")
+                .replace(/[\u0622\u0623\u0625\u0671]/g, "\u0627")
+                .replace(/\u0649/g, "\u064A")
+                .replace(/\u0629/g, "\u0647");
+      };
+      var normLat = function (t) {
+        return t.toLowerCase().replace(/[^a-z0-9\u0600-\u06FF]+/g, "");
+      };
+      var searchKeys = function (t) {
+        var a = normArab(t), l = normLat(a);
+        // with and without the definite article, on both sides
+        return [l, l.replace(/^al/, ""), a, a.replace(/^\u0627\u0644/, "")];
+      };
+      $("spList").querySelectorAll(".trow").forEach(function (r) {
+        r.dataset.k = searchKeys(r.textContent).join("|");
+      });
       $("spFilter").oninput = function () {
-        var q = this.value.toLowerCase();
+        var raw = this.value.trim();
+        if (!raw) {
+          $("spList").querySelectorAll(".trow").forEach(function (r) { r.style.display = ""; });
+          return;
+        }
+        var qs = searchKeys(raw).filter(function (x) { return x.length; });
         $("spList").querySelectorAll(".trow").forEach(function (r) {
-          r.style.display = r.textContent.toLowerCase().indexOf(q) >= 0 ? "" : "none";
+          var k = r.dataset.k || "";
+          var hit = qs.some(function (q) { return k.indexOf(q) >= 0; });
+          r.style.display = hit ? "" : "none";
         });
       };
       $("spList").onchange = function (e) {
@@ -1736,10 +1997,34 @@
             if (lo === 1 && hi === ayat) { from = null; to = null; }
           }
         }
-        assignHomework({
-          p_students: ids, p_kind: kind,
-          p_surahs: surahs, p_from: from, p_to: to
-        }, who, done);
+        var due = ($("spDue") && !$("spDueWrap").hidden) ? $("spDue").value : null;
+        var send = function (d0) {
+          assignHomework({
+            p_students: ids, p_kind: kind,
+            p_surahs: surahs, p_from: from, p_to: to, p_due_on: d0 || null
+          }, who, done);
+        };
+        /* The nudge. Tarek's rule is that new hifdh set on a Friday for the
+           Sunday is too tight, and he is right — but he also did not want
+           teachers restricted, and he is right about that too: a tool that
+           refuses a teacher is a tool teachers route around. So the app says
+           what it thinks and offers both buttons, with the teacher's own
+           choice first. */
+        if (due && kind === "memorise" && proposed && due < proposed) {
+          var gap = Math.round((new Date(due) - new Date(dd.session && dd.session.held_on ||
+                                                         dd.class_day)) / 86400000);
+          closeSheet();
+          sheet(T("dueSoonTitle").split("{n}").join(gap),
+            '<div style="font-size:14px;line-height:1.6">' +
+              esc(T("dueSoonBody").split("{d}").join(i18n.fmtDate(due, true))
+                                  .split("{n}").join(gap)) + '</div>',
+            T("dueSoonKeep").split("{d}").join(i18n.fmtDate(due, true)),
+            function () { send(due); },
+            T("dueSoonUse").split("{d}").join(i18n.fmtDate(proposed, true)));
+          $("shNo").onclick = function () { closeSheet(); send(proposed); };
+          return false;
+        }
+        send(due);
         return false;
       };
     }).catch(fail);
@@ -1965,6 +2250,7 @@
                        // fixture cannot easily reach (a cancelled one) and see
                        // what the screen decides
                        renderClassNote: renderClassNote,
+                       renderNotices: renderNotices,
                        renderGaps: renderGaps };
   window.SijillSheet = sheet;
   window.SijillCloseSheet = closeSheet;

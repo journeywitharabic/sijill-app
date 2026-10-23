@@ -80,6 +80,7 @@
        screen is to be the thing you look at before anything else; behind a
        tab you have to remember to press, it is a report nobody reads. */
     var tabs = [["gaps", T("tabGaps")], ["dash", T("tabDash")],
+                ["notices", T("ntTitle")],
                 ["manage", T("tabManage")], ["stats", T("tabStats")]];
     $("ctabs").innerHTML = tabs.map(function (x) {
       return '<button data-c="' + x[0] + '" aria-pressed="' + (C.tab === x[0]) + '">' + esc(x[1]) + '</button>';
@@ -94,7 +95,97 @@
     if (t === "gaps")  return loadGaps();
     if (t === "dash")  return loadDash();
     if (t === "stats") return loadStats();
+    if (t === "notices") return loadNotices();
     return renderManage();
+  }
+
+  /* ------------------------------------------------------------ notices
+
+     A coordinator writes to the whole school; teachers write to their own
+     class. Both are listed here, including ones that have lapsed in the
+     last month, because "what have the families been told recently" is a
+     coordinator question and the change log is the wrong place to answer it.
+
+     Nothing is permanent by design. Every notice carries the day it stops
+     showing. The temptation is a "pin forever" switch, and the reason there
+     isn't one is that a permanent notice is wrong by March and nobody
+     remembers it is there — the same reasoning that made the class note
+     belong to a day. A standing notice is re-posted, which takes five
+     seconds and means somebody looked at it again.  */
+  function loadNotices() {
+    api.read("api_notices").then(function (list) {
+      C.notices = list || [];
+      renderNotices();
+    }).catch(err);
+  }
+
+  function renderNotices() {
+    var list = C.notices || [];
+    $("cbody").innerHTML =
+      '<div class="card"><button class="btn" id="ntNew">' + esc(T("ntAdd")) + '</button></div>' +
+      (list.length
+        ? '<div class="card">' + list.map(function (n) {
+            return '<div class="irow"><div class="lab">' +
+              '<span class="tr">' + esc(n.body) + '</span>' +
+              '<span class="m">' +
+                esc(n.scope === "school" ? T("ntSchool") : (n["class"] || T("ntClass"))) +
+                " \u00b7 " + esc(T("ntUntilShort").split("{d}").join(i18n.fmtDate(n.until, true))) +
+                " \u00b7 " + esc(n.live ? T("ntLive") : T("ntLapsed")) +
+                (n.by ? " \u00b7 " + esc(T("ntBy").split("{w}").join(n.by)) : "") +
+              '</span></div>' +
+              (n.live ? '<button class="btn ghost sm ntdel" data-n="' + esc(n.id) + '">' +
+                esc(T("ntRemove")) + '</button>' : '') +
+              '</div>';
+          }).join("") + '</div>'
+        : '<div class="card"><div class="empty">' + esc(T("ntNone")) + '</div></div>');
+
+    $("ntNew").onclick = function () { noticeSheet(); };
+    $("cbody").querySelectorAll(".ntdel").forEach(function (b) {
+      b.onclick = function () {
+        window.SijillSheet(T("ntRemoveQ"), "", T("ntRemove"), function () {
+          api.write("api_notice_remove", { p_id: b.dataset.n }, T("ntTitle"))
+            .then(function () { window.SijillToast(T("ntTookDown")); loadNotices(); }).catch(err);
+        });
+      };
+    });
+  }
+
+  function noticeSheet() {
+    // The class list comes from the server rather than from whatever an
+    // earlier tab happened to leave behind: a coordinator can open this
+    // tab first, and an empty dropdown would quietly make every notice
+    // school-wide.
+    api.read("api_classes").then(function (cs) { noticeSheetWith(cs || []); }).catch(err);
+  }
+
+  function noticeSheetWith(classes) {
+    var until = new Date(Date.now() + 7 * 86400000).toISOString().slice(0, 10);
+    window.SijillSheet(T("ntTitle"),
+      '<div class="note warn" style="margin:0 0 9px;font-size:12.5px">' +
+        esc(T("cnHint")) + '</div>' +
+      '<label class="fld"><span>' + esc(T("ntBody")) + '</span>' +
+        '<textarea id="ntBody" rows="3" maxlength="600"></textarea></label>' +
+      '<div class="fieldrow" style="margin-top:10px">' +
+        '<label class="fld"><span>' + esc(T("ntUntil")) + '</span>' +
+          '<input id="ntUntil" type="date" value="' + esc(until) + '"></label>' +
+        '<label class="fld"><span>' + esc(T("ntTitle")) + '</span>' +
+          '<select id="ntScope"><option value="school">' + esc(T("ntSchool")) + '</option>' +
+          classes.map(function (c) {
+            return '<option value="c:' + esc(c.id) + '">' + esc(c.name) + '</option>';
+          }).join("") + '</select></label>' +
+      '</div>',
+      T("ntSave"), function () {
+        var body = ($("ntBody").value || "").trim();
+        if (!body) { window.SijillToast(T("ntBody")); return false; }
+        var v = $("ntScope").value;
+        api.write("api_notice_set", {
+          p_scope: v === "school" ? "school" : "class",
+          p_body: body, p_until: $("ntUntil").value,
+          p_class: v === "school" ? null : v.slice(2)
+        }, T("ntTitle")).then(function () {
+          window.SijillToast(T("ntPosted")); loadNotices();
+        }).catch(err);
+      });
   }
 
   /* B1 · the coordinator screens never re-translated.
@@ -107,6 +198,7 @@
   window.addEventListener("sijill:lang", function () {
     if ($("v-coord").hidden) return;
     renderTabs();
+    if (C.tab === "notices" && C.notices) return renderNotices();
     if (C.tab === "dash"  && C.dash)  return renderDash();
     if (C.tab === "stats" && C.stats) return renderStats();
     openTab(C.tab);

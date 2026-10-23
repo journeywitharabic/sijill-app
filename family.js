@@ -58,6 +58,14 @@
       scope:"The pages are counted inside juz {j} \u2014 the part {n} is memorising now. The two lines under it count the whole Qur\u2019an. Pages are a fairer measure than surahs, because surah lengths vary enormously.",
       helpHome:"Needs review — help at home", recent:"Recent classes",
       nothingYet:"Nothing set yet.", noClasses:"No classes recorded yet.",
+      /* "Nothing set yet" on a child who is holding three unheard pieces of
+         work reads as "your child has been given nothing", and that is the
+         message that reached Tarek. Both halves are true; saying only one of
+         them is what made it wrong. */
+      nothingNewBut:"Nothing new set for this class yet — but there is still {n} to practise above.",
+      nothingNewBut1:"Nothing new set for this class yet — but there is still one to practise above.",
+      dueOn:"to be ready for {d}",
+      noticeSchool:"From the school", noticeClass:"From the class",
       contact:"Any question about homework or attendance — message the school on ClassDojo.",
       tajweed:"Tajwīd", adab:"Adab", tr_up:"moving forward", tr_flat:"standing still", tr_down:"needs attention", tr_away:"not enough to say", trHelp:"over the last few classes", wholeSurah:"whole surah", ayat:"ayat", notMarked:"not marked",
       noneRecorded:"Here — nothing recorded", guideLink:"A short guide to this page",
@@ -80,6 +88,10 @@
       scope:"الصَّفَحَاتُ مَحْسُوبَةٌ ضِمْنَ الجُزْءِ {j} — القِسْمِ الَّذِي يَحْفَظُهُ {n} الآنَ. أَمَّا السَّطْرَانِ تَحْتَهُ فَيَشْمَلَانِ القُرْآنَ كُلَّه. وَالصَّفَحَاتُ مِقْيَاسٌ أَدَقُّ مِنَ السُّوَرِ لِأَنَّ أَطْوَالَ السُّوَرِ مُتَفَاوِتَة.",
       helpHome:"يَحْتَاجُ مُرَاجَعَة — لِلْمُسَاعَدَةِ فِي البَيْت", recent:"الحِصَصُ الأَخِيرَة",
       nothingYet:"لَمْ يُحَدَّدْ شَيْءٌ بَعْد.", noClasses:"لَا حِصَصَ مُسَجَّلَةٌ بَعْد.",
+      nothingNewBut:"لَمْ يُحَدَّدْ جَدِيدٌ لِهَذِهِ الحِصَّةِ بَعْد — غَيْرَ أَنَّ {n} مَا زَالَتْ لِلتَّحْضِيرِ أَعْلَاه.",
+      nothingNewBut1:"لَمْ يُحَدَّدْ جَدِيدٌ لِهَذِهِ الحِصَّةِ بَعْد — غَيْرَ أَنَّ وَاحِدًا مَا زَالَ لِلتَّحْضِيرِ أَعْلَاه.",
+      dueOn:"لِيَكُونَ جَاهِزًا لِـ{d}",
+      noticeSchool:"مِنَ المَدْرَسَة", noticeClass:"مِنَ الحَلْقَة",
       contact:"لِأَيِّ سُؤَالٍ حَوْلَ الوَاجِبِ أَوِ الحُضُور، رَاسِلِ المَدْرَسَةَ عَبْرَ ClassDojo.",
       tajweed:"التَّجْوِيد", adab:"الأَدَب", tr_up:"يَتَقَدَّم", tr_flat:"ثَابِت", tr_down:"يَحْتَاجُ انْتِبَاهًا", tr_away:"لَا يُمْكِنُ الحُكْمُ بَعْد", trHelp:"خِلَالَ الحِصَصِ الأَخِيرَة", wholeSurah:"السُّورَةُ كَامِلَة", ayat:"آيَة", notMarked:"لَمْ يُسَجَّل",
       noneRecorded:"حَاضِر — لَمْ يُسَجَّلْ شَيْء", guideLink:"دَلِيلٌ مُخْتَصَرٌ لِهَذِهِ الصَّفْحَة",
@@ -166,6 +178,21 @@
 
     h += '<div class="ctx" style="padding:0 0 12px"><h1>' + esc(c.name) + '</h1>' +
          '<div class="sub">' + esc(c["class"] || "") + '</div></div>';
+
+    /* Notices, above everything. School-wide ones come once at the top of
+       the response rather than per child, so a family with three children
+       here reads an announcement once instead of three times. Each carries
+       no date of its own on screen: it is here because it is current, and
+       it leaves on its own when it stops being. */
+    var nots = ((DATA.notices || []).map(function (n) { return { n: n, school: true }; }))
+      .concat((c.notices || []).map(function (n) { return { n: n, school: false }; }));
+    if (nots.length) {
+      h += nots.map(function (x) {
+        return '<div class="pcard notice' + (x.school ? " school" : "") + '">' +
+          '<h2>' + esc(t(x.school ? "noticeSchool" : "noticeClass")) + '</h2>' +
+          '<div class="line"><span>' + esc(x.n.body) + '</span></div></div>';
+      }).join("");
+    }
     h += trendBar(c.trend);
 
     // the attendance warning — adults only; the server omits it on a student link
@@ -202,7 +229,10 @@
              (x.ayah_from ? " " + x.ayah_from + "–" + x.ayah_to : "")) + '</span></div>' +
           ((x.set_on || x.set_by)
             ? '<div class="line sub">' + esc(t("setOnBy", {
-                d: i18n.fmtDate(x.set_on), t: x.set_by || "—" })) + '</div>' : '') +
+                d: i18n.fmtDate(x.set_on), t: x.set_by || "—" })) +
+              (x.due_on ? ' \u00b7 ' +
+                esc(t("dueOn", { d: i18n.fmtDate(x.due_on, true) })) : '') +
+              '</div>' : '') +
           '</div>';
       }).join("");
     }
@@ -217,7 +247,9 @@
     h += '<div class="pcard hero"><h2>' + esc(t("forNextClass")) + ' ' +
          esc(nextLabel) + '</h2>' +
          (next.length ? hwLines(next)
-           : '<div class="line"><span>' + esc(t("nothingYet")) + '</span></div>') +
+           : '<div class="line"><span>' + esc(owed.length
+               ? t(owed.length === 1 ? "nothingNewBut1" : "nothingNewBut", { n: owed.length })
+               : t("nothingYet")) + '</span></div>') +
          '</div>';
 
     /* What the class did together, newest first. Shown only when a teacher
@@ -371,6 +403,36 @@
       if (th) document.documentElement.setAttribute("data-theme", th);
     } catch (e) {}
     i18n.setLang(i18n.lang);
+
+    /* Preview mode, for teachers. Teachers kept asking what the family
+       actually sees, and the honest way to answer that is to show them THIS
+       page rather than a second rendering of the same data that drifts from
+       it within two rounds. So the page can be opened with #preview=<id>
+       and the teacher's own session token, which the server checks: no
+       family link is involved, none is shown, and nothing here can write.
+
+       It is deliberately the same file. A preview that is a copy is a
+       preview that is eventually a lie. */
+    var prev = /(?:^|&|#)preview=([0-9a-f-]{36})/.exec(location.hash || "");
+    if (prev) {
+      var tok = null;
+      try { tok = localStorage.getItem("sijill.token"); } catch (e) {}
+      if (!tok) {
+        return oops("Not signed in",
+          "Open this from the teacher app — it uses your own sign-in, not a family link.");
+      }
+      show("v-loading");
+      document.documentElement.setAttribute("data-preview", "1");
+      return api.rpc("api_family_preview", { p_token: tok, p_student: prev[1] })
+        .then(function (d) {
+          if (!d || d.ok === false) {
+            return oops("Could not show that child", (d && d.error) || "Try again.");
+          }
+          DATA = d; WHICH = 0; show("v-family"); render();
+        }).catch(function (e) {
+          oops("Could not show that child", e.message || "Try again.");
+        });
+    }
 
     var code = linkCode();
     if (!code) {

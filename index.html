@@ -244,6 +244,16 @@
       </div>
       <div class="who" id="cnoteBy"></div>
     </div>
+    <!-- Notices. Deliberately a separate box from the class note above, and
+         below it: the note is a record of what happened, a notice is an
+         announcement about what is going to. One box doing both would turn
+         the record into a noticeboard, and the record is the thing families
+         actually read. -->
+    <div class="ntbox" id="noticeBox" hidden>
+      <h2 data-t="ntTitle">Notice for families</h2>
+      <div id="noticeList"></div>
+      <button class="btn ghost sm" id="noticeAdd" data-t="ntAdd">Write a notice</button>
+    </div>
     <div class="note" data-t="clsHint">Tap a name to record recitation. Everything saves as you tap.</div>
   </div>
 </section>
@@ -262,6 +272,9 @@
     <button class="mini" id="gearStu" title="Settings" aria-label="Settings">⚙</button>
   </div>
   <div class="ctx"><h1 id="stuName">—</h1><div class="sub" id="stuSub">—</div></div>
+  <!-- Teachers asked to see what a family sees. It opens the real family
+       page in preview mode, not a second rendering of it. -->
+  <button class="lnk pvlink" id="pvOpen" data-t="pvOpen" hidden>See what the family sees</button>
   <div class="pad" id="stuBody"><div class="loading"><span class="spin"></span></div></div>
   <!-- The walk through the class. A teacher who has to go back to the list
        between every child loses their place eight times a night. -->
