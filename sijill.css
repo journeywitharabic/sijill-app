@@ -201,7 +201,7 @@ button#theme{display:inline-flex;align-items:center;justify-content:center}
 .irow{display:flex;align-items:center;gap:10px;padding:10px 12px;border-bottom:1px solid var(--line)}
 .irow:last-child{border-bottom:0}
 .irow .lab{flex:1;min-width:0;display:flex;flex-direction:column;gap:3px;align-items:flex-start}
-[dir="rtl"] .irow .lab{align-items:flex-end}
+/* removed in round 32: see below */
 .irow .ar{font-family:var(--serif);font-size:19px;font-weight:700;line-height:1.3}
 .irow .tr{font-size:13px;font-weight:600;color:var(--ink-2)}
 .irow .m{font-family:var(--mono);font-size:10.5px;color:var(--ink-3)}
@@ -1273,3 +1273,53 @@ html[data-preview] .langbtn, html[data-preview] .themebtn{display:none}
   background:var(--lapis-soft)}
 .pcard.notice h2{color:var(--lapis)}
 .pcard.notice .line span{font-size:15px;line-height:1.6}
+
+/* A Latin run inside an Arabic line. Without an INLINE isolating box the
+   bidi algorithm reorders across the boundary: "Al-Waaqia 1–86" followed by
+   the Arabic "مِنْ 96" came out as "Al-Waaqia 1–86 96 مِنْ", with the "of"
+   stranded on the wrong side of the name it belongs to. */
+.lat{unicode-bidi:isolate;direction:ltr;white-space:nowrap}
+.irow .tr .ofn{color:var(--ink-3)}
+
+/* The two kinds of work, each framed in its own colour with its name sitting
+   in the border. On a phone the two sections were a small grey label apart,
+   and teachers were grading review against the new-memorisation rule and the
+   other way round — which is not a reading mistake, it is two things that
+   look identical. The colours are the ones the assign buttons took in round
+   31, so teal always means new ground and terracotta always means revisiting
+   old, and neither is a grade colour.
+   `align-items:flex-start` is NOT set anywhere here on purpose: see the note
+   on .irow .lab below. */
+.kindbox{position:relative;border:2px solid var(--edge);border-radius:13px;
+  padding:16px 10px 10px;margin:18px 0 0;background:var(--surface)}
+.kindbox.new{--edge:var(--hw-new); --tint:var(--hw-new-soft)}
+.kindbox.rev{--edge:var(--hw-rev); --tint:var(--hw-rev-soft)}
+.kindbox .kindlab{position:absolute;top:-10px;inset-inline-start:13px;
+  background:var(--paper);padding:0 8px;font-size:11.5px;font-weight:700;
+  letter-spacing:.1em;text-transform:uppercase;color:var(--edge);
+  border-radius:6px;line-height:19px}
+html[lang="ar"] .kindbox .kindlab{letter-spacing:0;text-transform:none;font-size:13px}
+.kindbox > .note.rule{margin-bottom:9px}
+.kindbox > .card{border:0;background:none;padding:0;margin:0}
+.kindbox > .card > .irow:last-child{border-bottom:0}
+/* and the same two colours on the rows in the next-class box */
+.hwrow .k.new{color:var(--hw-new)}
+.hwrow .k.rev{color:var(--hw-rev)}
+
+/* The change log's filter bar. Dates, a teacher, a kind and a search box —
+   added when a teacher misused a button across several children and the only
+   way to find what he had done was to scroll a fixed list of sixty rows and
+   hope. */
+.lgf{padding:12px 13px;margin-bottom:10px}
+.lgf .fieldrow{display:flex;gap:8px;margin:0 0 8px}
+.lgf .fld{flex:1 1 0;min-width:0;display:flex;flex-direction:column;gap:3px}
+.lgf .fld>span{font-size:10.5px;font-weight:700;letter-spacing:.06em;
+  text-transform:uppercase;color:var(--ink-3)}
+.lgf input,.lgf select{width:100%;min-height:38px;padding:7px 9px;font-size:14px;
+  border:1px solid var(--line);border-radius:9px;background:var(--surface);color:var(--ink)}
+.lgbtns{display:flex;gap:8px;justify-content:flex-end;margin-top:10px}
+/* "50 of 312" and "50 of 50" look identical without the total, and only one
+   of them means you have seen everything. */
+.lgcount{font-size:12.5px;color:var(--ink-3);margin:0 0 8px}
+.lgpage{display:flex;gap:8px;justify-content:space-between;margin-top:10px}
+.lgpage button[disabled]{opacity:.4}

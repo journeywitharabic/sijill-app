@@ -249,15 +249,21 @@
         ? '<span class="pill ' + s.flags.kind + '"><i></i>' + esc(s.flags.message) + '</span>' : "";
       var tr = trendHtml(s.trend, false);
       // "Heard it, all fine" straight from the list. This is the whole point
-      // of the row: the ordinary child has nothing to discuss, and making
-      // that case cost a trip into their page and back is what turns a
-      // two-minute register into a twenty-minute one. It only appears when
-      // there is something open to hear and the child is actually here.
-      var canHear = s.due > 0 && !isAbsent(s.state) && s.state;
-      var heard = canHear
-        ? '<button class="heard" data-heard="' + i + '" title="' + esc(T("heardAllTip")) + '">' +
-            '<span class="ic">✓</span><small>' + esc(T("heardAll")) + '</small></button>'
-        : "";
+      /* The "✓ heard" button used to sit here: one tap recorded every open
+         item as good with full tajwīd. It is gone as of round 32.
+
+         Not because teachers misread it — because it closed EVERY open
+         homework row regardless of when the work was due. Round 31 gave
+         homework a due day and the call behind this button never learned
+         about it, so a teacher who assigned next Friday's work and then
+         said "yes, I heard everything due today" had the new work recorded
+         as recited and taken off the family's page. The mental model was
+         right; the button reached further than its label.
+
+         A scoped version is buildable — only work whose due day has
+         arrived — and the server function was dropped rather than narrowed
+         so that nothing can call the old shape while that is decided. */
+
       /* A quiet marker, so a teacher scanning the register sees who is
          carrying unheard work without reading a count at the top and doing
          the arithmetic. This is the other half of the "5 have nothing for
@@ -283,7 +289,6 @@
           (isAbsent(s.state) ? ' <span class="pill mute"><i></i>' + esc(T("carries")) + '</span>' : "") +
           (s.recited ? ' <span class="pill ok"><i></i>' + esc(T("recited")) + '</span>' : "") +
         '</span></button>' +
-        heard +
         // Word labels under the icons. "L" meant nothing to anyone and meant
         // less than nothing in Arabic.
         '<div class="seg3">' +
@@ -595,41 +600,9 @@
       var s2 = S.dayData.students[+chip.closest(".reasons").dataset.r];
       return mark(s2, REASONS[+chip.dataset.j][0]);
     }
-    var hb = e.target.closest("[data-heard]");
-    if (hb) {
-      var sh = S.dayData.students[+hb.dataset.heard];
-      hb.disabled = true;
-      return markAllGood(sh);
-    }
     var nm = e.target.closest(".nmb");
     if (nm) openStudent(S.dayData.students[+nm.closest(".srow").dataset.i]);
   });
-
-  /* One tap on the class row: everything this child had open, recited well.
-     The database does it in a single call so a dropped signal can never leave
-     a child credited with two of their three items. */
-  function markAllGood(s) {
-    return api.write("api_mark_all_good",
-      { p_session: S.dayData.session.id, p_student: s.id }, s.name
-    ).then(function (r) {
-      var ids = (r && r.ids) || [];
-      S.undo = {
-        label: s.name,
-        fn: function () {
-          // Newest first — the same order a teacher would undo them by hand,
-          // and the order the undo check expects.
-          return ids.slice().reverse().reduce(function (p, id) {
-            return p.then(function () {
-              return api.write("api_undo_record", { p_record: id }, s.name);
-            });
-          }, Promise.resolve());
-        }
-      };
-      showUndo();
-      toast(T("heardDone", { name: s.name, n: (r && r.marked) || 0 }), S.undo.fn);
-      return refreshDay();
-    }).catch(function (e) { refreshDay(); fail(e); });
-  }
 
   function mark(s, state) {
     var was = s.state, wasReason = s.reason;
@@ -843,7 +816,8 @@
 
   function surahLabel(x) {
     var ar = '<span class="ar" dir="rtl">' + esc(x.name_ar) + "</span>";
-    var en = '<span class="tr">' + esc(x.name_en) + rangeLabel(x) + "</span>";
+    var en = '<span class="tr"><span class="lat">' + esc(x.name_en) +
+              rangeSpan(x) + '</span>' + rangeOf(x) + "</span>";
     return ar + en;
   }
   /* How long a piece of homework has been sitting there. Only open homework
@@ -895,6 +869,23 @@
   function rangeOnly(x) {
     if (x.ayah_from == null && x.ayah_to == null) return "";
     return x.ayah_from + "\u2013" + x.ayah_to;
+  }
+
+  /* rangeLabel, split in two. The ayah numbers belong INSIDE the isolated
+     Latin run with the name — "Al-Waaqia 1–86" is one thing — while the
+     "of 96" is Arabic in an Arabic page and belongs outside it. Keeping them
+     in one string meant the bidi algorithm moved "مِنْ 96" to the far side of
+     the name, and the line read "Al-Waaqia 1–86 96 مِنْ". */
+  function rangeSpan(x) {
+    if (x.ayah_from == null && x.ayah_to == null) return "";
+    if (x.whole_surah) return "";
+    if (x.ayat && x.ayah_from === 1 && x.ayah_to === x.ayat) return "";
+    return " " + x.ayah_from + "\u2013" + x.ayah_to;
+  }
+  function rangeOf(x) {
+    if (!rangeSpan(x) || !x.ayat) return "";
+    return ' <span class="ofn">' +
+           esc(T("ofAyat").split("{n}").join(x.ayat)) + '</span>';
   }
 
   function rangeLabel(x) {
@@ -980,10 +971,18 @@
       /* The rule lives inside the group it applies to. The thresholds differ
          between the two now, so one line at the bottom of the screen would be
          wrong for whichever section you were not looking at. */
+      /* Each kind is framed in its own colour with its name sitting in the
+         border. On a phone the two were a small grey label apart and
+         teachers were grading review work against the new-memorisation rule
+         and the other way round — which is not a reading mistake, it is two
+         things that look identical. The colours are the ones round 31 gave
+         the two assign buttons, so teal always means new ground and
+         terracotta always means revisiting old, and neither is a grade. */
       if (todayRev.length) {
-        html += '<div class="subh">' + esc(T("gDueGroup")) + '</div>' +
+        html += '<div class="kindbox rev"><div class="kindlab">' +
+                  esc(T("gDueGroup")) + '</div>' +
                 '<div class="note rule">' + T("ruleReview") + '</div>' +
-                '<div class="card">' + todayRev.map(function (x) { return itemRow(x, "due"); }).join("") + '</div>';
+                '<div class="card">' + todayRev.map(function (x) { return itemRow(x, "due"); }).join("") + '</div></div>';
       }
       /* CAREFUL: "memorise" and "new_memorisation" are spelled the British way
          on purpose — they are not words here, they are a value stored in
@@ -991,9 +990,10 @@
          "memorization"; changing these to match it silently stops the app
          matching its own database. */
       if (todayNew.length) {
-        html += '<div class="subh">' + esc(T("gNew")) + '</div>' +
+        html += '<div class="kindbox new"><div class="kindlab">' +
+                  esc(T("gNew")) + '</div>' +
                 '<div class="note rule">' + T("ruleNew") + '</div>' +
-                '<div class="card">' + todayNew.map(function (x) { return itemRow(x, "new"); }).join("") + '</div>';
+                '<div class="card">' + todayNew.map(function (x) { return itemRow(x, "new"); }).join("") + '</div></div>';
       }
     }
     html += '</div>';
@@ -1033,7 +1033,7 @@
                  ago that the child has never been heard on sits in it looking
                  exactly like something set yesterday. */
               return '<div class="hwrow"><div class="hwmain">' +
-                '<b class="k">' +
+                '<b class="k ' + (h.kind === "memorise" ? "new" : "rev") + '">' +
                   (h.kind === "memorise" ? esc(ar ? "لِلْحِفْظ" : "Memorize") : esc(ar ? "لِلْمُرَاجَعَة" : "Review")) +
                 '</b> <span class="ar" style="font-family:var(--serif);font-size:18px;font-weight:700">' +
                 esc(h.name_ar) + '</span> <span style="color:var(--ink-2)">' + esc(h.name_en) + rangeLabel(h) + '</span>' +
@@ -1264,7 +1264,8 @@
       ' data-to="' + (x.ayah_to == null ? "" : x.ayah_to) + '"' +
       ' data-kind="' + (kind === "new" ? "new" : "review") + '">' +
       '<div class="lab"><span class="ar" dir="rtl">' + esc(x.name_ar) + '</span>' +
-      '<span class="tr">' + esc(x.name_en) + rangeLabel(x) + '</span>' +
+      '<span class="tr"><span class="lat">' + esc(x.name_en) + rangeSpan(x) +
+      '</span>' + rangeOf(x) + '</span>' +
       '<span class="m' + stale + (old ? " old" : "") + '">' + esc(meta) +
         /* Change lives here too, not only in the next-class box.
            Round 24 split the homework in two and left the editor behind in

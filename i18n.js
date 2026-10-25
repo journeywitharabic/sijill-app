@@ -19,7 +19,7 @@
     schoolName:"Qur’an School",
     tagline:"Attendance · homework · memorization",
     lastHeld:"the last class that ran",
-    aheadNote:"This class has not met yet. You can set homework now — attendance and ✓ heard open on the day itself.",
+    aheadNote:"This class has not met yet. You can set homework now — attendance and grading open on the day itself.",
     gateTitle:"Sign in",
     gateHelp:"Type the school passphrase. You only do this once on this phone — it will remember you.",
     gateGo:"Sign in",
@@ -45,7 +45,7 @@
        off in code, which read as "Undo last change" on a 7-second toast where
        "Undo" is the whole of what is meant — and would have silently stopped
        working the day either language's `undo` lost its arrow. */
-    undo:"\u21b6 Undo last change", undoShort:"Undo", clsHint:"Tap <b>✓ heard</b> when a child recites everything they had open and there is nothing to add — it records every item as good with <b>tajwīd 5/5</b>. If the tajwīd was not 5/5, tap their <b>name</b> and grade the items one at a time. Both attendance <b>and</b> recitation are needed before the day counts as complete. Everything saves as you tap.",
+    undo:"\u21b6 Undo last change", undoShort:"Undo", clsHint:"Tap a child's <b>name</b> to hear them and grade each passage. Both attendance <b>and</b> recitation are needed before the day counts as complete. Everything saves as you tap.",
     coordMode:"Coordinator tools", signOut:"Sign out",
     back:"‹ Back", fullMushaf:"☰ Mushaf",
     present:"present", late:"late", excused:"excused", noreason:"no reason",
@@ -114,6 +114,14 @@
     /* What the family sees */
     pvOpen:"See what the family sees", pvTitle:"The family's page",
     pvNote:"This is exactly what {w}'s family sees on their own link. Nothing here can be changed, and their link is not shown.",
+    /* The change log's filter bar. These were English literals when the bar
+       was built, which is a regression in an app a teacher can read in
+       Arabic — and the release-notes check caught it before a teacher did. */
+    lgFrom:"From", lgTo:"To", lgTeacher:"Teacher", lgKind:"Kind", lgSearch:"Search",
+    lgAnyone:"anyone", lgAnything:"anything",
+    lgSearchHint:"a child\u2019s name, a surah\u2026",
+    lgGo:"Search", lgClear:"Clear", lgNewer:"\u2039 Newer", lgOlder:"Older \u203a",
+    lgShowing:"Showing {a}\u2013{b} of {n}", lgNoMatch:"Nothing matches those filters.",
     gNextClass:"Homework for the next class",
     gNoNextClass:"no class scheduled yet",
     gNothingDue:"Nothing waiting to be graded.",
@@ -202,7 +210,7 @@
     /* "absent", not "away". The Arabic has always said غَائِب — absent —
        so the two languages were naming the same button differently, and
        "away" reads as a softer, vaguer thing than the register records. */
-    mHere:"here", mLate:"late", mAway:"absent",
+    mHere:"present", mLate:"late", mAway:"absent",
     gGood:"good", gAgain:"again", gNotReady:"not ready",
     /* One tooltip per kind, because round 23 made the rules different. The
        tooltip must never say something the rule printed above the section
@@ -228,8 +236,6 @@
     mtClearBody:"It stops counting as memorized. If the child has forgotten it, mark it review instead — that keeps the history and puts it back in the rotation.",
     mtPagesSolid:"{n} pages solid across the mushaf",
     mtHelp:"Tap a juz to open it. You can mark a whole juz, a hizb, a page or a few ayat — whichever matches what you actually know. Nothing here says the child recited today; it records what they already have.",
-    heardAll:"heard", heardAllTip:"Heard everything they had open — memorisation and tajwīd both good (5/5)",
-    heardDone:"{name} — {n} marked good",
     /* --- taking a mark back --- */
     undoMark:"Take back", undoMarkTitle:"Take this mark back?",
     undoMarkBody:"The recitation is kept and marked withdrawn. {who} memorization goes back to what it was, and any homework it cleared opens again.",
@@ -262,7 +268,7 @@
     schoolName:"مَدْرَسَةُ القُرْآنِ",
     tagline:"الحُضُورُ وَالوَاجِبَاتُ وَالحِفْظُ",
     lastHeld:"آخِرُ حَلْقَةٍ انْعَقَدَتْ",
-    aheadNote:"لَمْ تَبْدَأْ هَذِهِ الحَلْقَةُ بَعْدُ. يُمْكِنُكَ تَعْيِينُ الوَاجِبَاتِ الآنَ، وَيُفْتَحُ الحُضُورُ يَوْمَ الحَلْقَةِ.",
+    aheadNote:"لَمْ تَبْدَأْ هَذِهِ الحَلْقَةُ بَعْدُ. يُمْكِنُكَ تَعْيِينُ الوَاجِبِ الآن — وَيُفْتَحُ الحُضُورُ وَالتَّقْيِيمُ فِي يَوْمِ الحِصَّةِ نَفْسِه.",
     gateTitle:"تَسْجِيلُ الدُّخُول",
     gateHelp:"اُكْتُبْ كَلِمَةَ مُرُورِ المَدْرَسَة. تَفْعَلُ ذَلِكَ مَرَّةً وَاحِدَةً عَلَى هَذَا الهَاتِفِ فَقَط.",
     gateGo:"دُخُول",
@@ -280,7 +286,7 @@
     bulkNote:"يُنْشَأُ وَاجِبٌ مُنْفَصِلٌ لِكُلِّ طَالِب، فَيُمْكِنُ تَعْدِيلُ أَيِّ وَاحِدٍ لَاحِقًا. وَالغَائِبُونَ مَشْمُولُون — لَهُمُ الوَاجِبُ نَفْسُه.",
 
     undo:"↶ تَرَاجُعٌ عَنْ آخِرِ تَغْيِير", undoShort:"تَرَاجُع",
-    clsHint:"انْقُرْ <b>سَمِعْتُهُ</b> إِذَا سَمِعْتَ كُلَّ مَا عَلَيْهِ وَلَا شَيْءَ تُضِيفُه — وَيُسَجَّلُ كُلُّ بَنْدٍ جَيِّدًا مَعَ <b>تَجْوِيد ٥/٥</b>. وَإِنْ لَمْ يَكُنِ التَّجْوِيدُ ٥/٥ فَانْقُرْ <b>اسْمَه</b> وَقَيِّمْ البُنُودَ وَاحِدًا وَاحِدًا. وَيَلْزَمُ الحُضُورُ <b>وَ</b> التِّلَاوَةُ لِيُعَدَّ اليَوْمُ كَامِلًا. وَكُلُّ شَيْءٍ يُحْفَظُ فَوْرًا.",
+    clsHint:"انْقُرْ <b>اسْمَ</b> الطَّالِبِ لِتَسْمَعَهُ وَتُقَيِّمَ كُلَّ مَقْطَع. وَيَلْزَمُ الحُضُورُ <b>وَ</b> التِّلَاوَةُ لِيُعَدَّ اليَوْمُ كَامِلًا. وَكُلُّ شَيْءٍ يُحْفَظُ فَوْرًا.",
     coordMode:"أَدَوَاتُ المُنَسِّق", signOut:"تَسْجِيلُ الخُرُوج",
     back:"‹ رُجُوع", fullMushaf:"☰ المُصْحَف",
     present:"حَاضِر", late:"مُتَأَخِّر", excused:"بِعُذْر", noreason:"بِدُونِ عُذْر",
@@ -328,6 +334,11 @@
     ntHeading:"مِنَ المَدْرَسَة", ntHeadingClass:"مِنَ الحَلْقَة",
     pvOpen:"اُنْظُرْ مَا يَرَاهُ الأَهْل", pvTitle:"صَفْحَةُ الأَهْل",
     pvNote:"هَذَا بِعَيْنِهِ مَا يَرَاهُ أَهْلُ {w} فِي رَابِطِهِمْ. لَا يُمْكِنُ تَغْيِيرُ شَيْءٍ هُنَا، وَلَا يُعْرَضُ رَابِطُهُم.",
+    lgFrom:"مِنْ", lgTo:"إِلَى", lgTeacher:"المُعَلِّم", lgKind:"النَّوْع", lgSearch:"بَحْث",
+    lgAnyone:"أَيُّ أَحَد", lgAnything:"أَيُّ نَوْع",
+    lgSearchHint:"اِسْمُ طَالِبٍ أَوْ سُورَة\u2026",
+    lgGo:"اِبْحَثْ", lgClear:"مَسْح", lgNewer:"\u2039 الأَحْدَث", lgOlder:"الأَقْدَم \u203a",
+    lgShowing:"عَرْضُ {a}–{b} مِنْ {n}", lgNoMatch:"لَا شَيْءَ يُطَابِقُ هَذِهِ المُرَشِّحَات.",
     gNextClass:"وَاجِبُ الحِصَّةِ القَادِمَة",
     gNoNextClass:"لَمْ تُجْدَوَلْ حِصَّةٌ بَعْد",
     gNothingDue:"لَا شَيْءَ يَنْتَظِرُ التَّقْيِيم.",
@@ -414,8 +425,6 @@
     mtClearBody:"لَنْ يُحْسَبَ مَحْفُوظًا بَعْدَ الآن. إِنْ كَانَ الطَّالِبُ قَدْ نَسِيَهُ فَاخْتَرْ مُرَاجَعَة، فَذَلِكَ يَحْفَظُ التَّارِيخَ وَيُعِيدُهُ إِلَى دَوْرَةِ المُرَاجَعَة.",
     mtPagesSolid:"{n} صَفْحَةً مُتْقَنَةً فِي المُصْحَفِ كُلِّهِ",
     mtHelp:"اُنْقُرْ عَلَى جُزْءٍ لِفَتْحِه. يُمْكِنُكَ تَعْلِيمُ جُزْءٍ كَامِلٍ أَوْ حِزْبٍ أَوْ صَفْحَةٍ أَوْ بِضْعِ آيَاتٍ، بِحَسَبِ مَا تَعْرِفُهُ فِعْلًا. لَا شَيْءَ هُنَا يَقُولُ إِنَّ الطَّالِبَ تَلَا اليَوْم؛ هَذَا تَسْجِيلٌ لِمَا هُوَ حَافِظُهُ أَصْلًا.",
-    heardAll:"سَمِعْتُهُ", heardAllTip:"سَمِعْتُ كُلَّ مَا كَانَ عَلَيْهِ — الحِفْظُ وَالتَّجْوِيدُ جَيِّدَان (٥/٥)",
-    heardDone:"{name} — سُجِّلَ {n} بِنَجَاح",
     undoMark:"تَرَاجَعْ", undoMarkTitle:"هَلْ تَتَرَاجَعُ عَنْ هَذَا التَّسْجِيل؟",
     undoMarkBody:"تَبْقَى التِّلَاوَةُ فِي السِّجِلِّ مَعَ عَلَامَةِ السَّحْب. يَعُودُ حِفْظُ {who} إِلَى مَا كَانَ عَلَيْهِ، وَيُفْتَحُ الوَاجِبُ الَّذِي أُغْلِقَ مِنْ جَدِيد.",
     undoneOk:"تَمَّ التَّرَاجُع",

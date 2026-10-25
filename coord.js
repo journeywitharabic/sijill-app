@@ -1249,13 +1249,67 @@
     }).catch(err);
   }
 
+  /* The change log, searchable.
+
+     It used to return the newest sixty rows and stop. That was fine while it
+     was a curiosity. It stopped being fine the week a teacher misused a
+     button across several children and the only way to find what he had
+     done was to scroll and hope — so it now filters by day, by teacher and
+     by free text, pages, and says how many rows matched. "50 of 312" and
+     "50 of 50" look identical without the total, and only one of them means
+     you have seen everything. */
+  var LOG = { from: "", to: "", actor: "", search: "", entity: "", offset: 0, limit: 50 };
+
   function manageLog(body) {
-    api.read("api_change_log", { p_limit: 60, p_entity: null }).then(function (rows) {
+    api.read("api_change_log", {
+      p_limit: LOG.limit, p_offset: LOG.offset,
+      p_entity: LOG.entity || null,
+      p_from: LOG.from || null, p_to: LOG.to || null,
+      p_actor: LOG.actor || null, p_search: LOG.search || null
+    }).then(function (d) {
       if (gone(body)) return;   // a newer render replaced this one
+      var rows = (d && d.rows) || [], total = (d && d.total) || 0;
+      var shown = LOG.offset + rows.length;
+      var opt = function (v, label, cur) {
+        return '<option value="' + esc(v) + '"' + (v === cur ? " selected" : "") +
+               '>' + esc(label) + '</option>';
+      };
       body.innerHTML =
         '<div class="note" style="margin-bottom:10px">Every change that replaced something, newest first. ' +
         '<b>Undo</b> puts that one row back — it is the middle ground between the in-app undo and restoring ' +
         'a whole night\'s backup.</div>' +
+        '<div class="card lgf">' +
+          '<div class="fieldrow">' +
+            '<label class="fld"><span>' + esc(T("lgFrom")) + '</span>' +
+              '<input type="date" id="lgFrom" value="' + esc(LOG.from) + '"></label>' +
+            '<label class="fld"><span>' + esc(T("lgTo")) + '</span>' +
+              '<input type="date" id="lgTo" value="' + esc(LOG.to) + '"></label>' +
+          '</div>' +
+          '<div class="fieldrow">' +
+            '<label class="fld"><span>' + esc(T("lgTeacher")) + '</span><select id="lgActor">' +
+              opt("", T("lgAnyone"), LOG.actor) +
+              ((d.actors || []).slice().sort().map(function (a) {
+                return opt(a, a, LOG.actor); }).join("")) +
+            '</select></label>' +
+            '<label class="fld"><span>' + esc(T("lgKind")) + '</span><select id="lgEntity">' +
+              opt("", T("lgAnything"), LOG.entity) +
+              ((d.entities || []).slice().sort().map(function (e) {
+                return opt(e, e, LOG.entity); }).join("")) +
+            '</select></label>' +
+          '</div>' +
+          '<label class="fld"><span>' + esc(T("lgSearch")) + '</span>' +
+            '<input type="search" id="lgSearch" placeholder="' + esc(T("lgSearchHint")) + '" value="' +
+            esc(LOG.search) + '"></label>' +
+          '<div class="lgbtns">' +
+            '<button class="mini" id="lgClear">' + esc(T("lgClear")) + '</button>' +
+            '<button class="btn sm" id="lgGo">' + esc(T("lgGo")) + '</button>' +
+          '</div>' +
+        '</div>' +
+        '<div class="lgcount">' +
+          (total ? esc(T("lgShowing").split("{a}").join(LOG.offset + 1)
+                                       .split("{b}").join(shown)
+                                       .split("{n}").join(total))
+                 : esc(T("lgNoMatch"))) + '</div>' +
         '<div class="tw"><table><thead><tr><th>When</th><th>Who</th><th>What</th><th></th></tr></thead><tbody>' +
         (rows.length ? rows.map(function (r) {
           // The table used to print the bare table name — "attendance",
@@ -1272,11 +1326,44 @@
             '<td style="text-align:right">' + (r.before && r.entity !== "sessions"
               ? '<button class="mini lg-undo" data-id="' + r.id + '">Undo</button>' : '') + '</td></tr>';
         }).join("") : '<tr><td colspan="4" style="padding:18px;color:var(--ink-3)">Nothing changed yet.</td></tr>') +
-        '</tbody></table></div>';
+        '</tbody></table></div>' +
+        '<div class="lgpage">' +
+          '<button class="mini" id="lgPrev"' + (LOG.offset ? '' : ' disabled') + '>' + esc(T("lgNewer")) + '</button>' +
+          '<button class="mini" id="lgNext"' + (shown < total ? '' : ' disabled') + '>' + esc(T("lgOlder")) + '</button>' +
+        '</div>';
+
+      var apply = function () {
+        LOG.from   = $("lgFrom").value;
+        LOG.to     = $("lgTo").value;
+        LOG.actor  = $("lgActor").value;
+        LOG.entity = $("lgEntity").value;
+        LOG.search = $("lgSearch").value;
+        LOG.offset = 0;          // a new question starts at the first page
+        manageLog(body);
+      };
+      $("lgGo").onclick = apply;
+      $("lgSearch").onkeydown = function (e) { if (e.key === "Enter") apply(); };
+      $("lgClear").onclick = function () {
+        LOG = { from: "", to: "", actor: "", search: "", entity: "", offset: 0, limit: 50 };
+        manageLog(body);
+      };
+      $("lgPrev").onclick = function () {
+        LOG.offset = Math.max(0, LOG.offset - LOG.limit); manageLog(body);
+      };
+      $("lgNext").onclick = function () {
+        if (shown < total) { LOG.offset += LOG.limit; manageLog(body); }
+      };
       body.querySelectorAll(".lg-undo").forEach(function (b) {
         b.onclick = function () {
           api.write("api_revert", { p_change: +b.dataset.id }, "undo")
-            .then(function (r) { window.SijillToast("Put back: " + r.reverted); renderManage(); })
+            .then(function (r) {
+              window.SijillToast("Put back: " + r.reverted);
+              // Stay on the page you were reading rather than jumping back
+              // to the top of the newest: undoing a run of changes means
+              // working down one list, and losing your place each time is
+              // what made this unusable in the first place.
+              manageLog(body);
+            })
             .catch(err);
         };
       });
