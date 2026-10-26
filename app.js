@@ -1373,10 +1373,18 @@
               var jump = !S.readOnly && h.class_id && h.status !== "cancelled";
               return '<div class="irow" style="align-items:flex-start"><div class="lab" style="gap:4px">' +
                 '<span class="tr" style="font-size:13.5px">' +
+                /* A bordered control, not a coloured word. Tarek could not
+                   tell the date was tappable, and in Arabic it was worse: the
+                   chevron sat inline next to "register taken by X" and read
+                   as a separator between two pieces of text. A box around it
+                   ends both problems — the chevron is inside the control's
+                   own edge rather than floating in a sentence. */
                 (jump
                   ? '<button class="daylink" data-day="' + esc(h.held_on) + '" ' +
                     'data-cls="' + esc(h.class_id) + '">' +
-                    esc(i18n.fmtDate(h.held_on, true)) + '<span class="chev" aria-hidden="true">›</span></button>'
+                    '<span class="cal" aria-hidden="true">▤</span>' +
+                    esc(i18n.fmtDate(h.held_on, true)) +
+                    '<span class="chev" aria-hidden="true">›</span></button>'
                   : i18n.fmtDate(h.held_on, true)) +
                 (h.status === "cancelled" ? ' <span class="pill mute"><i></i>' + (ar ? "مُغْلَقَة" : "closed") + '</span>' : '') +
                 // On a closed day every enrolled child is excused automatically,
@@ -1398,8 +1406,11 @@
                      school that means enrolled, which is a different fact
                      about a different thing. The Arabic was never ambiguous
                      and is unchanged. */
-                  ? ' <span class="who">' + (ar ? "الحُضُورَ سَجَّلَ" : "register taken by") + ' ' +
-                    esc(h.attendance_by) + '</span>' : '') + '</span>' +
+                  /* On its own line now. Beside a bordered date button it
+                     read as part of the title, and in Arabic it was what
+                     made the chevron look like punctuation. */
+                  ? '</span><span class="m">' + (ar ? "الحُضُورَ سَجَّلَ" : "register taken by") + ' ' +
+                    esc(h.attendance_by) + '</span>' : '</span>') +
                 (recited ? '<span class="m">' + recited + '</span>' : '') +
                 (notes || '') +
                 (h.adab && h.adab.stars

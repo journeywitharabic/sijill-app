@@ -595,7 +595,7 @@
         b.onclick = function () { removeStudent(b.dataset.id, b.dataset.name); };
       });
       $("addStu").onclick = addStudent;
-    }).catch(err);
+    }).catch(function (e) { err(e, body); });
   }
 
   function addStudent() {
@@ -895,7 +895,7 @@
             var n = ($("tName").value || "").trim();
             if (n.length < 3) return false;
             api.write("api_teacher_add", { p_name: n }, n)
-              .then(function () { window.SijillCloseSheet(); renderManage(); }).catch(err);
+              .then(function () { window.SijillCloseSheet(); renderManage(); }).catch(function (e) { err(e, body); });
             return false;
           });
         setTimeout(function () { var f = $("tName"); if (f) f.focus(); }, 60);
@@ -1009,7 +1009,7 @@
           });
         setTimeout(function () { var f = $("cName"); if (f) f.focus(); }, 60);
       };
-    }).catch(err);
+    }).catch(function (e) { err(e, body); });
   }
 
   /* Which rows the Links screen is showing. Kept on the module, not in the
@@ -1081,7 +1081,7 @@
       body.querySelectorAll(".lk-sent").forEach(function (b) {
         b.onclick = function () {
           api.write("api_mark_link_sent", { p_guardian: b.dataset.id, p_sent: true }, "link")
-            .then(function () { renderManage(); }).catch(err);
+            .then(function () { renderManage(); }).catch(function (e) { err(e, body); });
         };
       });
       body.querySelectorAll(".lk-unsent").forEach(function (b) {
@@ -1118,7 +1118,7 @@
         };
       });
       $("newLink").onclick = function () { newLink(students); };
-    }).catch(err);
+    }).catch(function (e) { err(e, body); });
   }
 
   function newLink(students) {
@@ -1189,9 +1189,18 @@
     var to = new Date(Date.UTC(y, m, 0));
     return [from.toISOString().slice(0, 10), to.toISOString().slice(0, 10)];
   }
+  /* Arithmetic on the numbers, with no Date in the middle.
+     This used to build `new Date(Date.UTC(y, m, 1))` and then read it back
+     with getFullYear()/getMonth(), which are LOCAL. West of UTC, the first of
+     the month at midnight UTC is the last day of the month before, so every
+     step back skipped a month and every step forward stood still — October
+     went to August, August would not move at all, and the only way home was
+     the This month button. Exactly what Tarek saw. */
   function shiftMonth(key, by) {
     var y = +key.slice(0, 4), m = +key.slice(5, 7) - 1 + by;
-    return monthKey(new Date(Date.UTC(y, m, 1)));
+    y += Math.floor(m / 12);
+    m = ((m % 12) + 12) % 12;
+    return y + "-" + ("0" + (m + 1)).slice(-2);
   }
 
   /* What one day held, under the grid rather than on another screen. A
@@ -1452,7 +1461,7 @@
             return false;
           });
       }
-    }).catch(err);
+    }).catch(function (e) { err(e, body); });
   }
 
   /* The change log, searchable.
@@ -1573,7 +1582,7 @@
             .catch(err);
         };
       });
-    }).catch(err);
+    }).catch(function (e) { err(e, body); });
   }
 
   function manageMaint(body) {
@@ -1605,7 +1614,7 @@
       // tab shows them immediately rather than fetching again.
       if (C.tab !== "stats") return;
       renderStats();
-    }).catch(err);
+    }).catch(function (e) { err(e, body); });
   }
 
   function renderStats() {
@@ -1663,9 +1672,22 @@
     $("cbody").innerHTML = h;
   }
 
-  function err(e) {
+  /* A failed load has to SAY so. This used to toast and nothing else, which
+     left the spinner turning — and that is exactly how the broken change log
+     looked to Tarek: a panel spinning for ever on a desktop, where the toast
+     had already come and gone, and only the phone showed him the message.
+     Pass the panel and the failure lands where the content was going to. */
+  function err(e, body) {
     if (api.isSignedOut(e)) { api.setToken(null); location.reload(); return; }
-    window.SijillToast(e.message || String(e));
+    var msg = e && (e.message || String(e)) || "something went wrong";
+    window.SijillToast(msg);
+    if (body && !gone(body)) {
+      body.innerHTML = '<div class="note warn"><b>' + esc(T("loadFailed")) + '</b> ' +
+        esc(msg) + '<div style="height:9px"></div>' +
+        '<button class="btn ghost sm" id="retryLoad">' + esc(T("retry")) + '</button></div>';
+      var r = $("retryLoad");
+      if (r) r.onclick = function () { renderManage(); };
+    }
   }
 
   window.SijillCoord = { enter: enter, open: openCoord,

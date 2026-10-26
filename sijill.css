@@ -1419,10 +1419,17 @@ html[lang="ar"] .daychip .dmon{letter-spacing:0;text-transform:none;font-size:11
    Styled as the date it already was, plus a chevron: the chevron is the whole
    affordance, the same way it is on a child's name in the register. Without
    it this reads as a label and nobody finds out the day is reachable. */
-.daylink{appearance:none;border:0;background:none;padding:0;margin:0;
-  font:inherit;color:var(--lapis);font-weight:700;cursor:pointer;
-  display:inline-flex;align-items:center;gap:3px;text-align:start}
-.daylink .chev{font-size:14px;opacity:.6;font-weight:400}
+/* A control, not a coloured word. As a bare link nobody could tell the date
+   was tappable, and in Arabic the chevron sat inline beside "register taken
+   by X" and read as a separator between two pieces of text. The border is
+   what fixes both: the chevron is inside the control's own edge. */
+.daylink{appearance:none;border:1px solid var(--line-2);border-radius:9px;
+  background:var(--surface-2);padding:5px 8px 5px 9px;margin:0;
+  font:inherit;font-size:13px;color:var(--lapis);font-weight:700;cursor:pointer;
+  display:inline-flex;align-items:center;gap:6px;text-align:start;line-height:1.2}
+.daylink:hover{background:var(--surface-3);border-color:var(--lapis)}
+.daylink .cal{font-size:12px;opacity:.65;font-weight:400}
+.daylink .chev{font-size:15px;opacity:.75;font-weight:400;margin-inline-start:1px}
 
 /* ===========================================================================
    Round 37 — the coordinator's calendar
