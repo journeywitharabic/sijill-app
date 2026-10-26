@@ -243,6 +243,16 @@
     "no attendance": "s-partial", "no recitation": "s-partial",
     "nothing logged": "s-empty", "closed": "s-closed", "ahead": "s-ahead"
   };
+  /* The class name carries a hyphen and a dictionary key cannot, so the two
+     have to be bridged somewhere. Doing it here rather than at each call
+     site: the tooltip on every chip in the strip has been printing the raw
+     key "st_s-complete" since round 35 — invisible because nobody hovers a
+     phone, and wrong everywhere it was copied to afterwards. */
+  function stateLabel(cls) {
+    var k = "st_" + String(cls || "").replace(/-/g, "_");
+    var v = T(k);
+    return v === k ? "" : v;
+  }
   function renderDayStrip() {
     var strip = $("dayStrip");
     if (!strip) return;
@@ -261,8 +271,12 @@
       return '<button class="daychip ' + (DAYSTATE[x.state] || "") + '" ' +
         'data-on="' + esc(x.held_on) + '"' +
         (x.held_on === S.day ? ' aria-current="date"' : '') +
-        ' title="' + esc(i18n.fmtDate(x.held_on, true) + " · " + T("st_" + (DAYSTATE[x.state] || "")) ) + '">' +
+        ' title="' + esc(i18n.fmtDate(x.held_on, true) + " · " + stateLabel(DAYSTATE[x.state]) ) + '">' +
         '<span class="dow">' + esc(dow) + '</span>' +
+        // The month, because "FRI 25" at the end of October says nothing
+        // about whether that is this month's 25th or September's — and the
+        // strip now reaches back far enough for that to matter.
+        '<span class="dmon">' + esc(i18n.fmtMonth(x.held_on)) + '</span>' +
         '<span class="dnum">' + esc(dayNum(x.held_on)) + '</span>' +
         '<span class="dot" aria-hidden="true"></span></button>';
     }).join("") +
@@ -352,6 +366,7 @@
     var behind = !!c && !c.today && !ahead && !deep;
     renderDayStrip();
     renderBackNote(deep);
+    if ($("backCoord")) $("backCoord").hidden = !S.readOnly;
     $("clsTitle").textContent = d["class"].name;
     $("clsDate").textContent = i18n.fmtDate(d.session.held_on, true) +
       (behind ? " · " + T("lastHeld") : "") +
@@ -1016,6 +1031,15 @@
   $("backCls").onclick = function () {
     if (S.readOnly) { S.readOnly = false; return window.SijillCoord.open(); }
     show("v-class"); refreshDay();
+  };
+
+  /* The way out of a register a coordinator opened from their calendar. The
+     register itself is unchanged — it is the same screen in the same
+     read-only mode the student sheet already used; only the door is new. */
+  if ($("backCoord")) $("backCoord").onclick = function () {
+    S.readOnly = false; S.day = null;
+    if (window.SijillCoord) return window.SijillCoord.open();
+    openClasses();
   };
 
   function surahLabel(x) {
@@ -2520,6 +2544,22 @@
   /* Opening a child from the coordinator's table. There is no class in
      progress there, so nothing can be graded — the sheet opens read-only and
      the grade buttons are left off rather than shown and then failing. */
+  /* A class-day, opened from the coordinator's calendar. Read-only for the
+     same reason the student sheet is: there is no lesson in progress, and a
+     coordinator looking at the 16th from a laptop on Saturday is reading, not
+     taking a register. The strip, the counts and the gap lines all still work
+     — renderDay already hides what cannot be acted on. */
+  window.SijillOpenClassDay = function (classId, on) {
+    S.readOnly = true;
+    S.pulled = {}; S.gapFilter = null;
+    S.clsId = classId; S.day = on || null;
+    var sel = $("classPick");
+    if (sel) sel.value = classId;
+    show("v-class");
+    window.scrollTo(0, 0);
+    refreshDay();
+  };
+
   window.SijillOpenStudentById = function (id) {
     S.pulled = {};
     S.readOnly = true;

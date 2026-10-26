@@ -192,6 +192,11 @@
 <!-- ===================== TEACHER · CLASS ===================== -->
 <section class="view wrap" id="v-class" hidden>
   <div class="bar">
+    <!-- Only when a coordinator opened this register from their calendar.
+         The class view is normally the home screen and has nothing to go back
+         to; arriving from the calendar it does, and without this there is no
+         way out but the browser's own back. -->
+    <button class="back" id="backCoord" data-t="back" hidden>‹ Back</button>
     <svg class="crest" aria-label="Qur’an School" role="img"><use href="#crest-mark"/></svg>
     <span class="barschool">Qur’an School</span>
     <div class="logo"><span class="ar">سِجِلّ</span><span class="en"><b>Sijill</b></span></div>

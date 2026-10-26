@@ -192,6 +192,15 @@
     dShort_friday:"Fri", dShort_sunday:"Sun",
     dayEarlier:"Earlier\u2026",
     histMore:"Show earlier classes",
+    calMonth:"The month",
+    calPrev:"Previous month", calNext:"Next month", calToday:"This month",
+    calPick:"Tap a day to see what it held.",
+    calChanges:"Changes that day",
+    calOpenReg:"Open register",
+    calChase:"Still to log",
+    calChaseNone:"Every class day that has run is fully logged.",
+    calCounts:"{a} of {n} marked \u00b7 {r} heard",
+    calClose:"Closing a day",
     st_s_complete:"everything logged", st_s_partial:"partly logged",
     st_s_empty:"nothing logged yet", st_s_closed:"class closed",
     st_s_ahead:"has not happened yet",
@@ -307,7 +316,7 @@
     undo:"↶ تَرَاجُعٌ عَنْ آخِرِ تَغْيِير", undoShort:"تَرَاجُع",
     clsHint:"انْقُرْ <b>اسْمَ</b> الطَّالِبِ لِتَسْمَعَهُ وَتُقَيِّمَ كُلَّ مَقْطَع. وَيَلْزَمُ الحُضُورُ <b>وَ</b> التِّلَاوَةُ لِيُعَدَّ اليَوْمُ كَامِلًا. وَكُلُّ شَيْءٍ يُحْفَظُ فَوْرًا.",
     coordMode:"أَدَوَاتُ المُنَسِّق", signOut:"تَسْجِيلُ الخُرُوج",
-    back:"‹ رُجُوع", fullMushaf:"☰ المُصْحَف",
+    back:"› رُجُوع", fullMushaf:"☰ المُصْحَف",
     present:"حَاضِر", late:"مُتَأَخِّر", excused:"بِعُذْر", noreason:"بِدُونِ عُذْر",
     dueback:"لِلْإِعَادَة", heard:"سُمِعَتْ", recited:"سُجِّلَ", carries:"الوَاجِبُ مُسْتَمِرّ",
     notMarked:"لَمْ يُسَجَّلْ بَعْد",
@@ -416,6 +425,15 @@
     dShort_friday:"الجُمُعَة", dShort_sunday:"الأَحَد",
     dayEarlier:"أَقْدَم\u2026",
     histMore:"اِعْرِضْ حِصَصًا أَقْدَم",
+    calMonth:"الشَّهْر",
+    calPrev:"الشَّهْرُ السَّابِق", calNext:"الشَّهْرُ التَّالِي", calToday:"هَذَا الشَّهْر",
+    calPick:"اِضْغَطْ يَوْمًا لِتَرَى مَا فِيه.",
+    calChanges:"تَغْيِيرَاتُ ذَلِكَ اليَوْم",
+    calOpenReg:"اِفْتَحِ الكَشْف",
+    calChase:"مَا زَالَ بِحَاجَةٍ إِلَى تَسْجِيل",
+    calChaseNone:"كُلُّ يَوْمِ حِصَّةٍ انْعَقَدَ مُسَجَّلٌ بِالكَامِل.",
+    calCounts:"{a} مِنْ {n} مُسَجَّل \u00b7 {r} سُمِعُوا",
+    calClose:"إِغْلَاقُ يَوْم",
     st_s_complete:"سُجِّلَ كُلُّ شَيْء", st_s_partial:"سُجِّلَ جُزْءٌ مِنْه",
     st_s_empty:"لَمْ يُسَجَّلْ شَيْءٌ بَعْد", st_s_closed:"الحَلْقَةُ مُغْلَقَة",
     st_s_ahead:"لَمْ تَحْدُثْ بَعْد",
@@ -502,16 +520,56 @@
     window.dispatchEvent(new Event("sijill:lang"));
   }
 
+  /* Arabic month and weekday names, vowelled, because everything this app
+     writes in Arabic is vowelled and dates were the one exception.
+
+     They used to come from toLocaleDateString("ar"), which returns them
+     BARE — so a calendar tile read "الأَحَد / أكتوبر", the weekday with its
+     tashkeel and the month without, one above the other. In a running
+     sentence that was easy to miss; stacked on a tile it is the first thing
+     you see.
+
+     The locale had a second problem worth being rid of: which digits it
+     returns depends on the device's own ICU build, so the same date showed
+     as 25 on one phone and ٢٥ on another. Formatting it here makes every
+     phone agree. Digits stay Latin, matching the ayah numbers the app has
+     always printed. */
+  var AR_MONTHS = ["يَنَايِر", "فِبْرَايِر", "مَارِس", "أَبْرِيل", "مَايُو", "يُونْيُو",
+                   "يُولْيُو", "أَغُسْطُس", "سِبْتَمْبِر", "أُكْتُوبَر", "نُوفَمْبِر", "دِيسَمْبِر"];
+  var AR_DOW = ["الأَحَد", "الاِثْنَيْن", "الثُّلَاثَاء", "الأَرْبِعَاء",
+                "الخَمِيس", "الجُمُعَة", "السَّبْت"];
+
   /* Dates are always shown the way a person reads them, in their language,
      and never as a bare ISO string. */
   function fmtDate(iso, withWeekday) {
     if (!iso) return "—";
     var d = new Date(iso + (iso.length === 10 ? "T12:00:00" : ""));
-    var loc = (lang === "ar") ? "ar" : "en-GB";
+    if (isNaN(d.getTime())) return String(iso);
+    if (lang === "ar") {
+      return (withWeekday ? AR_DOW[d.getDay()] + "\u060C " : "") +
+             d.getDate() + " " + AR_MONTHS[d.getMonth()] + " " + d.getFullYear();
+    }
     var o = { day: "numeric", month: "short", year: "numeric" };
     if (withWeekday) o.weekday = "long";
-    try { return d.toLocaleDateString(loc, o); } catch (e) { return iso; }
+    try { return d.toLocaleDateString("en-GB", o); } catch (e) { return iso; }
   }
 
-  window.i18n = { t: t, isAr: isAr, setLang: setLang, get lang() { return lang; }, fmtDate: fmtDate };
+  /* Just the month, for the calendar tiles. Same source as fmtDate so the
+     two can never name a month differently.
+
+     English abbreviates; ARABIC DOES NOT. There is no conventional
+     three-letter Arabic month, and أكتوبر cut to أكت is not an abbreviation,
+     it is a fragment. The full name fits the Arabic chip, which is already
+     wider to hold الجُمُعَة. */
+  function fmtMonth(iso) {
+    if (!iso) return "";
+    var d = new Date(iso + (iso.length === 10 ? "T12:00:00" : ""));
+    if (isNaN(d.getTime())) return String(iso).slice(5, 7);
+    if (lang === "ar") return AR_MONTHS[d.getMonth()];
+    try { return d.toLocaleDateString("en-GB", { month: "short" }); }
+    catch (e) { return String(iso).slice(5, 7); }
+  }
+
+  window.i18n = { t: t, isAr: isAr, setLang: setLang, get lang() { return lang; },
+                  fmtDate: fmtDate, fmtMonth: fmtMonth };
 })();

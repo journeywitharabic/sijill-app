@@ -1362,9 +1362,9 @@ html[lang="ar"] .kindbox .kindlab{letter-spacing:0;text-transform:none;font-size
 .daystrip::-webkit-scrollbar{display:none}
 .daystrip[hidden]{display:none}
 .daychip{flex:none;display:flex;flex-direction:column;align-items:center;gap:3px;
-  min-width:58px;padding:7px 9px 6px;border:1px solid var(--line);
+  min-width:58px;padding:6px 9px 6px;border:1px solid var(--line);
   border-radius:11px;background:var(--surface);color:var(--ink-2);
-  font-size:12px;font-weight:600;line-height:1.25;cursor:pointer}
+  font-size:12px;font-weight:600;line-height:1.25;cursor:pointer;gap:2px}
 .daychip .dow{font-size:10px;font-weight:700;letter-spacing:.06em;
   text-transform:uppercase;color:var(--ink-3)}
 /* Arabic has no three-letter weekday, so the chip takes the whole word and
@@ -1375,6 +1375,15 @@ html[lang="ar"] .daychip .dow{letter-spacing:0;text-transform:none;font-size:11.
    alone would be four tones to learn on a strip where the nearest row of
    buttons already spends colour on grades — and a filled dot against a
    hollow one is readable at a glance and in greyscale. */
+/* Weekday, month, day — a calendar tile. The day number is the thing being
+   scanned for, so it stays the only line at full size; the other two are
+   labels and are sized like labels. */
+.daychip .dmon{font-size:9.5px;font-weight:700;letter-spacing:.05em;
+  text-transform:uppercase;color:var(--ink-3);margin-top:-2px}
+html[lang="ar"] .daychip .dmon{letter-spacing:0;text-transform:none;font-size:11px}
+.daychip .dnum{font-size:15px;font-weight:700;line-height:1.1;color:var(--ink)}
+.daychip[aria-current="date"] .dmon{color:rgba(255,255,255,.82)}
+.daychip[aria-current="date"] .dnum{color:#fff}
 .daychip .dot{width:8px;height:8px;border-radius:50%;background:transparent}
 .daychip.s-complete .dot{background:var(--ok)}          /* filled, green */
 .daychip.s-partial  .dot{background:var(--late-fill)}   /* filled, amber */
@@ -1414,3 +1423,86 @@ html[lang="ar"] .daychip .dow{letter-spacing:0;text-transform:none;font-size:11.
   font:inherit;color:var(--lapis);font-weight:700;cursor:pointer;
   display:inline-flex;align-items:center;gap:3px;text-align:start}
 .daylink .chev{font-size:14px;opacity:.6;font-weight:400}
+
+/* ===========================================================================
+   Round 37 — the coordinator's calendar
+   ---------------------------------------------------------------------------
+   A grid here and a strip on the teacher's register. Not an inconsistency: a
+   teacher wants this Friday on a phone, a coordinator wants "what did October
+   look like" and this is the wide screen. The grid is also the only shape
+   that answers "which Fridays have nothing on them at all" in one look.
+
+   A cell carries a dot PER CLASS, not one state for the day. Juz Amma logged
+   and Hizb 54 untouched is the ordinary Saturday, and rolling that into a
+   single colour throws away the only fact worth having.
+   ======================================================================== */
+.calnav{display:flex;align-items:center;gap:8px;margin:0 0 10px}
+.calnav .calname{font-size:15px;font-weight:700;min-width:9em}
+.calgrid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;
+  background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:8px}
+.calhead{font-size:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;
+  color:var(--ink-3);text-align:center;padding:2px 0 4px}
+html[lang="ar"] .calhead{letter-spacing:0;text-transform:none;font-size:12px}
+.calcell{min-height:46px;border:1px solid transparent;border-radius:9px;
+  background:none;padding:4px 3px;display:flex;flex-direction:column;
+  align-items:center;gap:3px;color:var(--ink-3);font:inherit}
+.calcell .n{font-size:12px;font-weight:600}
+.calcell.blank{visibility:hidden}
+/* A day with classes is the only thing worth pressing, so it is the only
+   thing that looks pressable. */
+.calcell.has{background:var(--surface-2);border-color:var(--line);
+  color:var(--ink);cursor:pointer}
+.calcell.has .n{font-weight:700}
+.calcell.today{border-color:var(--brass);border-width:1.5px}
+.calcell.has.open{background:var(--lapis);border-color:var(--lapis);color:#fff}
+.calcell .dots{display:flex;gap:3px;flex-wrap:wrap;justify-content:center}
+.calgrid .dot,.callegend .dot,.chaserow .dot,.dayrow .dot{
+  width:7px;height:7px;border-radius:50%;background:transparent;flex:none}
+.calgrid .dot.s-complete,.callegend .dot.s-complete,
+.chaserow .dot.s-complete,.dayrow .dot.s-complete{background:var(--ok)}
+.calgrid .dot.s-partial,.callegend .dot.s-partial,
+.chaserow .dot.s-partial,.dayrow .dot.s-partial{background:var(--late-fill)}
+.calgrid .dot.s-empty,.callegend .dot.s-empty,
+.chaserow .dot.s-empty,.dayrow .dot.s-empty{box-shadow:inset 0 0 0 1.5px var(--ink-3)}
+.calgrid .dot.s-closed,.callegend .dot.s-closed,
+.chaserow .dot.s-closed,.dayrow .dot.s-closed{height:2px;border-radius:1px;background:var(--ink-3)}
+.calgrid .dot.s-ahead,.callegend .dot.s-ahead,
+.chaserow .dot.s-ahead,.dayrow .dot.s-ahead{height:2px;border-radius:1px;
+  box-shadow:inset 0 0 0 1px var(--line-2)}
+.calcell.has.open .dot.s-empty{box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.75)}
+.callegend{display:flex;gap:12px;flex-wrap:wrap;margin:8px 0 14px;
+  font-size:11.5px;color:var(--ink-3)}
+.callegend span{display:inline-flex;align-items:center;gap:5px}
+
+/* One day, opened in place under the grid. Checking three Fridays in a row
+   should not mean navigating back and forth. */
+.dayp{border:1px solid var(--line);border-radius:12px;background:var(--surface);
+  padding:12px 13px;margin:0 0 6px}
+.dayph{display:flex;align-items:center;gap:10px;margin-bottom:8px;font-size:14px}
+.dayph b{flex:1}
+.dayrow{display:flex;align-items:center;gap:9px;padding:8px 0;
+  border-top:1px solid var(--line)}
+.dayrow:first-of-type{border-top:0}
+.dayrow .w{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
+.dayrow .w b{font-size:13.5px}
+.dayrow .m{font-family:var(--mono);font-size:11px;color:var(--ink-3)}
+
+/* Still to log. The grid says what October looked like; this says what has
+   to be chased, which is the question actually asked on a Saturday. */
+.chaselist{border:1px solid var(--line);border-radius:12px;background:var(--surface);
+  overflow:hidden}
+.chaserow{display:flex;align-items:center;gap:9px;width:100%;padding:10px 12px;
+  border:0;border-top:1px solid var(--line);background:none;font:inherit;
+  color:var(--ink);text-align:start;cursor:pointer}
+.chaserow:first-child{border-top:0}
+.chaserow .w{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
+.chaserow .w b{font-size:13.5px}
+.chaserow .m{font-family:var(--mono);font-size:11px;color:var(--ink-3)}
+.chaserow .chev{color:var(--ink-3);font-size:16px}
+
+/* A disclosure chevron points the way the screen opens, and in a
+   right-to-left layout that is leftwards. Every one of these has pointed the
+   wrong way in Arabic since the register was built — on the student rows, on
+   the parent page, and on everything added since, because each new one copied
+   the last. One rule rather than a glyph choice at each site. */
+[dir="rtl"] .chev{display:inline-block;transform:scaleX(-1)}

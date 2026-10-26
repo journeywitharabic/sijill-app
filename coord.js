@@ -9,7 +9,10 @@
   "use strict";
   var $ = function (id) { return document.getElementById(id); };
   var T = i18n.t;
-  var C = { tab: "gaps", dash: null, stats: null, mtab: "students", dclass: "", cal: null, calMsg: "" };
+  var C = { tab: "gaps", dash: null, stats: null, mtab: "students", dclass: "",
+          cal: null, calMsg: "",
+          // the month on screen, and the day opened under the grid
+          calMonth: null, calOpen: null };
 
   function esc(s) {
     return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) {
@@ -1157,18 +1160,160 @@
     }, 50);
   }
 
+  /* ---------------------------------------------------------------- the
+     calendar.
+
+     A grid here and a strip on the teacher's register, and that is not an
+     inconsistency: a teacher wants this Friday on a phone, a coordinator
+     wants "what did October look like" on a laptop, and the coordinator
+     screen is the wide one. The grid is also the only shape that answers
+     "which Fridays have nothing on them at all" in one look.
+
+     Everything the cells are coloured by comes from class_day_state, the
+     same view the teacher's strip reads, so the two screens cannot disagree
+     about whether the 16th was logged. */
+  function stateLabel(cls) {
+    var k = "st_" + String(cls || "").replace(/-/g, "_");
+    var v = T(k);
+    return v === k ? "" : v;
+  }
+  var CAL_STATE = {
+    "complete": "s-complete", "partly logged": "s-partial",
+    "no attendance": "s-partial", "no recitation": "s-partial",
+    "nothing logged": "s-empty", "closed": "s-closed", "ahead": "s-ahead"
+  };
+  function monthKey(d) { return d.getFullYear() + "-" + ("0" + (d.getMonth() + 1)).slice(-2); }
+  function monthBounds(key) {
+    var y = +key.slice(0, 4), m = +key.slice(5, 7);
+    var from = new Date(Date.UTC(y, m - 1, 1));
+    var to = new Date(Date.UTC(y, m, 0));
+    return [from.toISOString().slice(0, 10), to.toISOString().slice(0, 10)];
+  }
+  function shiftMonth(key, by) {
+    var y = +key.slice(0, 4), m = +key.slice(5, 7) - 1 + by;
+    return monthKey(new Date(Date.UTC(y, m, 1)));
+  }
+
+  /* What one day held, under the grid rather than on another screen. A
+     coordinator checking three Fridays in a row should not be navigating
+     back and forth; the grid stays where it is and this fills in below it. */
+  function dayPanel(d, ar) {
+    if (!d) return '<div class="note">' + esc(T("calPick")) + '</div>';
+    return '<div class="dayp">' +
+      '<div class="dayph"><b>' + esc(i18n.fmtDate(d.held_on, true)) + '</b>' +
+        '<button class="btn ghost sm" id="calLog">' + esc(T("calChanges")) + '</button></div>' +
+      d.classes.map(function (c) {
+        var st = CAL_STATE[c.state] || "";
+        return '<div class="dayrow">' +
+          '<span class="dot ' + st + '"></span>' +
+          '<span class="w"><b>' + esc(c.class_name) + '</b>' +
+            '<span class="m">' + esc(stateLabel(st)) + ' \u00b7 ' +
+            esc(T("calCounts").split("{a}").join(c.attendance_marked)
+                  .split("{r}").join(c.students_recited)
+                  .split("{n}").join(c.enrolled)) +
+            (c.note ? ' \u00b7 \u201c' + esc(c.note) + '\u201d' : '') + '</span></span>' +
+          (c.status === "cancelled" ? ''
+            : '<button class="mini cal-open" data-day="' + esc(d.held_on) + '" ' +
+              'data-cls="' + esc(c.class_id) + '">' + esc(T("calOpenReg")) + '</button>') +
+        '</div>';
+      }).join("") + '</div>';
+  }
+
   function manageCalendar(body) {
     var ar = i18n.isAr();
-    Promise.all([api.read("api_classes"), api.read("api_closures")]).then(function (res) {
+    if (!C.calMonth) C.calMonth = monthKey(new Date());
+    var mb = monthBounds(C.calMonth);
+    Promise.all([api.read("api_classes"), api.read("api_closures"),
+                 api.read("api_calendar", { p_from: mb[0], p_to: mb[1] }),
+                 api.read("api_chase_days", { p_limit: 40 })]).then(function (res) {
       if (gone(body)) return;   // a newer render replaced this one
-      var cs = res[0], closed = res[1] || [];
+      var cs = res[0], closed = res[1] || [], cal = res[2] || {}, chase = res[3] || [];
       /* Closing a day refreshes this screen so the table below updates, and
          that used to wipe the date, class and reason the coordinator had just
          typed — so pressing Reopen straight afterwards reopened TODAY rather
          than the day they were working on. The form remembers itself. */
       var form = C.cal || {};
       var today = form.date || new Date().toISOString().slice(0, 10);
-      body.innerHTML =
+      /* The month. Cells carry a dot per class rather than a single state:
+         Juz Amma logged and Hizb 54 untouched is the ordinary Saturday, and
+         rolling that into one colour would lose the only fact worth having. */
+      var byDay = {};
+      (cal.days || []).forEach(function (d) { byDay[d.held_on] = d; });
+      var mb2 = monthBounds(C.calMonth);
+      var first = new Date(mb2[0] + "T12:00:00");
+      var last = new Date(mb2[1] + "T12:00:00");
+      var lead = first.getDay();              // Sunday = 0, and the school meets Sunday
+      var cells = [];
+      for (var i = 0; i < lead; i++) cells.push(null);
+      for (var day = 1; day <= last.getDate(); day++) {
+        cells.push(C.calMonth + "-" + ("0" + day).slice(-2));
+      }
+      var dowHead = (ar ? ["ح", "ن", "ث", "ر", "خ", "ج", "س"]
+                        : ["S", "M", "T", "W", "T", "F", "S"]);
+      var monthLabel = new Date(mb2[0] + "T12:00:00");
+      var mName = i18n.fmtMonth(mb2[0]) + " " + monthLabel.getFullYear();
+
+      var grid =
+        '<div class="grph" style="margin:0 0 10px"><h2>' + esc(T("calMonth")) + '</h2></div>' +
+        '<div class="calnav">' +
+          // Back in time is LEFT in English and RIGHT in Arabic, so the
+          // glyph follows the language rather than the DOM order.
+          '<button class="btn ghost sm" id="calPrev" aria-label="' + esc(T("calPrev")) + '">' +
+            (ar ? '\u203a' : '\u2039') + '</button>' +
+          '<b class="calname">' + esc(mName) + '</b>' +
+          '<button class="btn ghost sm" id="calNext" aria-label="' + esc(T("calNext")) + '">' +
+            (ar ? '\u2039' : '\u203a') + '</button>' +
+          '<span style="flex:1"></span>' +
+          '<button class="btn ghost sm" id="calToday">' + esc(T("calToday")) + '</button>' +
+        '</div>' +
+        '<div class="calgrid" role="grid">' +
+          dowHead.map(function (x) { return '<div class="calhead">' + esc(x) + '</div>'; }).join("") +
+          cells.map(function (iso) {
+            if (!iso) return '<div class="calcell blank"></div>';
+            var d = byDay[iso];
+            var num = +iso.slice(8, 10);
+            if (!d) return '<div class="calcell"><span class="n">' + num + '</span></div>';
+            var dots = d.classes.map(function (c) {
+              return '<span class="dot ' + (CAL_STATE[c.state] || "") + '" title="' +
+                     esc(c.class_name + " \u00b7 " + stateLabel(CAL_STATE[c.state])) + '"></span>';
+            }).join("");
+            return '<button class="calcell has' + (C.calOpen === iso ? " open" : "") +
+              (iso === cal.today ? " today" : "") + '" data-day="' + esc(iso) + '">' +
+              '<span class="n">' + num + '</span><span class="dots">' + dots + '</span></button>';
+          }).join("") +
+        '</div>' +
+        '<div class="callegend">' +
+          ['s-complete', 's-partial', 's-empty', 's-closed', 's-ahead'].map(function (k) {
+            return '<span><span class="dot ' + k + '"></span>' + esc(stateLabel(k)) + '</span>';
+          }).join("") +
+        '</div>' +
+        '<div id="calDay">' + dayPanel(byDay[C.calOpen], ar) + '</div>';
+
+      /* Still to log. The grid answers "what did October look like"; this
+         answers "what do I have to chase", which is the question actually
+         asked on a Saturday morning — and it reaches back past the month on
+         screen, because a gap does not stop being a gap when the month
+         changes. */
+      var chaseBox =
+        '<div class="grph" style="margin:22px 0 8px"><h2>' + esc(T("calChase")) + '</h2>' +
+          '<span class="n">' + chase.length + '</span></div>' +
+        (chase.length
+          ? '<div class="chaselist">' + chase.map(function (x) {
+              return '<button class="chaserow" data-day="' + esc(x.held_on) + '" ' +
+                'data-cls="' + esc(x.class_id) + '">' +
+                '<span class="dot ' + (CAL_STATE[x.state] || "") + '"></span>' +
+                '<span class="w"><b>' + esc(i18n.fmtDate(x.held_on, true)) + '</b>' +
+                  '<span class="m">' + esc(x.class_name) + ' \u00b7 ' +
+                  esc(stateLabel(CAL_STATE[x.state])) + ' \u00b7 ' +
+                  esc(T("calCounts").split("{a}").join(x.attendance_marked)
+                        .split("{r}").join(x.students_recited)
+                        .split("{n}").join(x.enrolled)) + '</span></span>' +
+                '<span class="chev" aria-hidden="true">\u203a</span></button>';
+            }).join("") + '</div>'
+          : '<div class="note"><b>' + esc(T("calChaseNone")) + '</b></div>');
+
+      body.innerHTML = grid + chaseBox +
+        '<div class="grph" style="margin:22px 0 8px"><h2>' + esc(T("calClose")) + '</h2></div>' +
         '<div class="note"><b>' + esc(ar ? "إِغْلَاقُ يَوْم." : "Close a day.") + '</b> ' +
         esc(ar
           ? "ثَلْجٌ أَوْ عِيدٌ أَوْ لَا مُعَلِّمَ مُتَاح. اليَوْمُ المُغْلَقُ يُسَجَّلُ فِيهِ كُلُّ الطُّلَّابِ غَائِبِينَ بِعُذْرٍ مَعَ السَّبَبِ الَّذِي تَكْتُبُه، فَلَا يُحْسَبُ غِيَابًا عَلَى أَحَد. وَيَبْقَى بِإِمْكَانِ المُعَلِّمِينَ إِسْنَادُ وَاجِبِ الأُسْبُوعِ القَادِم."
@@ -1211,6 +1356,49 @@
         }).join("") : '<tr><td colspan="4" style="padding:18px;color:var(--ink-3)">' +
             esc(ar ? "لَمْ يُغْلَقْ أَيُّ يَوْمٍ بَعْدُ." : "No days closed yet.") + '</td></tr>') +
         '</tbody></table></div>';
+
+      /* ---- the calendar's own handlers ---- */
+      if ($("calPrev")) $("calPrev").onclick = function () {
+        C.calMonth = shiftMonth(C.calMonth, -1); C.calOpen = null; renderManage();
+      };
+      if ($("calNext")) $("calNext").onclick = function () {
+        C.calMonth = shiftMonth(C.calMonth, 1); C.calOpen = null; renderManage();
+      };
+      if ($("calToday")) $("calToday").onclick = function () {
+        C.calMonth = (cal.today || new Date().toISOString().slice(0, 10)).slice(0, 7);
+        C.calOpen = cal.today || null; renderManage();
+      };
+      /* Tapping a day fills the panel in place. No re-fetch: the month is
+         already in hand, and a round trip to redraw something already on the
+         client is a spinner for nothing on a classroom signal. */
+      body.querySelectorAll(".calcell.has").forEach(function (b) {
+        b.onclick = function () {
+          C.calOpen = (C.calOpen === b.dataset.day) ? null : b.dataset.day;
+          body.querySelectorAll(".calcell.has").forEach(function (o) {
+            o.classList.toggle("open", o.dataset.day === C.calOpen);
+          });
+          $("calDay").innerHTML = dayPanel(byDay[C.calOpen], ar);
+          wireDayPanel();
+        };
+      });
+      function wireDayPanel() {
+        body.querySelectorAll(".cal-open").forEach(function (b) {
+          b.onclick = function () { window.SijillOpenClassDay(b.dataset.cls, b.dataset.day); };
+        });
+        var lg = $("calLog");
+        /* Straight into the change log with that day already filtered, rather
+           than telling a coordinator to go and set two dates themselves. The
+           log has taken a date range since round 32; nothing ever handed it
+           one. */
+        if (lg) lg.onclick = function () {
+          LOG.from = C.calOpen; LOG.to = C.calOpen; LOG.offset = 0;
+          C.mtab = "log"; renderManage();
+        };
+      }
+      wireDayPanel();
+      body.querySelectorAll(".chaserow").forEach(function (b) {
+        b.onclick = function () { window.SijillOpenClassDay(b.dataset.cls, b.dataset.day); };
+      });
 
       function remember() {
         C.cal = { date: $("cdDate").value, scope: $("cdScope").value, note: $("cdNote").value };
