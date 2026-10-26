@@ -1405,3 +1405,12 @@ html[lang="ar"] .daychip .dow{letter-spacing:0;text-transform:none;font-size:11.
 /* A mark typed long after the class it belongs to uses the existing muted
    pill. It is context, not a warning, and a new colour here would be a new
    thing to learn for something that says "this was filled in later". */
+
+/* Round 36 — a day in the student's timeline, as a way into that day.
+   Styled as the date it already was, plus a chevron: the chevron is the whole
+   affordance, the same way it is on a child's name in the register. Without
+   it this reads as a label and nobody finds out the day is reachable. */
+.daylink{appearance:none;border:0;background:none;padding:0;margin:0;
+  font:inherit;color:var(--lapis);font-weight:700;cursor:pointer;
+  display:inline-flex;align-items:center;gap:3px;text-align:start}
+.daylink .chev{font-size:14px;opacity:.6;font-weight:400}

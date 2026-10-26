@@ -333,17 +333,23 @@
     var mine = (S.days || []).filter(function (x) { return x.held_on === d.session.held_on; })[0];
     var ahead = mine ? mine.state === "ahead"
                      : (!!c && !c.today && (!c.last || d.session.held_on > c.last.held_on));
-    // Today is not a class day and the register has quietly opened the last
-    // one that ran. That is the right thing to open — a teacher catching up
-    // on Saturday wants Friday — but the screen never said so, and a date in
-    // small grey type under the class name is easy to read straight past.
-    var behind = !!c && !c.today && !ahead;
     /* A day the teacher went looking for, as against the one the register
        opens on by itself. The difference matters: Saturday morning showing
        Friday's register is the normal case and must keep every control,
        including Mark all present. The 16th, reached from the strip, is not. */
     var def = defaultDay();
     var deep = !ahead && !!def && d.session.held_on < def;
+    /* Today is not a class day and the register has quietly opened the last
+       one that ran. That is the right thing to open — a teacher catching up
+       on Saturday wants Friday — but the screen never said so, and a date in
+       small grey type under the class name is easy to read straight past.
+
+       NOT true of a day reached from the strip. Before round 35 the only
+       non-today day the register could show WAS the last one that ran, so
+       the two were the same thing; now the 18th would have announced itself
+       as "the last class that ran" with the 25th sitting in the strip above
+       it saying otherwise. */
+    var behind = !!c && !c.today && !ahead && !deep;
     renderDayStrip();
     renderBackNote(deep);
     $("clsTitle").textContent = d["class"].name;
@@ -901,10 +907,32 @@
   window.SijillTrendLegend = trendLegend;
 
   /* ------------------------------------------------------- student sheet */
+
+  /* How many class days of history to ask for. Four is what fits on a phone
+     without scrolling past the work, and it is almost always enough — but
+     "almost always" was the whole of it until now, and a parent asking about
+     a day in September had no answer anywhere in the app.
+
+     The server already took this count; the client simply never varied it.
+     Raised in steps rather than fetched whole: the payload carries every
+     recitation, every tajwid grade and every note for each day, and a child
+     with a full year behind them is a large read on a classroom signal. */
+  var HIST_STEPS = [4, 12, 30, 200];
+  function histN() { return HIST_STEPS[S.histStep || 0]; }
+  function histMore() {
+    if ((S.histStep || 0) >= HIST_STEPS.length - 1) return;
+    S.histStep = (S.histStep || 0) + 1;
+    reloadStudent();
+  }
+
   function openStudent(s) {
     // A new child starts with nothing pulled forward from the last one, and
     // with the rotation collapsed again.
     S.pulled = {}; S.rotAll = false;
+    // ...and with the history back to four days. A teacher who opened one
+    // child's whole year does not want the next child's whole year, and the
+    // read is paid for on every tap through the register.
+    S.histStep = 0;
     S.student = s;
     show("v-student");
     window.scrollTo(0, 0);
@@ -916,7 +944,7 @@
     // The database has been able to list, edit and delete them since day one;
     // the app simply never asked, which is why Tarek could not find them.
     return Promise.all([
-      api.read("api_student", { p_student: s.id, p_history: 4 }),
+      api.read("api_student", { p_student: s.id, p_history: histN() }),
       api.read("api_notes", { p_student: s.id }).catch(function () { return []; })
     ]).then(function (r) {
       S.studentData = r[0];
@@ -1308,8 +1336,24 @@
                 return '<span style="font-size:12.5px;color:var(--ink-2);font-style:italic">“' +
                   esc(n.body) + '”' + (n.by ? ' <span style="font-style:normal;color:var(--ink-3)">— ' + esc(n.by) + '</span>' : '') + '</span>';
               }).join("<br>");
+              /* The date is the way in. Tapping it opens the register for
+                 that day — of the class the day BELONGED to, which for a
+                 child who moved in February is not the class they are in
+                 now. "Absent on the 16th" then becomes "nobody took the
+                 register on the 16th", which was not reachable from
+                 anywhere before.
+
+                 Not offered in the coordinator's read-only view: there is no
+                 register behind it to return to, and that journey belongs
+                 with the coordinator's own calendar. */
+              var jump = !S.readOnly && h.class_id && h.status !== "cancelled";
               return '<div class="irow" style="align-items:flex-start"><div class="lab" style="gap:4px">' +
-                '<span class="tr" style="font-size:13.5px">' + i18n.fmtDate(h.held_on, true) +
+                '<span class="tr" style="font-size:13.5px">' +
+                (jump
+                  ? '<button class="daylink" data-day="' + esc(h.held_on) + '" ' +
+                    'data-cls="' + esc(h.class_id) + '">' +
+                    esc(i18n.fmtDate(h.held_on, true)) + '<span class="chev" aria-hidden="true">›</span></button>'
+                  : i18n.fmtDate(h.held_on, true)) +
                 (h.status === "cancelled" ? ' <span class="pill mute"><i></i>' + (ar ? "مُغْلَقَة" : "closed") + '</span>' : '') +
                 // On a closed day every enrolled child is excused automatically,
                 // so an "absent" pill beside "closed" is an artefact of the
@@ -1348,7 +1392,15 @@
                   ? '<span class="m" style="opacity:.8">' + esc(T("adab")) + ' · ' +
                     (ar ? "سَجَّلَ" : "by") + ' ' + esc(h.adab_by) + '</span>' : '') +
                 '</div></div>';
-            }).join("") : '<div class="empty">' + esc(T("noneHist")) + '</div>') + '</div></div>';
+            }).join("") : '<div class="empty">' + esc(T("noneHist")) + '</div>') + '</div>' +
+            /* Shown only while there might be more. The server returns fewer
+               rows than asked for once it has run out, which is the honest
+               signal — a button that keeps offering a year that is not there
+               is a button that stops being believed. */
+            ((d.history || []).length >= histN() && (S.histStep || 0) < HIST_STEPS.length - 1
+              ? '<div class="actionrow" style="margin-top:8px">' +
+                '<button class="btn ghost sm" id="histMore">' + esc(T("histMore")) + '</button></div>'
+              : '') + '</div>';
 
     /* notes — readable, editable and removable, which they have never been.
        And the heading now says who else reads them, because until round 34
@@ -1580,7 +1632,7 @@
         p_note: null,
         p_tajweed: outcome === "not_prepared" ? null : tj
       }, S.student.name).then(function () {
-        return api.read("api_student", { p_student: S.student.id, p_history: 4 });
+        return api.read("api_student", { p_student: S.student.id, p_history: histN() });
       }).then(function (d) { S.studentData = d; renderStudent(); }).catch(fail);
     }
 
@@ -1634,7 +1686,7 @@
         p_note: note || null
       }, S.student.name).then(function () {
         return Promise.all([
-          api.read("api_student", { p_student: S.student.id, p_history: 4 }),
+          api.read("api_student", { p_student: S.student.id, p_history: histN() }),
           api.read("api_class_day", { p_class: S.clsId, p_on: S.dayData.session.held_on })
         ]);
       }).then(function (r) {
@@ -1691,6 +1743,29 @@
     if (ad) ad.onclick = function () { pickSurah("review"); };
 
     /* Taking a recitation back. */
+    var hm = $("histMore");
+    if (hm) hm.onclick = histMore;
+
+    /* A day in the timeline, opened as a register. The class comes off the
+       row rather than from the child, because a child who changed class in
+       February has February days belonging to the old one — and opening the
+       new class on an old date would either show the wrong roll or fail
+       outright with "no class for that day". */
+    $("stuBody").querySelectorAll(".daylink").forEach(function (b) {
+      b.onclick = function () {
+        var on = b.dataset.day, cls = b.dataset.cls;
+        S.day = on; S.gapFilter = null;
+        if (cls && cls !== S.clsId) {
+          S.clsId = cls;
+          var sel = $("classPick");
+          if (sel) sel.value = cls;
+        }
+        show("v-class");
+        window.scrollTo(0, 0);
+        refreshDay();
+      };
+    });
+
     $("stuBody").querySelectorAll(".undoRec").forEach(function (b) {
       b.onclick = function () {
         var ar = i18n.isAr();
@@ -1858,7 +1933,7 @@
 
   function reloadStudent() {
     return Promise.all([
-      api.read("api_student", { p_student: S.student.id, p_history: 4 }),
+      api.read("api_student", { p_student: S.student.id, p_history: histN() }),
       api.read("api_notes", { p_student: S.student.id }).catch(function () { return S.notes || []; })
     ]).then(function (r) { S.studentData = r[0]; S.notes = r[1] || []; renderStudent(); });
   }
