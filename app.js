@@ -1214,9 +1214,14 @@
                 '</div></div>';
             }).join("") : '<div class="empty">' + esc(T("noneHist")) + '</div>') + '</div></div>';
 
-    // notes — readable, editable and removable, which they have never been
+    /* notes — readable, editable and removable, which they have never been.
+       And the heading now says who else reads them, because until round 34
+       nothing on this screen did: a teacher could write a note here, see it
+       listed, and have no way of knowing whether it had reached anyone. */
     html += '<div class="grp"><div class="grph"><h2>' + esc(T("gNotes")) + '</h2>' +
-            '<span class="n">' + (S.notes || []).length + '</span></div><div class="card">' +
+            '<span class="n">' + (S.notes || []).length + '</span></div>' +
+            '<div class="note rule">' + esc(T("gNotesSeen")) + '</div>' +
+            '<div class="card">' +
             ((S.notes || []).length ? S.notes.map(function (n) {
               return '<div class="irow noterow" style="align-items:flex-start">' +
                 '<div class="lab">' +
@@ -1727,9 +1732,13 @@
       '<textarea id="noteBody" style="width:100%;min-height:96px;font-family:var(--sans);font-size:15px;' +
       'padding:10px;border:1px solid var(--line);border-radius:10px;background:var(--surface);color:var(--ink)"></textarea>' +
       '<div class="note" style="margin-top:10px">' +
+      /* It used to say "write what you'd be comfortable reading aloud to the
+         child's parent", which invited a teacher to judge the risk. There is
+         no risk to judge: the parent reads it, on their own page, with your
+         name on it. Say that. */
       (i18n.isAr()
-        ? "كُلُّ تَعْدِيلٍ أَوْ حَذْفٍ يُسَجَّل. اُكْتُبْ مَا لَا تَمَانِعُ قِرَاءَتَهُ أَمَامَ وَالِدَيِ الطَّالِب."
-        : "Edits and deletes are recorded. Write what you'd be comfortable reading aloud to the child's parent.") +
+        ? "<b>يَقْرَأُ هَذِهِ المُلَاحَظَةَ أَهْلُ الطَّالِبِ فِي صَفْحَتِهِمْ، وَعَلَيْهَا اسْمُك.</b> وَكُلُّ تَعْدِيلٍ أَوْ حَذْفٍ يُسَجَّل."
+        : "<b>The child’s family reads this on their own page, with your name on it.</b> Edits and deletes are recorded.") +
       '</div>',
       T("save"), function () {
         var body = ($("noteBody").value || "").trim();

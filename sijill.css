@@ -1332,3 +1332,11 @@ html[lang="ar"] .kindbox .kindlab{letter-spacing:0;text-transform:none;font-size
   border-radius:11px;padding:9px 12px;margin:0 0 12px;font-size:13px;
   line-height:1.5;color:var(--ink-2)}
 .joined .who{font-size:12px;color:var(--ink-3);margin-top:3px}
+
+/* Round 34 — a teacher's note, on the family's page. Each carries its own
+   day: a notice is current by definition and expires on its own, but a note
+   never does, so without a date a parent cannot tell last Sunday's from
+   September's. */
+.pcard.notice .line + .line{margin-top:11px;padding-top:11px;
+  border-top:1px solid rgba(29,59,44,.16)}
+.pcard .nby{font-family:var(--mono);font-size:11.5px;color:var(--ink-3);margin-top:4px}

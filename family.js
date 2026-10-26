@@ -66,6 +66,8 @@
       nothingNewBut1:"Nothing new set for this class yet — but there is still one to practise above.",
       dueOn:"to be ready for {d}",
       noticeSchool:"From the school", noticeClass:"From the class",
+      noticeTeacher:"From your child’s teacher",
+      noteBy:"{t} · {d}",
       contact:"Any question about homework or attendance — message the school on ClassDojo.",
       tajweed:"Tajwīd", adab:"Adab", tr_up:"moving forward", tr_flat:"standing still", tr_down:"needs attention", tr_away:"not enough to say", trHelp:"over the last few classes", wholeSurah:"whole surah", ayat:"ayat", notMarked:"not marked",
       noneRecorded:"Here — nothing recorded", guideLink:"A short guide to this page",
@@ -92,6 +94,8 @@
       nothingNewBut1:"لَمْ يُحَدَّدْ جَدِيدٌ لِهَذِهِ الحِصَّةِ بَعْد — غَيْرَ أَنَّ وَاحِدًا مَا زَالَ لِلتَّحْضِيرِ أَعْلَاه.",
       dueOn:"لِيَكُونَ جَاهِزًا لِـ{d}",
       noticeSchool:"مِنَ المَدْرَسَة", noticeClass:"مِنَ الحَلْقَة",
+      noticeTeacher:"مِنْ مُعَلِّمِ اِبْنِكُم",
+      noteBy:"{t} · {d}",
       contact:"لِأَيِّ سُؤَالٍ حَوْلَ الوَاجِبِ أَوِ الحُضُور، رَاسِلِ المَدْرَسَةَ عَبْرَ ClassDojo.",
       tajweed:"التَّجْوِيد", adab:"الأَدَب", tr_up:"يَتَقَدَّم", tr_flat:"ثَابِت", tr_down:"يَحْتَاجُ انْتِبَاهًا", tr_away:"لَا يُمْكِنُ الحُكْمُ بَعْد", trHelp:"خِلَالَ الحِصَصِ الأَخِيرَة", wholeSurah:"السُّورَةُ كَامِلَة", ayat:"آيَة", notMarked:"لَمْ يُسَجَّل",
       noneRecorded:"حَاضِر — لَمْ يُسَجَّلْ شَيْء", guideLink:"دَلِيلٌ مُخْتَصَرٌ لِهَذِهِ الصَّفْحَة",
@@ -193,6 +197,22 @@
           '<div class="line"><span>' + esc(x.n.body) + '</span></div></div>';
       }).join("");
     }
+    /* What the teacher wrote about this child. These used to come back only
+       when the note had been attached to a passage during grading, so a note
+       written from the + Add a note button — which is where a teacher writes
+       to the parents — reached nobody. Each carries its own day and author:
+       unlike a notice, a note does not expire, so without a date a parent
+       cannot tell last Sunday's from September's. */
+    var tn = c.teacher_notes || [];
+    if (tn.length) {
+      h += '<div class="pcard notice"><h2>' + esc(t("noticeTeacher")) + '</h2>' +
+        tn.map(function (n) {
+          return '<div class="line"><span>' + esc(n.body) + '</span>' +
+            '<div class="nby">' + esc(t("noteBy", {
+              t: n.by || "", d: n["on"] ? i18n.fmtDate(n["on"]) : "" })) + '</div></div>';
+        }).join("") + '</div>';
+    }
+
     h += trendBar(c.trend);
 
     // the attendance warning — adults only; the server omits it on a student link
@@ -340,11 +360,11 @@
                        '<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 1.6l1.9 3.9 4.3.6-3.1 3 .7 4.3L8 11.4l-3.8 2-.7-4.3-3.1-3 4.3-.6z"/></svg></span>';
                    }).join("") + '</span>' : "");
         }).join(" · ");
-        var notes = (x.notes || []).map(function (n) {
-          return '<div class="n">“' + esc(n.body) + '”' +
-                 (n.by ? ' <span style="font-style:normal;color:var(--ink-3)">— ' + esc(n.by) + '</span>' : '') +
-                 '</div>';
-        }).join("");
+        // The notes used to be printed here, under the class day they were
+        // attached to. They now have a card of their own at the top, with
+        // their date — printing them in both places would show every
+        // session-tied note twice.
+        var notes = "";
         // A dash meant "nothing recited", which is not something a parent can
         // be expected to decode — especially on a day their child was there.
         // Say it, and say whether they were present, which this card never did.
