@@ -68,6 +68,7 @@
       noticeSchool:"From the school", noticeClass:"From the class",
       noticeTeacher:"From your child’s teacher",
       noteBy:"{t} · {d}",
+      markedLate:"attendance filled in on {d}",
       contact:"Any question about homework or attendance — message the school on ClassDojo.",
       tajweed:"Tajwīd", adab:"Adab", tr_up:"moving forward", tr_flat:"standing still", tr_down:"needs attention", tr_away:"not enough to say", trHelp:"over the last few classes", wholeSurah:"whole surah", ayat:"ayat", notMarked:"not marked",
       noneRecorded:"Here — nothing recorded", guideLink:"A short guide to this page",
@@ -96,6 +97,7 @@
       noticeSchool:"مِنَ المَدْرَسَة", noticeClass:"مِنَ الحَلْقَة",
       noticeTeacher:"مِنْ مُعَلِّمِ اِبْنِكُم",
       noteBy:"{t} · {d}",
+      markedLate:"سُجِّلَ الحُضُورُ بِتَارِيخِ {d}",
       contact:"لِأَيِّ سُؤَالٍ حَوْلَ الوَاجِبِ أَوِ الحُضُور، رَاسِلِ المَدْرَسَةَ عَبْرَ ClassDojo.",
       tajweed:"التَّجْوِيد", adab:"الأَدَب", tr_up:"يَتَقَدَّم", tr_flat:"ثَابِت", tr_down:"يَحْتَاجُ انْتِبَاهًا", tr_away:"لَا يُمْكِنُ الحُكْمُ بَعْد", trHelp:"خِلَالَ الحِصَصِ الأَخِيرَة", wholeSurah:"السُّورَةُ كَامِلَة", ayat:"آيَة", notMarked:"لَمْ يُسَجَّل",
       noneRecorded:"حَاضِر — لَمْ يُسَجَّلْ شَيْء", guideLink:"دَلِيلٌ مُخْتَصَرٌ لِهَذِهِ الصَّفْحَة",
@@ -379,6 +381,14 @@
             : (st === "absent_sick" || st === "absent_travel" || st === "absent_other") ? t("excused")
             : t("notMarked"));
         }
+        /* A mark typed long after the class it belongs to. The register has
+           said this since round 35; the page a parent reads had not, so a
+           correction made three weeks later looked from their side exactly
+           like a mark taken in the room. It matters most here: this is the
+           record a family disputes. */
+        var late = x.marked_late
+          ? '<div class="line sub">' + esc(t("markedLate", { d: i18n.fmtDate(x.marked_late) })) + '</div>'
+          : '';
         var adab = x.adab && x.adab.stars
           ? '<div class="adabline">' + FACE(x.adab.stars) + '<span>' + esc(t("adab")) + ' ' +
             x.adab.stars + '/5' + (x.adab.note ? ' · “' + esc(x.adab.note) + '”' : '') +
@@ -387,7 +397,7 @@
         return '<div class="s"><div class="d">' + i18n.fmtDate(x.held_on, true) +
           (x.teacher ? ' · ' + esc(x.teacher) : '') + '</div>' +
           '<div class="w">' + line + '</div>' +
-          adab + notes + '</div>';
+          late + adab + notes + '</div>';
       }).join("") : '<div class="empty" style="color:var(--ink-3);font-size:13.5px">' +
                      esc(t("noClasses")) + '</div>') +
       '</div><div style="height:10px"></div><div class="note">' + esc(t("contact")) +

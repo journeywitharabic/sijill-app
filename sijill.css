@@ -1513,3 +1513,59 @@ html[lang="ar"] .calhead{letter-spacing:0;text-transform:none;font-size:12px}
    the parent page, and on everything added since, because each new one copied
    the last. One rule rather than a glyph choice at each site. */
 [dir="rtl"] .chev{display:inline-block;transform:scaleX(-1)}
+
+/* "already set" on a rotation row — the same place the assign link would be,
+   so the row does not change shape when the work exists. */
+.lnk.off{color:var(--ink-3);text-decoration:none;cursor:default}
+
+/* The excuse list: a checkbox row that is a label, so the whole row is the
+   target rather than a 13px box. */
+.excrow{display:flex;align-items:center;gap:10px;cursor:pointer}
+.excrow input{width:19px;height:19px;flex:none;accent-color:var(--lapis)}
+
+/* ===========================================================================
+   Round 39 — the progress sheet
+   ---------------------------------------------------------------------------
+   One page per child for a parent-teacher meeting. Rendered inside the
+   coordinator screen rather than on a page of its own, so printing is a block
+   of print CSS rather than a second copy of the token handling.
+   ======================================================================== */
+/* psheet, not sheet: `.sheet` is the bottom-sheet modal overlay —
+   position:fixed, inset:0, display:flex — and reusing the name gave every
+   progress card the modal's layout. The cards rendered in a row across the
+   bottom of the screen with their own rows as columns. */
+.psheets{display:block}
+.psheets > .psheet + .psheet{margin-top:14px}
+.psheet{border:1px solid var(--line);border-radius:13px;background:var(--surface);
+  padding:15px 17px}
+.psheet header{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;
+  border-bottom:2px solid var(--lapis);padding-bottom:8px;margin-bottom:10px}
+.psheet header h3{margin:0;font-size:18px;line-height:1.25;flex:1}
+.psheet header .cls{font-family:var(--mono);font-size:11.5px;color:var(--ink-3)}
+.shrow{display:flex;gap:12px;padding:7px 0;border-top:1px solid var(--line);
+  font-size:13.5px;line-height:1.5}
+.shrow:first-of-type{border-top:0}
+.shrow .k{flex:0 0 34%;max-width:170px;font-size:11px;font-weight:700;
+  letter-spacing:.06em;text-transform:uppercase;color:var(--ink-3);padding-top:2px}
+html[lang="ar"] .shrow .k{letter-spacing:0;text-transform:none;font-size:12.5px}
+.shrow .v{flex:1;min-width:0}
+.shrow .sub{color:var(--ink-3);font-size:12px}
+.shrow .hw{padding:1px 0}
+.shrow .nt{font-style:italic;padding:1px 0}
+.shrow .revlist{font-size:13px}
+.psheet footer{margin-top:11px;padding-top:8px;border-top:1px solid var(--line);
+  font-size:10.5px;color:var(--ink-3);text-align:center}
+
+@media print {
+  /* Everything that is the app rather than the sheets. */
+  .bar, .ctx, #ctabs, .mtabs, .noprint, .tally, #saveBar, #toast { display:none !important }
+  body, .view, .wrap { background:#fff !important; margin:0 !important; padding:0 !important }
+  .psheets { gap:0 }
+  /* One child per page. break-inside so a sheet is never split across two. */
+  .psheet { break-inside:avoid; break-after:page; border:0; border-radius:0;
+           padding:0 0 10mm; box-shadow:none }
+  .psheet:last-child { break-after:auto }
+  .psheet header { border-bottom-color:#1D3B2C !important;
+    -webkit-print-color-adjust:exact; print-color-adjust:exact }
+  @page { size:A4; margin:14mm 14mm }
+}

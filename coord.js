@@ -489,6 +489,7 @@
                 ["staff",    ar ? "المُعَلِّمُونَ وَالحَلْقَات" : "Teachers & classes"],
                 ["links",    ar ? "الرَّوَابِط" : "Links"],
                 ["calendar", ar ? "التَّقْوِيم" : "Calendar"],
+                ["sheets",   ar ? "أَوْرَاقُ التَّقَدُّم" : "Progress sheets"],
                 ["log",      ar ? "سِجِلُّ التَّغْيِيرَات" : "Change log"],
                 ["maint",    ar ? "الصِّيَانَة" : "Maintenance"]];
     $("cbody").innerHTML =
@@ -506,6 +507,7 @@
     if (C.mtab === "staff")    return manageStaff(body);
     if (C.mtab === "links")    return manageLinks(body);
     if (C.mtab === "calendar") return manageCalendar(body);
+    if (C.mtab === "sheets")   return manageSheets(body);
     if (C.mtab === "log")      return manageLog(body);
     return manageMaint(body);
   }
@@ -1223,9 +1225,76 @@
             (c.note ? ' \u00b7 \u201c' + esc(c.note) + '\u201d' : '') + '</span></span>' +
           (c.status === "cancelled" ? ''
             : '<button class="mini cal-open" data-day="' + esc(d.held_on) + '" ' +
-              'data-cls="' + esc(c.class_id) + '">' + esc(T("calOpenReg")) + '</button>') +
+              'data-cls="' + esc(c.class_id) + '">' + esc(T("calOpenReg")) + '</button>' +
+              /* Excuse a NAMED FEW. Closing the whole day already worked and
+                 is right for snow; six families at a funeral is the commoner
+                 case and had no path at all. Only offered on a day that has
+                 happened — there is nothing to excuse on a Friday still to
+                 come, and the database refuses it anyway. */
+              (d.held_on <= (C.calToday || d.held_on)
+                ? ' <button class="mini cal-exc" data-day="' + esc(d.held_on) + '" ' +
+                  'data-cls="' + esc(c.class_id) + '" data-name="' + esc(c.class_name) + '">' +
+                  esc(T("excSome")) + '</button>'
+                : '')) +
         '</div>';
       }).join("") + '</div>';
+  }
+
+  /* Excusing a named few on one day.
+     The children come from the register for that day, so the list is exactly
+     who was enrolled then — not who is in the class now, which for a day in
+     September is a different set of names. */
+  function excuseSheet(on, cls, clsName) {
+    var ar = i18n.isAr();
+    api.read("api_class_day", { p_class: cls, p_on: on }).then(function (d) {
+      var kids = d.students || [];
+      if (!kids.length) { window.SijillToast(T("excNobody")); return; }
+      window.SijillSheet(T("excTitle"),
+        '<div class="note" style="margin:0 0 10px">' +
+          esc(T("excBody").split("{c}").join(clsName)
+                .split("{d}").join(i18n.fmtDate(on, true))) + '</div>' +
+        '<div class="fieldrow">' +
+          '<label class="fld"><span>' + esc(T("excReasonLab")) + '</span>' +
+            '<select id="excState">' +
+              '<option value="absent_other">' + esc(ar ? "عُذْرٌ آخَر" : "Excused — other") + '</option>' +
+              '<option value="absent_sick">' + esc(ar ? "مَرَض" : "Sick") + '</option>' +
+              '<option value="absent_travel">' + esc(ar ? "سَفَر" : "Travel") + '</option>' +
+            '</select></label>' +
+        '</div>' +
+        '<input id="excWhy" placeholder="' + esc(T("excWhy")) + '" ' +
+          'style="width:100%;padding:10px;font-size:15px;border:1px solid var(--line);' +
+          'border-radius:10px;background:var(--surface);color:var(--ink);margin:8px 0 10px">' +
+        '<div class="card">' + kids.map(function (k, i) {
+          return '<label class="irow excrow"><input type="checkbox" name="exc" value="' +
+            esc(k.id) + '"><span class="lab"><span class="tr">' + esc(k.name) + '</span>' +
+            '<span class="m">' + esc(k.state ? stateWord(k.state, ar) : T("excUnmarked")) +
+            '</span></span></label>';
+        }).join("") + '</div>' +
+        '<div class="note" style="margin-top:10px">' + esc(T("excOverwrite")) + '</div>',
+        T("excSave"), function () {
+          var ids = Array.prototype.slice
+            .call(document.querySelectorAll('input[name=exc]:checked'))
+            .map(function (x) { return x.value; });
+          if (!ids.length) return false;
+          var st = $("excState").value, why = ($("excWhy").value || "").trim();
+          window.SijillCloseSheet();
+          api.write("api_excuse", { p_on: on, p_students: ids, p_state: st,
+                                    p_reason: why || null }, clsName)
+            .then(function (r) {
+              C.calMsg = '<span class="pill ok"><i></i>' +
+                esc(T("excDone").split("{n}").join(r.marked)) + '</span>';
+              renderManage();
+            }).catch(err);
+          return false;
+        });
+    }).catch(err);
+  }
+
+  function stateWord(st, ar) {
+    if (st === "present") return ar ? "حَاضِر" : "present";
+    if (st === "late") return ar ? "مُتَأَخِّر" : "late";
+    if (st === "absent_unjustified") return ar ? "بِدُونِ عُذْر" : "no reason";
+    return ar ? "بِعُذْر" : "excused";
   }
 
   function manageCalendar(body) {
@@ -1237,6 +1306,7 @@
                  api.read("api_chase_days", { p_limit: 40 })]).then(function (res) {
       if (gone(body)) return;   // a newer render replaced this one
       var cs = res[0], closed = res[1] || [], cal = res[2] || {}, chase = res[3] || [];
+      C.calToday = cal.today || null;
       /* Closing a day refreshes this screen so the table below updates, and
          that used to wipe the date, class and reason the coordinator had just
          typed — so pressing Reopen straight afterwards reopened TODAY rather
@@ -1394,6 +1464,11 @@
         body.querySelectorAll(".cal-open").forEach(function (b) {
           b.onclick = function () { window.SijillOpenClassDay(b.dataset.cls, b.dataset.day); };
         });
+        body.querySelectorAll(".cal-exc").forEach(function (b) {
+          b.onclick = function () {
+            excuseSheet(b.dataset.day, b.dataset.cls, b.dataset.name);
+          };
+        });
         var lg = $("calLog");
         /* Straight into the change log with that day already filtered, rather
            than telling a coordinator to go and set two dates themselves. The
@@ -1474,6 +1549,110 @@
      "50 of 50" look identical without the total, and only one of them means
      you have seen everything. */
   var LOG = { from: "", to: "", actor: "", search: "", entity: "", offset: 0, limit: 50 };
+
+  /* One page per child, for a parent-teacher meeting.
+
+     Rendered inside this screen rather than on a page of its own: a second
+     page would need its own copy of the token handling and its own entry in
+     the deploy zip, and printing from here costs one block of print CSS that
+     hides the app around it. Everything on a sheet is already computed
+     somewhere — this asks for it a class at a time so thirty-five can be
+     printed instead of thirty-five screens opened. */
+  function manageSheets(body) {
+    var ar = i18n.isAr();
+    api.read("api_classes").then(function (cs) {
+      if (gone(body)) return;
+      cs = cs || [];
+      if (!C.sheetCls && cs.length) C.sheetCls = cs[0].id;
+      if (!C.sheetCls) { body.innerHTML = '<div class="note">' + esc(T("shNoClass")) + '</div>'; return; }
+      busy(body);
+      api.read("api_progress_sheet", { p_class: C.sheetCls }).then(function (d) {
+        if (gone(body)) return;
+        var st = d.students || [];
+        body.innerHTML =
+          '<div class="note noprint"><b>' + esc(T("shHow")) + '</b> ' + esc(T("shHowBody")) + '</div>' +
+          '<div class="filters noprint">' +
+            '<select id="shCls">' + cs.map(function (c) {
+              return '<option value="' + esc(c.id) + '"' + (c.id === C.sheetCls ? " selected" : "") +
+                     '>' + esc(c.name) + '</option>'; }).join("") + '</select>' +
+            '<button class="btn sm" id="shPrint">' + esc(T("shPrint")) + '</button>' +
+            '<span class="m">' + esc(T("shCount").split("{n}").join(st.length)) + '</span>' +
+          '</div>' +
+          '<div class="psheets">' + st.map(function (x) { return sheetCard(x, d, ar); }).join("") + '</div>';
+        $("shCls").onchange = function () { C.sheetCls = this.value; renderManage(); };
+        $("shPrint").onclick = function () { window.print(); };
+      }).catch(function (e) { err(e, body); });
+    }).catch(function (e) { err(e, body); });
+  }
+
+  function sheetCard(x, d, ar) {
+    var a = x.attendance || {};
+    var held = +a.held || 0;
+    var there = (+a.present || 0) + (+a.late || 0);
+    /* The rate comes from the SERVER, not from arithmetic here. _flags has
+       computed it all year — attended over the days somebody actually took
+       the register — and the family page prints that same number under
+       "Attendance this year". A second calculation on this sheet is a second
+       number a parent can hold beside their phone and find different.
+
+       The counts below are the breakdown of it, and `counted` is only used
+       to say what the percentage is OF. */
+    var rate = (x.flags && x.flags.rate != null) ? Math.round(+x.flags.rate) : null;
+    var counted = held - (+a.unmarked || 0);
+    var pr = x.progress;
+    var hw = x.open_homework || [];
+    var rev = x.needs_review || [];
+    function row(label, value) {
+      return '<div class="shrow"><span class="k">' + esc(label) + '</span>' +
+             '<span class="v">' + value + '</span></div>';
+    }
+    return '<section class="psheet">' +
+      '<header><h3>' + esc(x.name) + '</h3>' +
+        '<span class="cls">' + esc(d["class"].name) + ' · ' + esc(i18n.fmtDate(d.as_of)) + '</span>' +
+      '</header>' +
+      row(T("shTrend"), esc((x.trend && x.trend.label) || "—") +
+            (x.trend && x.trend.detail ? ' <span class="sub">' + esc(x.trend.detail) + '</span>' : '')) +
+      /* Pages, inside the juz the new memorisation is in — the same reading
+         the family page gives, so a parent holding this and looking at their
+         phone sees one number, not two. */
+      row(T("shWhere"), pr
+            ? esc(T("shJuz").split("{j}").join(pr.juz)) + ' · ' +
+              esc(T("shPages").split("{s}").join(pr.pages_solid).split("{n}").join(pr.pages_in_juz)) +
+              (pr.pages_partial ? ' <span class="sub">' +
+                 esc(T("shPartial").split("{n}").join(pr.pages_partial)) + '</span>' : '')
+            : '<span class="sub">' + esc(T("shNotAssessed")) + '</span>') +
+      row(T("shSolid"), esc(String(x.surahs_solid || 0))) +
+      row(T("shAttendance"), rate === null
+            ? '<span class="sub">' +
+              esc(held ? T("shNoneMarked").split("{n}").join(held) : T("shNoClasses")) + '</span>'
+            : '<b>' + rate + '%</b> <span class="sub">' +
+              esc(T("shAttDetail").split("{p}").join(a.present).split("{l}").join(a.late)
+                    .split("{e}").join(a.excused).split("{u}").join(a.unexcused)
+                    .split("{n}").join(counted)) +
+              (a.unmarked ? ' · ' + esc(T("shUnmarked").split("{n}").join(a.unmarked)) : '') +
+              '</span>') +
+      row(T("shSet"), hw.length
+            ? hw.map(function (h) {
+                return '<div class="hw"><b>' + esc(h.name_en) + '</b> ' +
+                  (h.ayah_from ? h.ayah_from + '\u2013' + h.ayah_to : esc(T("shWhole"))) +
+                  ' <span class="sub">' + esc(h.kind === "memorise" ? T("gNew") : T("gDueGroup")) +
+                  (h.due_on ? ' · ' + esc(i18n.fmtDate(h.due_on)) : '') + '</span></div>';
+              }).join("")
+            : '<span class="sub">' + esc(T("shNothingSet")) + '</span>') +
+      row(T("shReview"), rev.length
+            ? '<span class="revlist">' + rev.slice(0, 8).map(function (r) {
+                return esc(r.name_en); }).join(' · ') +
+              (rev.length > 8 ? ' <span class="sub">+' + (rev.length - 8) + '</span>' : '') + '</span>'
+            : '<span class="sub">\u2014</span>') +
+      ((x.notes || []).length
+        ? row(T("shNotes"), x.notes.map(function (n) {
+            return '<div class="nt">\u201c' + esc(n.body) + '\u201d <span class="sub">' +
+              esc(n.by || '') + (n["on"] ? ' · ' + esc(i18n.fmtDate(n["on"])) : '') +
+              '</span></div>'; }).join(""))
+        : '') +
+      '<footer>' + esc(T("shFooter")) + '</footer>' +
+    '</section>';
+  }
 
   function manageLog(body) {
     api.read("api_change_log", {

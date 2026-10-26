@@ -1550,6 +1550,24 @@
         ((!S.readOnly && kind !== "rot" && x.homework_id)
           ? ' <button class="lnk hw-edit" data-hw="' + esc(x.homework_id) + '">' +
             esc(T("hwChange")) + '</button>' : '') +
+        /* Set this surah as review homework, in one tap. Asked for by the
+           teachers: the rotation already tells them which surah is next, and
+           to act on it they were going through Review — old memorization and
+           hunting for the same surah in a list of a hundred and fourteen.
+
+           On the meta line, not as a sixth button. The decision above about
+           hwChange applies for the same reason and in the same place: this
+           row already carries a note button, four grades and five stars, and
+           at 320px a sixth control wraps them into nonsense. The rotation
+           rows are the ones with a free slot here, because they have no
+           homework behind them to change. */
+        ((!S.readOnly && kind === "rot" && !x.open_homework)
+          ? ' <button class="lnk rot-hw">' + esc(T("rotAssign")) + '</button>' : '') +
+        /* ...and when there already IS homework open on it, say so instead
+           of offering to set it again. A second row for the same surah is
+           the duplicate the server would refuse anyway. */
+        ((kind === "rot" && x.open_homework)
+          ? ' <span class="lnk off">' + esc(T("rotHasHw")) + '</span>' : '') +
       '</span></div>' +
       (S.readOnly ? '' :
         /* The note button and the grades travel together in one block. The
@@ -1767,6 +1785,70 @@
         renderStudent();
       };
     });
+    /* Set a rotation surah as review homework in one tap. Asked for by the
+       teachers: the rotation already tells them which surah is next and they
+       were going through Review — old memorization to find the same surah in
+       a list of a hundred and fourteen.
+
+       The surah, the range and the kind all come off the row, so the sheet
+       has one thing in it — the day it is due — which is exactly what they
+       asked for. The day list and the proposed default are the server's, the
+       same ones the full picker uses, so a day this class does not meet
+       cannot be offered here either. */
+    $("stuBody").querySelectorAll(".rot-hw").forEach(function (b) {
+      b.onclick = function (ev) {
+        ev.stopPropagation();
+        var row = b.closest(".irow");
+        var dd = S.dayData || {};
+        var days = (dd.upcoming || []).slice();
+        var proposed = dd.review_due || days[0] || null;
+        if (proposed && days.indexOf(proposed) < 0) days.push(proposed);
+        days.sort();
+        var name = (row.querySelector(".lat") || {}).textContent || "";
+        sheet(T("rotAssignTitle"),
+          '<div class="note" style="margin:0 0 11px">' +
+            esc(T("rotAssignBody").split("{w}").join(name.trim())) + '</div>' +
+          (days.length
+            ? '<div class="duepick"><span class="lab">' + esc(T("gDueLabel")) + '</span>' +
+              '<select id="rotDue">' + days.map(function (d0) {
+                return '<option value="' + esc(d0) + '"' + (d0 === proposed ? " selected" : "") +
+                       '>' + esc(i18n.fmtDate(d0, true)) + '</option>';
+              }).join("") + '</select></div>'
+            /* No class day to be due on — a new class, or the calendar has
+               run out. Setting it with no day is still better than refusing:
+               the work exists and the next class day will claim it. */
+            : '<div class="note warn">' + esc(T("rotNoDay")) + '</div>'),
+          T("add"), function () {
+            var due = $("rotDue") ? $("rotDue").value : null;
+            closeSheet();
+            assignHomework({
+              p_students: [S.student.id],
+              p_kind: "review",
+              // p_surahS, plural: the same call sets a sweep of six for a
+              // whole class, and one surah for one child is that call with
+              // one of each.
+              p_surahs: [+row.dataset.surah],
+              p_from: row.dataset.from === "" ? null : +row.dataset.from,
+              p_to:   row.dataset.to   === "" ? null : +row.dataset.to,
+              p_due_on: due
+            }, S.student.name, function (r) {
+              /* An Undo rather than a confirmation, the same decision as the
+                 assign buttons: a confirm taxes every correct tap to catch a
+                 rare wrong one, and gets tapped through within a fortnight. */
+              var ids = (r && r.ids) || [];
+              toast(T("rotAssigned"), ids.length ? function () {
+                Promise.all(ids.map(function (id) {
+                  return api.write("api_edit_homework", { p_id: id, p_remove: true },
+                                   S.student.name);
+                })).then(function () { toast(T("hwUndone")); reloadStudent(); }).catch(fail);
+              } : null);
+              reloadStudent();
+            }).catch(fail);
+            return false;
+          });
+      };
+    });
+
     $("stuBody").querySelectorAll(".hw-edit").forEach(function (b) {
       b.onclick = function (ev) {
         ev.stopPropagation();
