@@ -1323,3 +1323,12 @@ html[lang="ar"] .kindbox .kindlab{letter-spacing:0;text-transform:none;font-size
 .lgcount{font-size:12.5px;color:var(--ink-3);margin:0 0 8px}
 .lgpage{display:flex;gap:8px;justify-content:space-between;margin-top:10px}
 .lgpage button[disabled]{opacity:.4}
+
+/* "Somebody joined after this class." Stated plainly rather than left for a
+   coordinator to work out from two numbers that disagree — the register
+   counts who was enrolled on the day it shows, the picker counts who is in
+   the class now, and both are right. */
+.joined{background:var(--lapis-soft);border:1px solid rgba(29,59,44,.2);
+  border-radius:11px;padding:9px 12px;margin:0 0 12px;font-size:13px;
+  line-height:1.5;color:var(--ink-2)}
+.joined .who{font-size:12px;color:var(--ink-3);margin-top:3px}

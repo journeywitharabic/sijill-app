@@ -372,6 +372,7 @@
     renderClassNote(ahead);
     renderNotices(ahead);
     renderGaps(ahead);
+    renderJoined();
   }
 
   /* --------------------------------------------------- what is still missing
@@ -439,6 +440,45 @@
       };
     });
     if ($("gapAll")) $("gapAll").onclick = function () { S.gapFilter = null; renderDay(); };
+  }
+
+  /* The register lists who was enrolled on the day it is showing; the class
+     picker counts who is in the class now. Both are right, and when they
+     disagree the screen used to say nothing at all — so a coordinator who
+     added a child on the Monday saw 12 in the picker, 11 in the list, and
+     reasonably concluded the app had lost one. */
+  function renderJoined() {
+    var bar = $("joinedBar");
+    if (!bar) return;
+    var d = S.dayData, later = (d && d.joined_later) || [];
+    bar.hidden = !later.length;
+    if (!later.length) return;
+    /* The earliest of them, not the first by name — the list is sorted for
+       reading, and "they appear from" has to be true of the whole group.
+       It can be missing entirely when no later class is on the calendar
+       yet, and a sentence ending in "from ." is worse than one that says
+       plainly that the day is not set. */
+    var days = later.map(function (x) { return x.appears_on; })
+                    .filter(Boolean).sort();
+    var when = days.length ? i18n.fmtDate(days[0], true) : "";
+    var one = later.length === 1;
+    var key = when ? (one ? "joinedLater1" : "joinedLater")
+                    : (one ? "joinedSoon1"  : "joinedSoon");
+    /* The name is Latin and the sentence around it may be Arabic, so it goes
+       in its own isolated run \u2014 the same reason the surah transliterations
+       do. The date does not: fmtDate returns Arabic text with Arabic-Indic
+       digits when the page is Arabic, and forcing it left-to-right would be
+       the bug rather than the fix. */
+    // Name them when there is one. A count on its own just raises the
+    // question it was meant to answer.
+    var txt = esc(T(key)).split("{n}").join(esc(String(later.length)))
+                         .split("{d}").join(esc(when))
+                         .split("{w}").join('<span class="lat">' +
+                                            esc(later[0].name) + '</span>');
+    bar.innerHTML = '<div class="joined">' + txt +
+      (one ? '' : '<div class="who"><span class="lat">' +
+                  esc(later.map(function (x) { return x.name; }).join(" \u00b7 ")) +
+                  '</span></div>') + '</div>';
   }
 
   /* Which children a gap line is about. One function so the count and the

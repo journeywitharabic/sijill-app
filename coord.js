@@ -597,21 +597,39 @@
 
   function addStudent() {
     api.read("api_classes").then(function (cs) {
+      /* The start date is asked for rather than assumed. It used to default
+         silently to the day you pressed Add, which is wrong more often than
+         it is right at a weekend school: a child is usually registered after
+         their first lesson, not before it. The register then left them off
+         the class they had actually attended, the picker still counted them,
+         and the two numbers disagreed with no explanation. */
+      var lastHeld = function (id) {
+        var c = cs.filter(function (x) { return x.id === id; })[0];
+        return (c && c.last && c.last.held_on) || new Date().toISOString().slice(0, 10);
+      };
       window.SijillSheet("Add a student",
         '<input id="nsName" placeholder="' + esc(T("spNameHint")) + '" ' +
         'style="width:100%;padding:12px;font-size:16px;border:1px solid var(--line);border-radius:10px;' +
         'background:var(--surface);color:var(--ink)">' +
         '<div style="height:10px"></div><select id="nsClass" style="width:100%">' +
         cs.map(function (c) { return '<option value="' + esc(c.id) + '">' + esc(c.name) + '</option>'; }).join("") +
-        '</select><div class="note" style="margin-top:10px">Use the same short form as the rest of the roster — ' +
+        '</select>' +
+        '<div style="height:10px"></div>' +
+        '<label class="fld"><span>' + esc(T("nsFrom")) + '</span>' +
+          '<input type="date" id="nsFrom" value="' + esc(lastHeld(cs[0] && cs[0].id)) + '"></label>' +
+        '<div class="note" style="margin-top:10px">' + esc(T("nsFromHint")) + '</div>' +
+        '<div class="note" style="margin-top:8px">Use the same short form as the rest of the roster — ' +
         'first name plus the initial of the surname. That is deliberate: the database never holds a full surname.</div>',
         "Add", function () {
           var n = ($("nsName").value || "").trim();
           if (n.length < 2) return false;
-          api.write("api_student_add", { p_name: n, p_class: $("nsClass").value, p_from: null }, n)
+          api.write("api_student_add", { p_name: n, p_class: $("nsClass").value,
+                                         p_from: $("nsFrom").value || null }, n)
             .then(function () { window.SijillCloseSheet(); renderManage(); }).catch(err);
           return false;
         });
+      // the proposed day belongs to the class, so it follows the dropdown
+      $("nsClass").onchange = function () { $("nsFrom").value = lastHeld(this.value); };
     }).catch(err);
   }
 
