@@ -1340,3 +1340,68 @@ html[lang="ar"] .kindbox .kindlab{letter-spacing:0;text-transform:none;font-size
 .pcard.notice .line + .line{margin-top:11px;padding-top:11px;
   border-top:1px solid rgba(29,59,44,.16)}
 .pcard .nby{font-family:var(--mono);font-size:11.5px;color:var(--ink-3);margin-top:4px}
+
+/* ===========================================================================
+   Round 35 — the day strip
+   ---------------------------------------------------------------------------
+   The register has always been a view of ONE class on ONE day; the day was
+   just never choosable. This is the control.
+
+   A horizontal strip, not a month grid. The school meets Friday and Sunday,
+   so a month is thirty cells of which eight carry anything, and a grid is a
+   worse target for a thumb. Newest day on the leading edge, because that is
+   the one wanted ninety-nine times in a hundred.
+
+   The dot is the point: it says whether the day was ever logged, which turns
+   the picker into a to-do list. "The 16th is still blank" is a far more
+   common problem at a volunteer school than "the 16th is wrong", and until
+   now the register could not say it at all.
+   ======================================================================== */
+.daystrip{display:flex;gap:7px;overflow-x:auto;padding:2px 0 9px;margin:0 0 3px;
+  -webkit-overflow-scrolling:touch;scrollbar-width:none}
+.daystrip::-webkit-scrollbar{display:none}
+.daystrip[hidden]{display:none}
+.daychip{flex:none;display:flex;flex-direction:column;align-items:center;gap:3px;
+  min-width:58px;padding:7px 9px 6px;border:1px solid var(--line);
+  border-radius:11px;background:var(--surface);color:var(--ink-2);
+  font-size:12px;font-weight:600;line-height:1.25;cursor:pointer}
+.daychip .dow{font-size:10px;font-weight:700;letter-spacing:.06em;
+  text-transform:uppercase;color:var(--ink-3)}
+/* Arabic has no three-letter weekday, so the chip takes the whole word and
+   widens for it rather than clipping it. */
+html[lang="ar"] .daychip{min-width:72px}
+html[lang="ar"] .daychip .dow{letter-spacing:0;text-transform:none;font-size:11.5px}
+/* Each state gets a different SHAPE as well as a different colour. Colour
+   alone would be four tones to learn on a strip where the nearest row of
+   buttons already spends colour on grades — and a filled dot against a
+   hollow one is readable at a glance and in greyscale. */
+.daychip .dot{width:8px;height:8px;border-radius:50%;background:transparent}
+.daychip.s-complete .dot{background:var(--ok)}          /* filled, green */
+.daychip.s-partial  .dot{background:var(--late-fill)}   /* filled, amber */
+.daychip.s-empty    .dot{box-shadow:inset 0 0 0 1.5px var(--ink-3)}  /* hollow */
+.daychip.s-closed   .dot{height:2px;border-radius:1px;background:var(--ink-3)} /* a dash */
+.daychip.s-ahead{border-style:dashed}
+.daychip.s-ahead .dot{height:2px;border-radius:1px;
+  background:transparent;box-shadow:inset 0 0 0 1px var(--line-2)}
+.daychip[aria-current="date"]{background:var(--lapis);border-color:var(--lapis);
+  color:#fff}
+.daychip[aria-current="date"] .dow{color:rgba(255,255,255,.82)}
+.daychip[aria-current="date"] .dot{box-shadow:0 0 0 1.5px rgba(255,255,255,.55)}
+.daychip.more{justify-content:center;border-style:dashed;color:var(--ink-3);
+  font-weight:700}
+
+/* The standing line for a day chosen out of the past. Brass, not amber: amber
+   is the "not prepared" grade and the ahead-note already owns it, and these
+   two notes can never appear at once but a teacher reads the colour before
+   the words. */
+.backnote{background:var(--surface-2);color:var(--ink);
+  border:1px solid var(--brass);border-inline-start-width:4px;
+  border-radius:11px;padding:10px 13px;margin-bottom:12px;
+  font-size:12.5px;line-height:1.5}
+.backnote[hidden]{display:none}
+.backnote b{font-weight:700}
+.backnote .lat{unicode-bidi:isolate;direction:ltr}
+
+/* A mark typed long after the class it belongs to uses the existing muted
+   pill. It is context, not a warning, and a new colour here would be a new
+   thing to learn for something that says "this was filled in later". */

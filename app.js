@@ -201,10 +201,113 @@
       return Promise.resolve();
     }
     $("slist").innerHTML = '<div class="loading"><span class="spin"></span></div>';
-    return api.read("api_class_day", { p_class: S.clsId, p_on: on }).then(function (d) {
-      S.dayData = d; S.day = d.session.held_on;
+    /* The days come back alongside the register rather than on their own
+       screen. One round trip on a classroom signal is already one thing that
+       can fail; two would be two, and the strip is useless without the day
+       it is pointing at. A failure to load the days leaves the strip as it
+       was and the register still works — the picker is a convenience, the
+       register is the job. */
+    return Promise.all([
+      api.read("api_class_day", { p_class: S.clsId, p_on: on }),
+      api.read("api_class_days", { p_class: S.clsId, p_back: S.dayBack || 8, p_fwd: 2 })
+        .catch(function () { return S.days || []; })
+    ]).then(function (r) {
+      S.dayData = r[0]; S.day = r[0].session.held_on;
+      S.days = r[1] || [];
       renderDay();
     }).catch(fail);
+  }
+
+  /* Which day the register opens on by itself: today if today is a class day,
+     otherwise the last one that ran. Anything older than that is a day the
+     teacher went looking for, and the screen says so. */
+  function defaultDay() {
+    var c = currentClass();
+    if (!c) return null;
+    if (c.today) return c.today.held_on || null;
+    return (c.last && c.last.held_on) || (c.next && c.next.held_on) || null;
+  }
+
+  function goToDay(on) {
+    if (!on || on === S.day) return;
+    S.day = on; S.gapFilter = null;
+    refreshDay();
+  }
+
+  /* The strip of class days. Each chip carries the day and whether anything
+     was ever logged against it, which is the half of this feature that gets
+     used every week — correcting a mistake is rarer than noticing that
+     nobody took the register on the 16th. */
+  var DAYSTATE = {
+    "complete": "s-complete", "partly logged": "s-partial",
+    "no attendance": "s-partial", "no recitation": "s-partial",
+    "nothing logged": "s-empty", "closed": "s-closed", "ahead": "s-ahead"
+  };
+  function renderDayStrip() {
+    var strip = $("dayStrip");
+    if (!strip) return;
+    var days = S.days || [];
+    // One day is not a choice, and a strip that cannot be used is 44px of
+    // furniture above the first child's name.
+    strip.hidden = days.length < 2;
+    if (strip.hidden) { strip.innerHTML = ""; return; }
+    strip.innerHTML = days.map(function (x) {
+      /* The schema allows friday and sunday and nothing else, but a chip for
+         a weekday the dictionary has not heard of is still better than a
+         blank one. */
+      var dkey = "dShort_" + (x.weekday || "");
+      var dow = T(dkey);
+      if (dow === dkey) dow = (x.weekday || "").slice(0, 3);
+      return '<button class="daychip ' + (DAYSTATE[x.state] || "") + '" ' +
+        'data-on="' + esc(x.held_on) + '"' +
+        (x.held_on === S.day ? ' aria-current="date"' : '') +
+        ' title="' + esc(i18n.fmtDate(x.held_on, true) + " · " + T("st_" + (DAYSTATE[x.state] || "")) ) + '">' +
+        '<span class="dow">' + esc(dow) + '</span>' +
+        '<span class="dnum">' + esc(dayNum(x.held_on)) + '</span>' +
+        '<span class="dot" aria-hidden="true"></span></button>';
+    }).join("") +
+      // Deliberately not a month grid in this round. "Earlier" extends the
+      // strip; a real calendar screen belongs with the coordinator's.
+      '<button class="daychip more" id="dayMore">' + esc(T("dayEarlier")) + '</button>';
+    strip.querySelectorAll(".daychip[data-on]").forEach(function (b) {
+      b.onclick = function () { goToDay(b.dataset.on); };
+    });
+    var more = $("dayMore");
+    if (more) more.onclick = function () {
+      S.dayBack = (S.dayBack || 8) + 8;
+      refreshDay();
+    };
+    /* "nearest", not "start". Scrolling the current day flush to the leading
+       edge pushed the two forward days off screen with nothing to say they
+       were there — and setting homework in advance is the second reason this
+       strip exists. Nearest leaves them in view when they already are, and
+       still reveals the chip after a jump to an older day. */
+    var cur = strip.querySelector('[aria-current="date"]');
+    if (cur && cur.scrollIntoView) {
+      cur.scrollIntoView({ block: "nearest", inline: "nearest" });
+    }
+  }
+
+  /* The standing line for a day chosen out of the past. Not a dialog and not
+     a lock: the mistake to design against is a teacher marking today's
+     register against the 16th, and what prevents that is orientation that
+     stays on screen, not a box they tap through on the way in. */
+  function renderBackNote(deep) {
+    var bar = $("backNote");
+    if (!bar) return;
+    bar.hidden = !deep;
+    if (!deep) return;
+    var d = S.dayData;
+    var when = i18n.fmtDate(d.session.held_on, true);
+    bar.innerHTML = '<b>' + esc(T("backTitle").split("{d}").join(when)) + '</b> ' +
+      esc(d.session.status === "cancelled" ? T("backClosed") : T("backBody"));
+  }
+
+  // The day of the month, in the digits the rest of the page is using.
+  function dayNum(iso) {
+    var s = i18n.fmtDate(iso);
+    var m = s.match(/[\d٠-٩]+/);
+    return m ? m[0] : String(iso).slice(8, 10);
   }
 
   var REASONS = [
@@ -222,12 +325,27 @@
     // Is the day on screen still ahead of us? c.last is the most recent day
     // that has already run, so anything past it, with no class today, has not
     // happened. ISO dates compare correctly as strings.
-    var ahead = !!c && !c.today && (!c.last || d.session.held_on > c.last.held_on);
+    /* The day strip carries the server's own answer, computed against
+       school_today() in the school's timezone. Prefer it: the browser's idea
+       of today is the device's, and a teacher finishing a register at 8pm in
+       Ottawa is already on tomorrow's date in UTC. The old heuristic stays as
+       the fallback for when the strip did not load. */
+    var mine = (S.days || []).filter(function (x) { return x.held_on === d.session.held_on; })[0];
+    var ahead = mine ? mine.state === "ahead"
+                     : (!!c && !c.today && (!c.last || d.session.held_on > c.last.held_on));
     // Today is not a class day and the register has quietly opened the last
     // one that ran. That is the right thing to open — a teacher catching up
     // on Saturday wants Friday — but the screen never said so, and a date in
     // small grey type under the class name is easy to read straight past.
     var behind = !!c && !c.today && !ahead;
+    /* A day the teacher went looking for, as against the one the register
+       opens on by itself. The difference matters: Saturday morning showing
+       Friday's register is the normal case and must keep every control,
+       including Mark all present. The 16th, reached from the strip, is not. */
+    var def = defaultDay();
+    var deep = !ahead && !!def && d.session.held_on < def;
+    renderDayStrip();
+    renderBackNote(deep);
     $("clsTitle").textContent = d["class"].name;
     $("clsDate").textContent = i18n.fmtDate(d.session.held_on, true) +
       (behind ? " · " + T("lastHeld") : "") +
@@ -287,6 +405,14 @@
               esc(ar ? REASONS[reasonIdx][2] : REASONS[reasonIdx][1]) + '</span>' : "") +
           flag +
           (isAbsent(s.state) ? ' <span class="pill mute"><i></i>' + esc(T("carries")) + '</span>' : "") +
+          /* Marked on a later day than the class it belongs to. Now that the
+             register can open any day, "present on the 16th" may have been
+             typed on the 26th, and a record that does not say so implies
+             somebody stood in the room with a clipboard. Muted, because it
+             is context rather than a warning — filling a gap in late is the
+             whole point of being able to reach the day. */
+          (s.marked_at && s.marked_at > d.session.held_on
+            ? ' <span class="pill mute"><i></i>' + esc(T("lateMark")) + '</span>' : "") +
           (s.recited ? ' <span class="pill ok"><i></i>' + esc(T("recited")) + '</span>' : "") +
         '</span></button>' +
         // Word labels under the icons. "L" meant nothing to anyone and meant
@@ -330,7 +456,12 @@
       // Also hidden when the day has not arrived: the database would only
       // refuse it. Homework stays available, because setting it in advance is
       // the whole reason for opening a future day early.
-      $("allPresent").hidden = ahead;
+      /* Also hidden on a day reached from the strip. It loops attendance
+         over every enrolled child, and on a register from six weeks ago it
+         would mark twelve of them present who may never have been in the
+         room. The ordinary catch-up — Saturday morning, Friday's register —
+         keeps it, because that day is not `deep`. */
+      $("allPresent").hidden = ahead || deep;
     }
 
     // "3 of 8 not yet marked" — Tarek asked for this up top and very visible
@@ -654,6 +785,11 @@
       s.name
     ).then(function (r) {
       if (r && r.flags) s.flags = r.flags;
+      /* The day this was typed, from the server — the browser's own clock is
+         the device's, and the school's date is what decides whether a mark
+         counts as filled in later. Without this the marker only appears
+         after a refresh, which is to say not when it is being earned. */
+      if (r && r.marked_at) s.marked_at = r.marked_at;
       renderDay();
     }).catch(function (e) { s.state = was; s.reason = wasReason; renderDay(); fail(e); });
   }

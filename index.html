@@ -204,9 +204,21 @@
   </div>
   <div class="ctx"><h1 id="clsTitle">—</h1><div class="sub" id="clsDate">—</div></div>
   <div class="pad">
+    <!-- The class days, newest first, each carrying whether it was ever
+         logged. A strip rather than a month grid: the school meets twice a
+         week, so a month is thirty cells of which eight mean anything, and
+         this is read with a thumb in a classroom. It is always visible
+         rather than hidden behind the date, because a volunteer teacher does
+         not tap grey text to find out it was a button. -->
+    <div class="daystrip" id="dayStrip" hidden></div>
     <div id="saveBar"></div>
     <!-- Shown only when the register on screen is for a day still ahead. -->
     <div class="aheadnote" id="aheadNote" hidden></div>
+    <!-- And when it is for a day deliberately chosen out of the past. Not a
+         dialog: a standing line, because the mistake to design against is a
+         teacher marking today's register against the 16th, and the defence
+         for that is orientation that does not go away. -->
+    <div class="backnote" id="backNote" hidden></div>
     <!-- "3 of 8 still to go" is the most useful thing on the screen and it
          used to scroll away the moment you started working. It now sticks. -->
     <div id="doneBar" class="sticky"></div>
