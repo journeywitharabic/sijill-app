@@ -27,6 +27,14 @@
     return decodeURIComponent(m ? m[1] : h);
   }
 
+  /* An adult reads their own page. Everything the parent wording assumes
+     — "your child", a first name, ClassDojo — is wrong for a man in his
+     forties looking at his own hifdh, and "Abu Yusuf" split on a space
+     gives "Abu", which is not a name at all. */
+  function adult(c) { return !!(c && c.is_adult); }
+  function who(c) { return adult(c) ? c.name : String(c.name || "").split(" ")[0]; }
+  function tc(c, key) { return adult(c) ? t(key + "Self") : t(key); }
+
   function oops(title, body) {
     $("oopsTitle").textContent = title;
     $("oopsBody").textContent = body;
@@ -67,12 +75,15 @@
       dueOn:"to be ready for {d}",
       noticeSchool:"From the school", noticeClass:"From the class",
       noticeTeacher:"From your child’s teacher",
+      noticeTeacherSelf:"From your teacher",
       noteBy:"{t} · {d}",
       markedLate:"attendance filled in on {d}",
       contact:"Any question about homework or attendance — message the school on ClassDojo.",
+      contactSelf:"Any question about your homework — speak to your teacher at the halaqa.",
       tajweed:"Tajwīd", adab:"Adab", tr_up:"moving forward", tr_flat:"standing still", tr_down:"needs attention", tr_away:"not enough to say", trHelp:"over the last few classes", wholeSurah:"whole surah", ayat:"ayat", notMarked:"not marked",
       noneRecorded:"Here — nothing recorded", guideLink:"A short guide to this page",
-      notAssessed:"We haven't done this year's review with your child yet. Once their teacher has been through it — usually in the first few weeks — their progress appears here." 
+      notAssessed:"We haven't done this year's review with your child yet. Once their teacher has been through it — usually in the first few weeks — their progress appears here.",
+      notAssessedSelf:"Your memorization has not been written down yet. Once you have been through it with your teacher it appears here." 
     },
     ar: {
       classNotes:"فِي الحَلْقَة", cnBy:"مَعَ {t}",
@@ -99,6 +110,9 @@
       noteBy:"{t} · {d}",
       markedLate:"سُجِّلَ الحُضُورُ بِتَارِيخِ {d}",
       contact:"لِأَيِّ سُؤَالٍ حَوْلَ الوَاجِبِ أَوِ الحُضُور، رَاسِلِ المَدْرَسَةَ عَبْرَ ClassDojo.",
+      contactSelf:"لِأَيِّ سُؤَالٍ حَوْلَ وَاجِبِك، كَلِّمْ مُعَلِّمَكَ فِي الحَلْقَة.",
+      noticeTeacherSelf:"مِنْ مُعَلِّمِك",
+      notAssessedSelf:"لَمْ يُسَجَّلْ حِفْظُكَ بَعْد. وَإِذَا رَاجَعْتَهُ مَعَ مُعَلِّمِكَ ظَهَرَ هُنَا.",
       tajweed:"التَّجْوِيد", adab:"الأَدَب", tr_up:"يَتَقَدَّم", tr_flat:"ثَابِت", tr_down:"يَحْتَاجُ انْتِبَاهًا", tr_away:"لَا يُمْكِنُ الحُكْمُ بَعْد", trHelp:"خِلَالَ الحِصَصِ الأَخِيرَة", wholeSurah:"السُّورَةُ كَامِلَة", ayat:"آيَة", notMarked:"لَمْ يُسَجَّل",
       noneRecorded:"حَاضِر — لَمْ يُسَجَّلْ شَيْء", guideLink:"دَلِيلٌ مُخْتَصَرٌ لِهَذِهِ الصَّفْحَة",
       notAssessed:"لَمْ نُجْرِ جَرْدَ هَذَا العَامِ مَعَ اِبْنِكُمْ بَعْد. وَحَالَمَا يُنْجِزُهُ مُعَلِّمُهُ — عَادَةً فِي الأَسَابِيعِ الأُولَى — سَيَظْهَرُ تَقَدُّمُهُ هُنَا." 
@@ -207,7 +221,7 @@
        cannot tell last Sunday's from September's. */
     var tn = c.teacher_notes || [];
     if (tn.length) {
-      h += '<div class="pcard notice"><h2>' + esc(t("noticeTeacher")) + '</h2>' +
+      h += '<div class="pcard notice"><h2>' + esc(tc(c, "noticeTeacher")) + '</h2>' +
         tn.map(function (n) {
           return '<div class="line"><span>' + esc(n.body) + '</span>' +
             '<div class="nby">' + esc(t("noteBy", {
@@ -314,12 +328,12 @@
       /* Most of the school has not been through the annual audit yet, so this
          is the normal state for a lot of families in September — not an error
          and not something to hide. Saying nothing here just looks broken. */
-      h += '<div class="pcard"><h2>' + esc(t("where", { n: c.name.split(" ")[0] })) + '</h2>' +
-        '<div class="note">' + esc(t("notAssessed")) + '</div></div>';
+      h += '<div class="pcard"><h2>' + esc(t("where", { n: who(c) })) + '</h2>' +
+        '<div class="note">' + esc(tc(c, "notAssessed")) + '</div></div>';
     } else {
       var pct = p.pages_in_juz ? Math.round(p.pages_solid / p.pages_in_juz * 100) : 0;
       var pctP = p.pages_in_juz ? Math.round(p.pages_partial / p.pages_in_juz * 100) : 0;
-      h += '<div class="pcard"><h2>' + esc(t("where", { n: c.name.split(" ")[0] })) + '</h2>' +
+      h += '<div class="pcard"><h2>' + esc(t("where", { n: who(c) })) + '</h2>' +
         '<div class="kv"><span>' + esc(t("pagesSolid")) + '</span><b>' + p.pages_solid +
           ' <span style="font-weight:400;color:var(--ink-3)">' +
           esc(t("ofPages", { n: p.pages_in_juz })) + '</span></b></div>' +
@@ -336,7 +350,7 @@
         '<span class="bar2" style="width:100%;height:10px"><i class="a" style="width:' + pct + '%"></i>' +
           '<i class="r" style="width:' + pctP + '%"></i></span>' +
         '<div style="height:11px"></div><div class="note">' +
-          esc(t("scope", { j: p.juz, n: c.name.split(" ")[0] })) + '</div></div>';
+          esc(t("scope", { j: p.juz, n: who(c) })) + '</div></div>';
     }
 
     // what to help with
@@ -400,13 +414,17 @@
           late + adab + notes + '</div>';
       }).join("") : '<div class="empty" style="color:var(--ink-3);font-size:13.5px">' +
                      esc(t("noClasses")) + '</div>') +
-      '</div><div style="height:10px"></div><div class="note">' + esc(t("contact")) +
+      '</div><div style="height:10px"></div><div class="note">' + esc(tc(c, "contact")) +
       /* The guide goes out once, as a PDF attached to one message, and is lost
          by the second week. The page it explains is the one place a parent
          reliably comes back to, so it carries its own link to it — in the
          language they are reading, not the language the file was named in. */
-      ' <a href="' + (i18n.isAr() ? "parent-guide-ar.html" : "parent-guide.html") +
-      '" target="_blank" rel="noopener">' + esc(t("guideLink")) + '</a></div></div>';
+      /* ...but not for an adult: the guide it points at is written for a
+         parent reading about their child, start to finish. */
+      (adult(c) ? '' :
+        ' <a href="' + (i18n.isAr() ? "parent-guide-ar.html" : "parent-guide.html") +
+        '" target="_blank" rel="noopener">' + esc(t("guideLink")) + '</a>') +
+      '</div></div>';
 
     $("body").innerHTML = h;
   }

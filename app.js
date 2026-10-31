@@ -934,6 +934,13 @@
      with a full year behind them is a large read on a classroom signal. */
   var HIST_STEPS = [4, 12, 30, 200];
   function histN() { return HIST_STEPS[S.histStep || 0]; }
+  /* Ask for ONE more than we show. "Fewer rows than asked for" is the
+     signal that there is no more history — but it goes silent exactly
+     when the count lands on a step: twelve rows asked, twelve returned,
+     and the button offers a thirteenth that does not exist. Asking for
+     thirteen and rendering twelve makes the signal true at the boundary
+     too. Found by the suite on a date when a child had exactly 12. */
+  function histAsk() { return histN() + 1; }
   function histMore() {
     if ((S.histStep || 0) >= HIST_STEPS.length - 1) return;
     S.histStep = (S.histStep || 0) + 1;
@@ -959,7 +966,7 @@
     // The database has been able to list, edit and delete them since day one;
     // the app simply never asked, which is why Tarek could not find them.
     return Promise.all([
-      api.read("api_student", { p_student: s.id, p_history: histN() }),
+      api.read("api_student", { p_student: s.id, p_history: histAsk() }),
       api.read("api_notes", { p_student: s.id }).catch(function () { return []; })
     ]).then(function (r) {
       S.studentData = r[0];
@@ -1319,8 +1326,8 @@
 
     // recent classes
     html += '<div class="grp"><div class="grph"><h2>' + esc(T("recentCls")) + '</h2>' +
-            '<span class="n">' + (d.history || []).length + '</span></div><div class="card">' +
-            ((d.history || []).length ? d.history.map(function (h) {
+            '<span class="n">' + Math.min((d.history || []).length, histN()) + '</span></div><div class="card">' +
+            ((d.history || []).length ? d.history.slice(0, histN()).map(function (h) {
               /* Each recitation is now its own line with a way back.
                  Marking something good clears the homework and the item
                  leaves the list, so a mis-tap used to be unrecoverable
@@ -1432,7 +1439,7 @@
                rows than asked for once it has run out, which is the honest
                signal — a button that keeps offering a year that is not there
                is a button that stops being believed. */
-            ((d.history || []).length >= histN() && (S.histStep || 0) < HIST_STEPS.length - 1
+            ((d.history || []).length > histN() && (S.histStep || 0) < HIST_STEPS.length - 1
               ? '<div class="actionrow" style="margin-top:8px">' +
                 '<button class="btn ghost sm" id="histMore">' + esc(T("histMore")) + '</button></div>'
               : '') + '</div>';
@@ -1685,7 +1692,7 @@
         p_note: null,
         p_tajweed: outcome === "not_prepared" ? null : tj
       }, S.student.name).then(function () {
-        return api.read("api_student", { p_student: S.student.id, p_history: histN() });
+        return api.read("api_student", { p_student: S.student.id, p_history: histAsk() });
       }).then(function (d) { S.studentData = d; renderStudent(); }).catch(fail);
     }
 
@@ -1739,7 +1746,7 @@
         p_note: note || null
       }, S.student.name).then(function () {
         return Promise.all([
-          api.read("api_student", { p_student: S.student.id, p_history: histN() }),
+          api.read("api_student", { p_student: S.student.id, p_history: histAsk() }),
           api.read("api_class_day", { p_class: S.clsId, p_on: S.dayData.session.held_on })
         ]);
       }).then(function (r) {
@@ -2050,7 +2057,7 @@
 
   function reloadStudent() {
     return Promise.all([
-      api.read("api_student", { p_student: S.student.id, p_history: histN() }),
+      api.read("api_student", { p_student: S.student.id, p_history: histAsk() }),
       api.read("api_notes", { p_student: S.student.id }).catch(function () { return S.notes || []; })
     ]).then(function (r) { S.studentData = r[0]; S.notes = r[1] || []; renderStudent(); });
   }

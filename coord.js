@@ -864,9 +864,15 @@
           return '<tr' + (c.active ? '' : ' style="opacity:.55"') + '><td><b>' + esc(c.name) + '</b>' +
             (c.active ? '' : ' <span class="pill mute"><i></i>' +
                              esc(ar ? "مُؤَرْشَفَة" : "archived") + '</span>') + '</td>' +
+            /* This was a two-way ternary — friday, else الأَحَد — so the
+               day a class met on a Saturday it was labelled Sunday in
+               Arabic and nobody would have questioned it. Through the
+               dictionary now, like every other string. */
             '<td>' + esc((c.meets || []).map(function (m) {
-                return ar ? (m === "friday" ? "الجُمُعَة" : "الأَحَد")
-                          : (m.charAt(0).toUpperCase() + m.slice(1));
+                /* i18n.t returns the KEY when it has no entry, which is
+                   truthy, so `T(k) || fallback` never falls back. Compare. */
+                var k = "dLong_" + m, v = T(k);
+                return v === k ? (m.charAt(0).toUpperCase() + m.slice(1)) : v;
               }).join(" · ")) + '</td>' +
             '<td class="n">' + c.students + '</td><td class="n">' + c.sessions + '</td>' +
             '<td style="text-align:right">' +
