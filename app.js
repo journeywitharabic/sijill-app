@@ -1101,7 +1101,12 @@
        signed-in teacher has a learner record of his own — in which case
        the adult session can be minted on the spot. Waiting for him to find
        a link from three weeks ago is not a feature. */
-    var has = !!api.getAlt() || (!S.self && !!(S.me && S.me.own_record));
+    /* Only a device that has opened his own link. The link is the only
+       per-person secret in Sijill: the passphrase is shared by ten people
+       and the name is picked from a list afterwards, which is a signature
+       and not a login. Migration 54 briefly treated it as one, and that
+       handed anybody a button onto anybody else's hifdh. */
+    var has = !!api.getAlt();
     [["hatCls", !S.self], ["hatStu", S.self]].forEach(function (x) {
       var b = $(x[0]);
       if (!b) return;
@@ -1115,15 +1120,7 @@
           S.recovered = false;
           startup();
         };
-        if (api.getAlt()) { api.swapHats(); return go(); }
-        b.textContent = "…";
-        api.rpc("api_self_from_teacher", { p_token: api.getToken() })
-          .then(function (r) {
-            if (!r || !r.ok) { renderHats(); return; }
-            api.pushAlt(r.token);
-            go();
-          })
-          .catch(function (e) { toast(e.message || String(e)); renderHats(); });
+        if (api.swapHats()) go();
       };
     });
   }
@@ -1398,6 +1395,15 @@
         '<p>' + esc(T("startAuditBody")) + '</p>' +
         '<div class="actionrow" style="margin-top:8px">' +
         '<button class="btn sm" id="startAuditGo">' + esc(T("fullMushaf")) + '</button></div></div>';
+    }
+
+    /* He has a record of his own and this device has no session for it.
+       Rather than showing nothing and leaving him hunting for a button
+       somebody told him about. */
+    if (!S.self && S.me && S.me.own_record && !api.getAlt() &&
+        d.student && d.student.id === S.me.own_record) {
+      html += '<div class="note" style="margin-bottom:16px">' +
+              esc(T("ownRecordHint")) + '</div>';
     }
 
     html += (S.readOnly && !S.self ? '<div class="note" style="margin-bottom:16px">Viewing from the coordinator ' +
