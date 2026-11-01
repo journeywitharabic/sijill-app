@@ -1305,7 +1305,19 @@
 
   function manageCalendar(body) {
     var ar = i18n.isAr();
-    if (!C.calMonth) C.calMonth = monthKey(new Date());
+    /* The month to open on is the SCHOOL's, not the phone's. At ten past
+       eight on a Toronto evening the last day of a month, the device is
+       already into the next one while school_today() is still yesterday —
+       so the calendar opened on November, and "This month", which has
+       always used the server's date, took you back to October. Both buttons
+       were right; they were answering different questions.
+       The device month is only a guess for the FIRST fetch, so there is
+       something to draw; the moment the server's today arrives, a guess
+       that disagrees with it is corrected and refetched. That costs one
+       extra round trip on the few hours a month where they differ, and
+       nothing at all the rest of the time. */
+    var guessed = false;
+    if (!C.calMonth) { C.calMonth = monthKey(new Date()); guessed = true; }
     var mb = monthBounds(C.calMonth);
     Promise.all([api.read("api_classes"), api.read("api_closures"),
                  api.read("api_calendar", { p_from: mb[0], p_to: mb[1] }),
@@ -1313,12 +1325,19 @@
       if (gone(body)) return;   // a newer render replaced this one
       var cs = res[0], closed = res[1] || [], cal = res[2] || {}, chase = res[3] || [];
       C.calToday = cal.today || null;
+      if (guessed && cal.today && cal.today.slice(0, 7) !== C.calMonth) {
+        C.calMonth = cal.today.slice(0, 7);
+        renderManage();
+        return;
+      }
       /* Closing a day refreshes this screen so the table below updates, and
          that used to wipe the date, class and reason the coordinator had just
          typed — so pressing Reopen straight afterwards reopened TODAY rather
          than the day they were working on. The form remembers itself. */
       var form = C.cal || {};
-      var today = form.date || new Date().toISOString().slice(0, 10);
+      /* Same correction: a date box that defaults to tomorrow because the
+         phone has rolled over is how a class gets closed on the wrong day. */
+      var today = form.date || cal.today || new Date().toISOString().slice(0, 10);
       /* The month. Cells carry a dot per class rather than a single state:
          Juz Amma logged and Hizb 54 untouched is the ordinary Saturday, and
          rolling that into one colour would lose the only fact worth having. */
