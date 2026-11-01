@@ -14,6 +14,13 @@
      is a 144-bit code the server issued, it can be revoked from the SQL
      editor at any time, and it dies when the school passphrase is rotated.  */
   var TOKEN_KEY = "sijill.token";
+  /* Most of the men in the adults' halaqa also teach the children, so one
+     phone holds two sessions: the staff one from the passphrase, and the
+     adult one from his own link. They are different sessions with different
+     rights — a teacher session cannot reach his own adult record, because
+     he is not marked as teaching adults, and it should not be able to.
+     So the device keeps both and swaps which is in use. */
+  var ALT_KEY = "sijill.alt";
 
   function getToken() {
     try { return localStorage.getItem(TOKEN_KEY) || null; } catch (e) { return MEM.token; }
@@ -23,7 +30,19 @@
     try { t ? localStorage.setItem(TOKEN_KEY, t) : localStorage.removeItem(TOKEN_KEY); }
     catch (e) { /* private browsing — fall back to memory for this visit */ }
   }
-  var MEM = { token: null };
+  var MEM = { token: null, alt: null };
+
+  function getAlt() {
+    try { return localStorage.getItem(ALT_KEY) || null; } catch (e) { return MEM.alt; }
+  }
+  function setAlt(t) {
+    MEM.alt = t;
+    try { t ? localStorage.setItem(ALT_KEY, t) : localStorage.removeItem(ALT_KEY); }
+    catch (e) { /* private browsing */ }
+  }
+  /* Put the session in hand aside and bring the other one forward. */
+  function pushAlt(t) { var cur = getToken(); if (cur && cur !== t) setAlt(cur); setToken(t); }
+  function swapHats() { var a = getAlt(); if (!a) return false; var c = getToken(); setToken(a); setAlt(c); return true; }
 
   /* WHICH HEADERS. This looks fussy and is not.
      Supabase has two generations of public key:
@@ -153,6 +172,7 @@
   window.api = {
     rpc: rpc, read: read, write: write,
     getToken: getToken, setToken: setToken,
+    getAlt: getAlt, setAlt: setAlt, pushAlt: pushAlt, swapHats: swapHats,
     isSignedOut: isSignedOut,
     onSaveState: onSaveState, retryFailed: retryFailed,
     failed: function () { return FAILED.slice(); },

@@ -176,6 +176,7 @@
         S.clsId = S.classes.length ? S.classes[0].id : null;
       }
       sel.value = S.clsId;
+      renderHats();
       return refreshDay();
     }).catch(fail);
   }
@@ -219,8 +220,34 @@
     ]).then(function (r) {
       S.dayData = r[0]; S.day = r[0].session.held_on;
       S.days = r[1] || [];
+      S.recovered = false;
       renderDay();
-    }).catch(fail);
+    }).catch(function (e) {
+      if (api.isSignedOut(e)) return fail(e);
+      /* Until round 40 every class was visible to every teacher, so the only
+         way this read could fail was the network, and `fail` toasting and
+         walking away was survivable. Two things changed: a class can now be
+         invisible to the caller, and a session can LOSE coordinator in the
+         middle of being used (picking a different teacher's name drops it).
+         Either one turns this read into a refusal, and a toast that fades
+         leaves a spinner turning on a register that will never arrive.
+         Tarek hit exactly that: the halaqa open on screen, the picker
+         already moved on to a class he could see, and a spinner between
+         them. */
+      var msg = (e && e.message) || String(e);
+      if (/not your class|that door is for teachers/i.test(msg) && !S.recovered) {
+        // the class list this screen was drawn from is out of date; rebuild
+        // it from the server and land on something this caller can open.
+        S.recovered = true;            // once only, so a refusal cannot loop
+        S.clsId = null; S.day = null; S.dayData = null; S.days = [];
+        return openClasses();
+      }
+      $("slist").innerHTML = '<div class="empty">' + esc(T("loadFailed")) +
+        ' <button class="btn ghost sm" id="dayRetry">' + esc(T("retry")) + '</button></div>';
+      var rb = $("dayRetry");
+      if (rb) rb.onclick = function () { S.recovered = false; refreshDay(); };
+      toast(msg);
+    });
   }
 
   /* Which day the register opens on by itself: today if today is a class day,
@@ -508,7 +535,13 @@
     // notice above already says so — the counter would just be noise. A
     // CLOSED day is usually in the future too, and its own message is
     // already in this element, so leave that one alone.
-    if (d.session.status !== "cancelled")
+    /* The halaqa is loosely tracked: nobody is chased for a register, so a
+       counter saying ten of ten adults are "not yet complete" is both wrong
+       and nagging. The class says so itself now (migration 47), so the bar
+       and the chase lines come off rather than being argued with. */
+    var loose = !!(d["class"] && d["class"].attendance_optional);
+    if (loose) $("doneBar").innerHTML = "";
+    else if (d.session.status !== "cancelled")
     $("doneBar").innerHTML = ahead ? "" : (tot && done >= tot)
       ? '<div class="donebar all"><span class="big">✓</span><div>' + esc(T("doneAll")) +
         ' <span style="font-weight:400;color:var(--ink-2)">· ' + T("doneAllSub", { n: tot }) + '</span></div></div>'
@@ -567,7 +600,11 @@
     var bar = $("gapBar");
     if (!bar) return;
     var d = S.dayData, sess = d && d.session;
-    if (!sess || sess.status === "cancelled" || ahead || S.readOnly) {
+    /* ...and not on a loosely-tracked class. "10 still need attendance" on
+       the halaqa is chasing grown men for a register nobody asked them to
+       keep, which is the opposite of what attendance_optional means. */
+    var loose = !!(d && d["class"] && d["class"].attendance_optional);
+    if (!sess || sess.status === "cancelled" || ahead || S.readOnly || loose) {
       bar.hidden = true; S.gapFilter = null; return;
     }
     var g = gapCounts(d);
@@ -1025,6 +1062,26 @@
      that need a second version get one. */
   function TS(key) { return S.self ? T(key + "Self") : T(key); }
 
+  /* The switch between the two sessions a device can hold. Shown only when
+     it holds both, which means only to somebody who both teaches here and
+     sits in the halaqa. */
+  function renderHats() {
+    var has = !!api.getAlt();
+    [["hatCls", !S.self], ["hatStu", S.self]].forEach(function (x) {
+      var b = $(x[0]);
+      if (!b) return;
+      b.hidden = !has;
+      if (!has) return;
+      b.textContent = S.self ? T("hatTeaching") : T("hatYou");
+      b.onclick = function () {
+        if (!api.swapHats()) return;
+        S.self = false; S.student = null; S.studentData = null;
+        S.dayData = null; S.clsId = null; S.day = null; S.days = [];
+        startup();
+      };
+    });
+  }
+
   function renderNav() {
     var l = classList(), i = stuIndex(), ar = i18n.isAr();
     var can = !S.readOnly && !S.self && i >= 0 && l.length > 1;
@@ -1182,6 +1239,10 @@
     var pv = $("pvOpen");
     if (pv) {
       pv.hidden = !!S.readOnly || !!S.self;   // an adult IS the family page
+      /* "See what the family sees" is the right words for a child and the
+         wrong ones for a grown man — there is no family on his page, it is
+         his own. */
+      if (d.student.is_adult) pv.textContent = T("pvOpenAdult");
       pv.onclick = function () { openFamilyPreview(d.student.id, d.student.name); };
     }
     var f = d.flags || {};
@@ -2697,7 +2758,9 @@
       history.replaceState(null, "", location.pathname + location.search);
       return api.rpc("api_self_sign_in", { p_link: link }).then(function (r) {
         if (!r || !r.ok) { show("v-gate"); return; }
-        api.setToken(r.token);
+        /* Keep the staff session if this device already had one. He does not
+           stop being a teacher by opening his own link. */
+        api.pushAlt(r.token);
         return afterWhoami();
       }).catch(function () { show("v-gate"); });
     }
@@ -2732,8 +2795,18 @@
     $("stuBody").innerHTML = '<div class="loading"><span class="spin"></span></div>';
     if ($("backCls")) $("backCls").hidden = true;
     renderNav();
+    renderHats();
     reloadStudent();
   }
+
+  /* Pasting your link into a tab that already has Sijill open changes only
+     the fragment, which the browser treats as the same document: startup()
+     never runs again and nothing happens. Opening it from WhatsApp is a
+     fresh load and works; opening it from the app you already had open did
+     not, which is exactly how somebody tries it the first time. */
+  window.addEventListener("hashchange", function () {
+    if (/(?:^|#|&)link=/.test(location.hash || "")) startup();
+  });
 
   window.SijillApp   = { S: S, startup: startup, openClasses: openClasses,
                        refreshDay: refreshDay,
