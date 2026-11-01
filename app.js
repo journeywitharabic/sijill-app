@@ -131,7 +131,27 @@
       b.onclick = function () {
         b.innerHTML = '<span class="spin"></span>';
         api.rpc("api_set_teacher", { p_token: api.getToken(), p_teacher: b.dataset.id })
-          .then(function (me) { S.me = me; openClasses(); })
+          .then(function (me) {
+            /* A different person is now holding this phone. They may teach
+               different classes, and since round 49 they may also have just
+               lost coordinator. Everything the last person was looking at
+               has to go — especially S.day, which is a DATE: carried from a
+               Saturday halaqa into a class that meets on Fridays it asks
+               the server for a day that class never had, and the register
+               dead-ends on "that did not load" under the previous
+               teacher's heading. */
+            S.me = me;
+            /* And the adult session this device was holding goes with the
+               last person. It is somebody's own hifdh record: leaving it
+               behind the "You" button for whoever picks their name next is
+               the same mistake as letting coordinator outlive the
+               coordinator, and it would be a worse one. */
+            api.setAlt(null);
+            S.clsId = null; S.day = null; S.dayData = null; S.days = [];
+            S.gapFilter = null; S.student = null; S.studentData = null;
+            S.recovered = false;
+            openClasses();
+          })
           .catch(function (e) { $("whoErr").textContent = e.message; $("whoErr").hidden = false; });
       };
     });
@@ -235,7 +255,18 @@
          already moved on to a class he could see, and a spinner between
          them. */
       var msg = (e && e.message) || String(e);
-      if (/not your class|that door is for teachers/i.test(msg) && !S.recovered) {
+      /* A day the class does not have. Not an error worth showing anybody:
+         forget the day and open the class on its own default. */
+      if ((e && e.code) === "22023" && /no class for/i.test(msg) && S.day) {
+         S.day = null;
+         return refreshDay();
+      }
+      /* Matched on the SQLSTATE, not on the words. 42501 reaching here means
+         the session is valid and may not see THIS — which, now that a class
+         can be invisible and coordinator can be dropped mid-session, is a
+         thing to recover from rather than report. Matching the message text
+         missed it, because the message is whatever Postgres said. */
+      if ((e && e.code) === "42501" && !S.recovered) {
         // the class list this screen was drawn from is out of date; rebuild
         // it from the server and land on something this caller can open.
         S.recovered = true;            // once only, so a refusal cannot loop
@@ -1066,7 +1097,11 @@
      it holds both, which means only to somebody who both teaches here and
      sits in the halaqa. */
   function renderHats() {
-    var has = !!api.getAlt();
+    /* Shown when the device already holds both sessions, OR when the
+       signed-in teacher has a learner record of his own — in which case
+       the adult session can be minted on the spot. Waiting for him to find
+       a link from three weeks ago is not a feature. */
+    var has = !!api.getAlt() || (!S.self && !!(S.me && S.me.own_record));
     [["hatCls", !S.self], ["hatStu", S.self]].forEach(function (x) {
       var b = $(x[0]);
       if (!b) return;
@@ -1074,10 +1109,21 @@
       if (!has) return;
       b.textContent = S.self ? T("hatTeaching") : T("hatYou");
       b.onclick = function () {
-        if (!api.swapHats()) return;
-        S.self = false; S.student = null; S.studentData = null;
-        S.dayData = null; S.clsId = null; S.day = null; S.days = [];
-        startup();
+        var go = function () {
+          S.self = false; S.student = null; S.studentData = null;
+          S.dayData = null; S.clsId = null; S.day = null; S.days = [];
+          S.recovered = false;
+          startup();
+        };
+        if (api.getAlt()) { api.swapHats(); return go(); }
+        b.textContent = "…";
+        api.rpc("api_self_from_teacher", { p_token: api.getToken() })
+          .then(function (r) {
+            if (!r || !r.ok) { renderHats(); return; }
+            api.pushAlt(r.token);
+            go();
+          })
+          .catch(function (e) { toast(e.message || String(e)); renderHats(); });
       };
     });
   }
