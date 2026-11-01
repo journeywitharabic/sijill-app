@@ -9,7 +9,12 @@
     me: null,                     // {teacher_id, teacher, coordinator}
     classes: [], clsId: null, day: null, dayData: null,
     student: null, studentData: null,
-    undo: null, ctab: "dash"
+    undo: null, ctab: "dash",
+    /* An adult looking at their own record. Not a second app: the same
+       student sheet, with the things only a teacher may do taken off it.
+       The boundary is the twenty-odd api_ functions, not this flag — this
+       flag is so the page is not confusing. */
+    self: false
   };
 
   /* ------------------------------------------------------------- plumbing */
@@ -387,6 +392,12 @@
       var flag = s.flags && s.flags.kind
         ? '<span class="pill ' + s.flags.kind + '"><i></i>' + esc(s.flags.message) + '</span>' : "";
       var tr = trendHtml(s.trend, false);
+      /* Seven of the men in the halaqa also teach the children, so a teacher
+         can be looking at his own name in his own register. Say so, and
+         leave his grade buttons off — migration 49 refuses a teacher
+         recording his own recitation, and offering the button first and
+         failing second is a worse way of saying no. */
+      var isMe = S.dayData && S.dayData.me && S.dayData.me === s.id;
       // "Heard it, all fine" straight from the list. This is the whole point
       /* The "✓ heard" button used to sit here: one tap recorded every open
          item as good with full tajwīd. It is gone as of round 32.
@@ -417,7 +428,8 @@
         // name — which broke the tests and would have broken anything else
         // that needed it.
         '<button class="nmb"><span class="nm">' + tr +
-          '<span class="nmtext">' + esc(s.name) + '</span>' +
+          '<span class="nmtext">' + esc(s.name) +
+            (isMe ? '<span class="youtag">' + esc(T("youTag")) + '</span>' : '') + '</span>' +
           '<span class="chev" aria-hidden="true">›</span></span><span class="meta">' +
           openMark +
           (s.due ? s.due + " " + T("dueback") + " · " : "") +
@@ -524,6 +536,7 @@
     renderClassNote(ahead);
     renderNotices(ahead);
     renderGaps(ahead);
+    renderSince();
     renderJoined();
   }
 
@@ -599,6 +612,27 @@
      disagree the screen used to say nothing at all — so a coordinator who
      added a child on the Monday saw 12 in the picker, 11 in the list, and
      reasonably concluded the app had lost one. */
+  /* Children never edit their own records, so a register has never had to
+     tell a teacher what happened while he was away. With fifteen men keeping
+     their own audits between Saturdays, walking in without this is walking
+     in blind. Empty on a children's class, and the server returns nothing
+     for one, so this costs them not even a line. */
+  function renderSince() {
+    var bar = $("sinceBar");
+    if (!bar) return;
+    var d = S.dayData, rows = (d && d.since_last) || [];
+    bar.hidden = !rows.length;
+    if (!rows.length) return;
+    var WHAT = { hifdh_state: "sinceAudit", homework: "sinceHw", notes: "sinceNote" };
+    bar.className = "sincebar";
+    bar.innerHTML = '<div class="ct">' + esc(T("sinceLast")) + '</div>' +
+      rows.slice(0, 6).map(function (r) {
+        var what = T(WHAT[r.what] || "sinceOther");
+        return '<p><b class="lat">' + esc(r.who) + '</b> ' + esc(what) +
+               (r.surah ? ' \u00b7 <span class="lat">' + esc(r.surah) + '</span>' : '') + '</p>';
+      }).join("");
+  }
+
   function renderJoined() {
     var bar = $("joinedBar");
     if (!bar) return;
@@ -984,9 +1018,16 @@
     for (var i = 0; i < l.length; i++) if (l[i].id === id) return i;
     return -1;
   }
+  /* The student sheet was written for a teacher reading about a child. An
+     adult is reading about himself, and four lines on it say so the wrong
+     way round — "due for grading", "the child was present", "the family
+     reads these". Same trick as the family page: one chooser, and the keys
+     that need a second version get one. */
+  function TS(key) { return S.self ? T(key + "Self") : T(key); }
+
   function renderNav() {
     var l = classList(), i = stuIndex(), ar = i18n.isAr();
-    var can = !S.readOnly && i >= 0 && l.length > 1;
+    var can = !S.readOnly && !S.self && i >= 0 && l.length > 1;
     $("stuPos").hidden = !can;
     $("stuNav").hidden = !can;
     if (!can) return;
@@ -1036,6 +1077,7 @@
   };
 
   $("backCls").onclick = function () {
+    if (S.self) return;           // nowhere to go back to: this is the page
     if (S.readOnly) { S.readOnly = false; return window.SijillCoord.open(); }
     show("v-class"); refreshDay();
   };
@@ -1139,7 +1181,7 @@
        point is the records rather than the family's view of them. */
     var pv = $("pvOpen");
     if (pv) {
-      pv.hidden = !!S.readOnly;
+      pv.hidden = !!S.readOnly || !!S.self;   // an adult IS the family page
       pv.onclick = function () { openFamilyPreview(d.student.id, d.student.name); };
     }
     var f = d.flags || {};
@@ -1196,12 +1238,12 @@
        nobody got to hear the child — sometimes for weeks. Naming a class day
        would be wrong in exactly the case that matters most. Each row carries
        its own date and goes amber once it is three weeks old. */
-    html += '<div class="grp sect"><div class="grph"><h2>' + esc(T("gDueGrade")) + '</h2>' +
+    html += '<div class="grp sect"><div class="grph"><h2>' + esc(TS("gDueGrade")) + '</h2>' +
             (todayRev.length + todayNew.length
               ? '<span class="n">' + (todayRev.length + todayNew.length) + '</span>' : '') +
             '</div>';
     if (!todayRev.length && !todayNew.length) {
-      html += '<div class="card"><div class="empty">' + esc(T("gNothingDue")) + '</div></div>';
+      html += '<div class="card"><div class="empty">' + esc(TS("gNothingDue")) + '</div></div>';
     } else {
       /* The rule lives inside the group it applies to. The thresholds differ
          between the two now, so one line at the bottom of the screen would be
@@ -1233,7 +1275,25 @@
     }
     html += '</div>';
 
-    html += (S.readOnly ? '<div class="note" style="margin-bottom:16px">Viewing from the coordinator ' +
+    /* A man who has just opened his link for the first time sees an almost
+       empty page, because nothing about his twenty years of hifdh is in the
+       database yet. Entering it is the first thing he should do and the one
+       thing the page does not otherwise ask for. Shown only while there is
+       genuinely nothing recorded, so it disappears for good after the first
+       juz. */
+    /* Rotation alone is the signal. It lists every surah he has anything
+       recorded for, so empty means nothing is recorded — whereas history
+       fills up with class days the moment the halaqa has met once, which
+       made the first version of this card never appear. */
+    if (S.self && !(d.rotation || []).length) {
+      html += '<div class="sincebar" style="margin-bottom:14px">' +
+        '<div class="ct">' + esc(T("startAudit")) + '</div>' +
+        '<p>' + esc(T("startAuditBody")) + '</p>' +
+        '<div class="actionrow" style="margin-top:8px">' +
+        '<button class="btn sm" id="startAuditGo">' + esc(T("fullMushaf")) + '</button></div></div>';
+    }
+
+    html += (S.readOnly && !S.self ? '<div class="note" style="margin-bottom:16px">Viewing from the coordinator ' +
               'screen, so nothing here can be marked. Open the class to record a recitation.</div>'
             /* Stacked full width, not side by side. Position is the one
                separator left once colour is ruled out — and it cannot come
@@ -1248,7 +1308,7 @@
               '<button class="btn ghost addhw-b rev" id="addReview">' +
                 '<span class="ic">\u25a4</span><span class="t"><b>' + esc(T("addReview")) +
                 '</b><small>' + esc(T("addReviewSub")) + '</small></span></button></div>' +
-              '<div class="note" style="margin-bottom:16px">' + T("markKey") + '</div>');
+              '<div class="note" style="margin-bottom:16px">' + TS("markKey") + '</div>');
 
     // what goes home tonight
     var hw = later;
@@ -1291,7 +1351,7 @@
                    the write, because a coordinator's session is a teacher's
                    session. A screen that promises it cannot change anything
                    must not hand you a button that does. */
-                (S.readOnly ? '' :
+                (S.readOnly || S.self ? '' :
                   '<button class="btn ghost sm hw-now" data-hw="' + esc(h.homework_id) + '" title="' +
                   esc(T("gHearNowTip")) + '">' + esc(T("gHearNow")) + '</button>' +
                   '<button class="btn ghost sm hw-edit" data-hw="' + esc(h.homework_id) + '">' +
@@ -1319,7 +1379,7 @@
     // Adab for today's class. Optional, and placed after the recitation work
     // rather than among it: conduct is a judgement made at the end of a
     // lesson, not while a child is still reciting.
-    if (!S.readOnly && S.dayData && S.dayData.session) {
+    if (!S.readOnly && !S.self && S.dayData && S.dayData.session) {
       var me = (S.dayData.students || []).filter(function (x) { return x.id === S.student.id; })[0];
       html += adabCard(me && me.adab);
     }
@@ -1358,7 +1418,7 @@
                      ? '<span class="basel">' + esc(T("baselineSet")) + '</span>'
                    : r.outcome === "repeat" ? '<span class="basel rev">' + esc(T("baselineRev")) + '</span>'
                    : '') +
-                  (S.readOnly || !r.id ? "" :
+                  (S.readOnly || S.self || !r.id ? "" :
                     '<button class="undoRec" data-rec="' + esc(r.id) + '" data-what="' +
                     esc(r.name_en) + '">↶ ' + esc(T("undoMark")) + '</button>') +
                 '</span>';
@@ -1377,7 +1437,7 @@
                  Not offered in the coordinator's read-only view: there is no
                  register behind it to return to, and that journey belongs
                  with the coordinator's own calendar. */
-              var jump = !S.readOnly && h.class_id && h.status !== "cancelled";
+              var jump = !S.readOnly && !S.self && h.class_id && h.status !== "cancelled";
               return '<div class="irow" style="align-items:flex-start"><div class="lab" style="gap:4px">' +
                 '<span class="tr" style="font-size:13.5px">' +
                 /* A bordered control, not a coloured word. Tarek could not
@@ -1450,7 +1510,7 @@
        listed, and have no way of knowing whether it had reached anyone. */
     html += '<div class="grp"><div class="grph"><h2>' + esc(T("gNotes")) + '</h2>' +
             '<span class="n">' + (S.notes || []).length + '</span></div>' +
-            '<div class="note rule">' + esc(T("gNotesSeen")) + '</div>' +
+            '<div class="note rule">' + esc(TS("gNotesSeen")) + '</div>' +
             '<div class="card">' +
             ((S.notes || []).length ? S.notes.map(function (n) {
               return '<div class="irow noterow" style="align-items:flex-start">' +
@@ -1463,7 +1523,11 @@
                     (n.edited_at ? " · " + T("noteEdited") : "") +
                   '</span>' +
                 '</div>' +
-                (S.readOnly ? "" :
+                /* An adult may change a note he wrote and not one written
+                   about him. The server refuses either way; showing the
+                   pencil on his teacher's note and then failing would just
+                   be a worse way of saying no. */
+                (S.readOnly || (S.self && !n.mine) ? "" :
                   '<button class="gb note" data-nedit="' + esc(n.id) + '" title="' + esc(T("edit")) + '">✎</button>' +
                   '<button class="gb note" data-ndel="' + esc(n.id) + '" title="' + esc(T("remove")) + '">🗑</button>') +
               '</div>';
@@ -1576,7 +1640,7 @@
         ((kind === "rot" && x.open_homework)
           ? ' <span class="lnk off">' + esc(T("rotHasHw")) + '</span>' : '') +
       '</span></div>' +
-      (S.readOnly ? '' :
+      (S.readOnly || S.self ? '' :
         /* The note button and the grades travel together in one block. The
            row already wraps so the tajwid line can have its own line; without
            this the buttons wrapped among themselves too and "not ready" ended
@@ -1867,6 +1931,8 @@
     if (ad) ad.onclick = function () { pickSurah("review"); };
 
     /* Taking a recitation back. */
+    var sa = $("startAuditGo");
+    if (sa) sa.onclick = function () { window.SijillOpenTree(); };
     var hm = $("histMore");
     if (hm) hm.onclick = histMore;
 
@@ -2458,6 +2524,7 @@
   /* B3 · "Full mushaf" used to open the same surah picker as "Add old
      memorization" — a button that lied about what it did, which is worse
      than one that is missing. It now opens the thing it always named. */
+  window.SijillOpenTree = function () { $("openTree").click(); };
   $("openTree").onclick = function () {
     if (!S.student) return;
     window.SijillMushaf.open(S.student.id, S.studentData && S.studentData.student
@@ -2620,13 +2687,52 @@
     } catch (e) {}
     i18n.setLang(i18n.lang);
 
+    /* An adult arrives with their link in the fragment, exactly as a parent
+       does on family.html. It is traded once for an ordinary session and
+       then taken out of the address bar, so the link is not left sitting in
+       a screenshot or a shared tab. */
+    var m = /(?:^|#|&)link=([^&]+)/.exec(location.hash || "");
+    if (m) {
+      var link = decodeURIComponent(m[1]);
+      history.replaceState(null, "", location.pathname + location.search);
+      return api.rpc("api_self_sign_in", { p_link: link }).then(function (r) {
+        if (!r || !r.ok) { show("v-gate"); return; }
+        api.setToken(r.token);
+        return afterWhoami();
+      }).catch(function () { show("v-gate"); });
+    }
+
     if (!api.getToken()) { show("v-gate"); return; }
-    api.rpc("api_whoami", { p_token: api.getToken() }).then(function (me) {
+    afterWhoami();
+  }
+
+  function afterWhoami() {
+    return api.rpc("api_whoami", { p_token: api.getToken() }).then(function (me) {
       if (!me || !me.signed_in) { api.setToken(null); show("v-gate"); return; }
       S.me = me;
+      if (me.kind === "self") return openSelf(me);
       if (!me.teacher_id) { pickWho(me.teachers || []); return; }
       openClasses();
     }).catch(function () { show("v-gate"); });
+  }
+
+  /* One person, one page, no navigation. A teacher needs tabs because they
+     handle thirty-five people; an adult handles one, so everything is on the
+     page and there is nothing to get lost in. */
+  function openSelf(me) {
+    S.self = true;
+    S.readOnly = false;
+    S.classes = [];
+    S.student = { id: me.student_id, name: me.name };
+    S.pulled = {}; S.rotAll = false; S.histStep = 0;
+    show("v-student");
+    window.scrollTo(0, 0);
+    $("stuName").textContent = me.name || "";
+    $("stuSub").textContent = "—";
+    $("stuBody").innerHTML = '<div class="loading"><span class="spin"></span></div>';
+    if ($("backCls")) $("backCls").hidden = true;
+    renderNav();
+    reloadStudent();
   }
 
   window.SijillApp   = { S: S, startup: startup, openClasses: openClasses,

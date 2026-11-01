@@ -1569,3 +1569,17 @@ html[lang="ar"] .shrow .k{letter-spacing:0;text-transform:none;font-size:12.5px}
     -webkit-print-color-adjust:exact; print-color-adjust:exact }
   @page { size:A4; margin:14mm 14mm }
 }
+
+/* ---- what the adults did while nobody was looking (round 40) -------------
+   Brand green, not teal: teal means NEW MEMORIZATION everywhere else in this
+   app and an informational strip must not borrow a grade's colour. */
+.sincebar{background:var(--surface);border:1px solid var(--line);
+  border-inline-start:3px solid var(--lapis);border-radius:13px;
+  padding:11px 12px;margin:0 0 12px;box-shadow:var(--shadow)}
+.sincebar .ct{font-family:var(--mono);font-size:10px;letter-spacing:.08em;
+  text-transform:uppercase;color:var(--lapis);margin-bottom:6px}
+.sincebar p{margin:4px 0;font-size:13.5px;color:var(--ink-2)}
+.sincebar p b{font-weight:650;color:var(--ink)}
+.youtag{font-family:var(--mono);font-size:9.5px;letter-spacing:.06em;
+  text-transform:uppercase;padding:1.5px 6px;border-radius:5px;
+  background:var(--surface-3);color:var(--ink-3);margin-inline-start:6px}

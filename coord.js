@@ -555,11 +555,32 @@
     if (f) { f.value = current; setTimeout(function () { f.focus(); f.select(); }, 40); }
   }
 
+  /* Which class the Students screen is showing. Adults are out of the
+     whole-school view by design (migration 50), so without a way to pick
+     their class they would be unreachable from here — which is how the
+     coordinator ends up back in the SQL editor. */
+  var STUCLASS = null;
+
   function manageStudents(body) {
-    api.read("api_dashboard", {}).then(function (d) {
+    var ar = i18n.isAr();
+    Promise.all([
+      api.read("api_dashboard", STUCLASS ? { p_class: STUCLASS } : {}),
+      api.read("api_classes")
+    ]).then(function (res) {
+      var d = res[0], classes = res[1] || [];
       if (gone(body)) return;   // a newer render replaced this one
+      var adultClasses = classes.filter(function (c) { return c.adults; });
       body.innerHTML =
-        '<div class="filters"><span style="flex:1"></span>' +
+        '<div class="filters">' +
+        '<select id="stuClass" class="mini" style="padding:6px 8px">' +
+        '<option value=""' + (STUCLASS ? "" : " selected") + '>' +
+          esc(ar ? "الأَطْفَال" : "Children") + '</option>' +
+        adultClasses.map(function (c) {
+          return '<option value="' + esc(c.id) + '"' +
+                 (STUCLASS === c.id ? " selected" : "") + '>' + esc(c.name) + '</option>';
+        }).join("") +
+        '</select>' +
+        '<span style="flex:1"></span>' +
         '<button class="btn sm" id="addStu">+ Add student</button></div>' +
         (window.SijillTrendLegend ? window.SijillTrendLegend() : "") +
         scrollHint() +
@@ -575,14 +596,41 @@
             '<button class="mini stu-go" data-id="' + esc(s.id) + '">Open</button> ' +
             '<button class="mini stu-ren" data-id="' + esc(s.id) + '" data-name="' + esc(s.name) + '">Rename</button> ' +
             '<button class="mini stu-link" data-id="' + esc(s.id) + '" data-name="' + esc(s.name) + '">Own link</button> ' +
+            '<button class="mini stu-unlink" data-id="' + esc(s.id) + '" data-name="' + esc(s.name) + '">' +
+              esc(ar ? "سَحْبُ الرَّابِط" : "Revoke link") + '</button> ' +
+            '<button class="mini stu-adult" data-id="' + esc(s.id) + '" data-name="' + esc(s.name) +
+              '" data-to="' + (STUCLASS ? "0" : "1") + '">' +
+              esc(STUCLASS ? (ar ? "لَيْسَ كَبِيرًا" : "Not an adult")
+                           : (ar ? "اِجْعَلْهُ كَبِيرًا" : "Mark adult")) + '</button> ' +
             '<button class="mini stu-move" data-id="' + esc(s.id) + '" data-name="' + esc(s.name) + '">Move</button> ' +
             '<button class="mini stu-rm" data-id="' + esc(s.id) + '" data-name="' + esc(s.name) + '">Remove</button></td></tr>';
         }).join("") + '</tbody></table></div>' +
         '<div style="height:10px"></div><div class="note">Adding, moving and removing students is here. ' +
         '<b>Remove</b> closes the enrolment and revokes the links — it never deletes the history, so a child ' +
         'who comes back in September picks up where they left off.</div>';
+      var sel = $("stuClass");
+      if (sel) sel.onchange = function () { STUCLASS = sel.value || null; renderManage(); };
       body.querySelectorAll(".stu-link").forEach(function (b) {
         b.onclick = function () { issueStudentLink(b.dataset.id, b.dataset.name); };
+      });
+      body.querySelectorAll(".stu-unlink").forEach(function (b) {
+        b.onclick = function () {
+          api.write("api_revoke_student_link", { p_student: b.dataset.id }, b.dataset.name)
+            .then(function (r) {
+              window.SijillToast(b.dataset.name + " — " +
+                (ar ? "سُحِبَ الرَّابِط" : "link revoked") +
+                (r && r.sessions_ended ? " \u00b7 " + r.sessions_ended +
+                  (ar ? " جَلْسَة أُنْهِيَت" : " session(s) ended") : ""));
+              renderManage();
+            }).catch(err);
+        };
+      });
+      body.querySelectorAll(".stu-adult").forEach(function (b) {
+        b.onclick = function () {
+          api.write("api_student_set_adult",
+            { p_student: b.dataset.id, p_adult: b.dataset.to === "1" }, b.dataset.name)
+            .then(function () { renderManage(); }).catch(err);
+        };
       });
       body.querySelectorAll(".stu-go").forEach(function (b) {
         b.onclick = function () { window.SijillOpenStudentById(b.dataset.id); };
@@ -826,12 +874,19 @@
           return '<tr' + (t.active ? "" : ' style="opacity:.55"') + '>' +
             '<td><b>' + esc(t.name) + '</b>' +
               (t.active ? "" : ' <span class="pill mute"><i></i>' +
-                 esc(ar ? "غَيْرُ نَشِط" : "switched off") + '</span>') + '</td>' +
+                 esc(ar ? "غَيْرُ نَشِط" : "switched off") + '</span>') +
+              (t.teaches_adults ? ' <span class="pill"><i></i>' +
+                 esc(ar ? "الكِبَار" : "adults") + '</span>' : "") + '</td>' +
             '<td class="n">' + t.marked + '</td>' +
             '<td class="n">' + (t.last_seen ? i18n.fmtDate(t.last_seen) : "—") + '</td>' +
             '<td style="text-align:right;white-space:nowrap">' +
             '<button class="mini tg-ren" data-id="' + esc(t.id) + '" data-name="' + esc(t.name) + '">' +
               esc(ar ? "تَعْدِيل" : "Rename") + '</button> ' +
+            '<button class="mini tg-adults" data-id="' + esc(t.id) +
+              '" data-name="' + esc(t.name) + '" data-to="' + (t.teaches_adults ? "0" : "1") + '">' +
+              esc(t.teaches_adults ? (ar ? "لَا يُعَلِّمُ الكِبَار" : "Not adults")
+                                   : (ar ? "يُعَلِّمُ الكِبَار" : "Teaches adults")) +
+            '</button> ' +
             '<button class="mini tg-act" data-id="' + esc(t.id) +
               '" data-name="' + esc(t.name) + '" data-to="' + (t.active ? "0" : "1") + '">' +
               esc(t.active ? (ar ? "أَوْقِفْ" : "Switch off") : (ar ? "أَعِدْ تَفْعِيلَه" : "Switch on")) +
@@ -991,18 +1046,44 @@
           '<input id="cName" placeholder="' + (ar ? "اسْمُ الحَلْقَة" : "Class name") + '" ' +
           'style="width:100%;padding:11px;font-size:16px;border:1px solid var(--line);' +
           'border-radius:10px;background:var(--surface);color:var(--ink);margin-bottom:10px">' +
-          '<div class="filters" style="margin:0"><label class="chip"><input type="checkbox" id="cFri" checked> ' +
-          (ar ? "الجُمُعَة" : "Friday") + '</label>' +
-          '<label class="chip"><input type="checkbox" id="cSun" checked> ' +
-          (ar ? "الأَحَد" : "Sunday") + '</label></div>',
+          /* Seven days, from the dictionary. Two hard-coded checkboxes is
+             how the school ended up unable to create a Saturday halaqa
+             without SQL. */
+          '<div class="filters" style="margin:0">' +
+          ["friday", "saturday", "sunday", "monday", "tuesday", "wednesday", "thursday"]
+            .map(function (d, i) {
+              return '<label class="chip"><input type="checkbox" id="cDay_' + d + '"' +
+                     (i < 1 || i === 2 ? " checked" : "") + '> ' + esc(T("dLong_" + d)) + '</label>';
+            }).join("") + '</div>' +
+          '<div class="filters" style="margin:8px 0 0">' +
+          '<label class="chip"><input type="checkbox" id="cAdults"> ' +
+          esc(ar ? "حَلْقَةُ كِبَار" : "Adults") + '</label>' +
+          '<label class="chip"><input type="checkbox" id="cLoose"> ' +
+          esc(ar ? "الحُضُورُ اخْتِيَارِيّ" : "Attendance optional") + '</label></div>' +
+          '<div class="note" style="margin-top:8px">' +
+          esc(ar
+            ? "حَلْقَةُ الكِبَارِ لَا يَرَاهَا إِلَّا مُعَلِّمٌ مُحَدَّدٌ لِتَعْلِيمِ الكِبَار."
+            : "An adults class is visible only to teachers marked as teaching adults.") +
+          '</div>',
           T("add"), function () {
             var n = ($("cName").value || "").trim();
             if (n.length < 2) return false;
             var meets = [];
-            if ($("cFri").checked) meets.push("friday");
-            if ($("cSun").checked) meets.push("sunday");
+            ["friday", "saturday", "sunday", "monday", "tuesday", "wednesday", "thursday"]
+              .forEach(function (d) {
+                var el = $("cDay_" + d);
+                if (el && el.checked) meets.push(d);
+              });
             if (!meets.length) return false;
+            var wantAdults = !!($("cAdults") && $("cAdults").checked);
+            var wantLoose  = !!($("cLoose") && $("cLoose").checked);
             api.write("api_class_add", { p_name: n, p_meets: meets }, n)
+              .then(function (r) {
+                if (!wantAdults && !wantLoose) return r;
+                return api.write("api_class_set_adults",
+                  { p_class: r.class_id, p_adults: wantAdults,
+                    p_attendance_optional: wantLoose }, n).then(function () { return r; });
+              })
               .then(function (r) {
                 window.SijillCloseSheet();
                 // Say how many class days were created. Silence here would
