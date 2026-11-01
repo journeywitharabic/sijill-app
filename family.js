@@ -493,6 +493,19 @@
         return oops("This link doesn't work",
           (d && d.error) || "Ask the school to send you a new one.");
       }
+      /* An adult opening his own link lands here because this is the page
+         the setup script printed, and this page is read-only — it was
+         built for a parent watching a child. His own page, the one he can
+         actually set homework and mark his memorization from, is the app.
+         Send him there rather than showing him a wall he cannot act on.
+         Only ever for a single-student link belonging to an adult: a
+         parent's link, and a child's own link, stay exactly where they
+         are. */
+      if (d.kind === "student" && (d.children || []).length === 1 &&
+          d.children[0] && d.children[0].is_adult) {
+        location.replace("index.html#link=" + encodeURIComponent(code));
+        return;
+      }
       DATA = d; WHICH = 0;
       show("v-family"); render();
     }).catch(function (e) {
