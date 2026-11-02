@@ -20,7 +20,6 @@
      rights — a teacher session cannot reach his own adult record, because
      he is not marked as teaching adults, and it should not be able to.
      So the device keeps both and swaps which is in use. */
-  var ALT_KEY = "sijill.alt";
 
   function getToken() {
     try { return localStorage.getItem(TOKEN_KEY) || null; } catch (e) { return MEM.token; }
@@ -30,19 +29,15 @@
     try { t ? localStorage.setItem(TOKEN_KEY, t) : localStorage.removeItem(TOKEN_KEY); }
     catch (e) { /* private browsing — fall back to memory for this visit */ }
   }
-  var MEM = { token: null, alt: null };
+  var MEM = { token: null };
 
-  function getAlt() {
-    try { return localStorage.getItem(ALT_KEY) || null; } catch (e) { return MEM.alt; }
-  }
-  function setAlt(t) {
-    MEM.alt = t;
-    try { t ? localStorage.setItem(ALT_KEY, t) : localStorage.removeItem(ALT_KEY); }
-    catch (e) { /* private browsing */ }
-  }
-  /* Put the session in hand aside and bring the other one forward. */
-  function pushAlt(t) { var cur = getToken(); if (cur && cur !== t) setAlt(cur); setToken(t); }
-  function swapHats() { var a = getAlt(); if (!a) return false; var c = getToken(); setToken(a); setAlt(c); return true; }
+  /* The alt-token switch that used to live here is gone.
+     A man who both teaches here and sits in the halaqa now holds ONE
+     session, and which hat it wears is a column on that session. The old
+     version kept two tokens in local storage and showed the switch only
+     when the device happened to hold both, which meant Abdulaziz — a
+     teacher — had no switch at all, because he opened his link on a phone
+     that had never held a staff session. See migration 57. */
 
   /* WHICH HEADERS. This looks fussy and is not.
      Supabase has two generations of public key:
@@ -172,7 +167,6 @@
   window.api = {
     rpc: rpc, read: read, write: write,
     getToken: getToken, setToken: setToken,
-    getAlt: getAlt, setAlt: setAlt, pushAlt: pushAlt, swapHats: swapHats,
     isSignedOut: isSignedOut,
     onSaveState: onSaveState, retryFailed: retryFailed,
     failed: function () { return FAILED.slice(); },

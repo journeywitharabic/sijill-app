@@ -46,6 +46,7 @@
        "Undo" is the whole of what is meant — and would have silently stopped
        working the day either language's `undo` lost its arrow. */
     undo:"\u21b6 Undo last change", undoShort:"Undo", clsHint:"Tap a child's <b>name</b> to hear them and grade each passage. Both attendance <b>and</b> recitation are needed before the day counts as complete. Everything saves as you tap.",
+    clsHintAdult:"Tap a <b>name</b> to hear him and grade each passage. Everything saves as you tap.",
     coordMode:"Coordinator tools", signOut:"Sign out",
     back:"‹ Back", fullMushaf:"☰ Mushaf",
     present:"present", late:"late", excused:"excused", noreason:"no reason",
@@ -129,6 +130,7 @@
     joinedSoon:"{n} children joined after this class — they appear once another class is on the calendar.",
     joinedSoon1:"{w} joined after this class — they appear once another class is on the calendar.",
     gNotesSeen:"The family reads these on their own page, each with the teacher's name and the day it was written.",
+    gNotesSeenAdult:"He reads these on his own page, each with the name of whoever wrote it and the day it was written.",
     ownRecordHint:"This is your own record. To open it as yourself \u2014 to set your own homework or mark what you know \u2014 use your personal link. Ask the coordinator to send it again if you no longer have it.",
     pvOpenAdult:"See what he sees",
     hatYou:"You",
@@ -186,6 +188,7 @@
     addReviewSub:"review a surah that was learned before",
     hwAdded:"{k} added", hwUndone:"Undone",
     markKey:"<b>–</b> means the child was present but hadn\u2019t prepared it. Nothing is recorded against the passage.",
+    markKeyAdult:"<b>–</b> means he was there but had not prepared it. Nothing is recorded against the passage.",
     hwHint:"<b>from ↻ repeat</b> means it landed here by itself. <b>set by teacher</b> means you chose it.",
     hwChange:"Change", hwSetThis:"set this week", hwSetWeeks:"set {n} weeks ago",
     hwSetLast:"set last week", hwStillOpen:"still waiting to be heard",
@@ -364,6 +367,7 @@
 
     undo:"↶ تَرَاجُعٌ عَنْ آخِرِ تَغْيِير", undoShort:"تَرَاجُع",
     clsHint:"انْقُرْ <b>اسْمَ</b> الطَّالِبِ لِتَسْمَعَهُ وَتُقَيِّمَ كُلَّ مَقْطَع. وَيَلْزَمُ الحُضُورُ <b>وَ</b> التِّلَاوَةُ لِيُعَدَّ اليَوْمُ كَامِلًا. وَكُلُّ شَيْءٍ يُحْفَظُ فَوْرًا.",
+    clsHintAdult:"انْقُرْ <b>الاسْمَ</b> لِتَسْمَعَهُ وَتُقَيِّمَ كُلَّ مَقْطَع. وَكُلُّ شَيْءٍ يُحْفَظُ فَوْرًا.",
     coordMode:"أَدَوَاتُ المُنَسِّق", signOut:"تَسْجِيلُ الخُرُوج",
     back:"› رُجُوع", fullMushaf:"☰ المُصْحَف",
     present:"حَاضِر", late:"مُتَأَخِّر", excused:"بِعُذْر", noreason:"بِدُونِ عُذْر",
@@ -421,6 +425,7 @@
     joinedSoon:"{n} طُلَّابٍ الْتَحَقُوا بَعْدَ هَذِهِ الحِصَّة — وَيَظْهَرُونَ عِنْدَ إِضَافَةِ حِصَّةٍ أُخْرَى إِلَى التَّقْوِيم.",
     joinedSoon1:"{w} الْتَحَقَ بَعْدَ هَذِهِ الحِصَّة — وَيَظْهَرُ عِنْدَ إِضَافَةِ حِصَّةٍ أُخْرَى إِلَى التَّقْوِيم.",
     gNotesSeen:"يَقْرَأُ الأَهْلُ هَذِهِ المُلَاحَظَاتِ فِي صَفْحَتِهِمْ، وَعَلَى كُلٍّ مِنْهَا اسْمُ المُعَلِّمِ وَيَوْمُ كِتَابَتِهَا.",
+    gNotesSeenAdult:"يَقْرَؤُهَا فِي صَفْحَتِهِ الخَاصَّةِ، وَعَلَى كُلٍّ مِنْهَا اسْمُ كَاتِبِهَا وَيَوْمُ كِتَابَتِهَا.",
     ownRecordHint:"هَذَا سِجِلُّكَ أَنْتَ. وَلِفَتْحِهِ بِصِفَتِكَ صَاحِبَهُ — لِتُحَدِّدَ وَاجِبَكَ أَوْ مَا تَحْفَظُهُ — اِسْتَعْمِلْ رَابِطَكَ الخَاصّ. وَاطْلُبْ مِنَ المُنَسِّقِ إِرْسَالَهُ ثَانِيَةً إِنْ لَمْ يَعُدْ عِنْدَك.",
     pvOpenAdult:"اُنْظُرْ مَا يَرَاه",
     hatYou:"أَنْتَ",
@@ -468,6 +473,7 @@
     addReviewSub:"مُرَاجَعَةُ سُورَةٍ حُفِظَتْ مِنْ قَبْل",
     hwAdded:"أُضِيفَ: {k}", hwUndone:"تَمَّ التَّرَاجُع",
     markKey:"<b>–</b> تَعْنِي أَنَّ الطَّالِبَ كَانَ حَاضِرًا لَكِنَّهُ لَمْ يُحَضِّرْ. وَلَا يُسَجَّلُ شَيْءٌ عَلَى المَقْطَع.",
+    markKeyAdult:"<b>–</b> تَعْنِي أَنَّهُ حَضَرَ وَلَمْ يُهَيِّئْهَا، وَلَا يُسَجَّلُ شَيْءٌ عَلَى المَقْطَع.",
     hwHint:"<b>مِنْ ↻ إِعَادَة</b> يَعْنِي أَنَّهُ أُضِيفَ تِلْقَائِيًّا. <b>أَضَافَهُ المُعَلِّم</b> يَعْنِي أَنَّكَ اخْتَرْتَه.",
     hwChange:"تَعْدِيل", hwSetThis:"حُدِّدَ هَذَا الأُسْبُوع", hwSetWeeks:"حُدِّدَ قَبْلَ {n} أَسَابِيع",
     hwSetLast:"حُدِّدَ الأُسْبُوعَ المَاضِي", hwStillOpen:"لَا يَزَالُ يَنْتَظِرُ السَّمَاع",

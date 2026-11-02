@@ -141,12 +141,12 @@
                dead-ends on "that did not load" under the previous
                teacher's heading. */
             S.me = me;
-            /* And the adult session this device was holding goes with the
-               last person. It is somebody's own hifdh record: leaving it
-               behind the "You" button for whoever picks their name next is
-               the same mistake as letting coordinator outlive the
-               coordinator, and it would be a worse one. */
-            api.setAlt(null);
+            /* There is nothing to clear any more. A man's own record is
+               reached from his own session, and a session opened with the
+               passphrase has no second hat to leak — the hat is a column on
+               the row, not a token in this browser. This is where the old
+               version wiped his link token and left him unable to get back
+               to his own page until he found the WhatsApp message again. */
             S.clsId = null; S.day = null; S.dayData = null; S.days = [];
             S.gapFilter = null; S.student = null; S.studentData = null;
             S.recovered = false;
@@ -597,6 +597,14 @@
       (c.exc ? '<span class="pill exc"><i></i>' + c.exc + " " + T("excused") + "</span>" : "") +
       (c.crit ? '<span class="pill crit"><i></i>' + c.crit + " " + T("noreason") + "</span>" : "");
 
+    /* Everything that is a children's-class idea, off in one place.
+       Each is gated on the class, so nothing about the Friday and Sunday
+       registers changes. */
+    var lean = adultClass();
+    if ($("bulkHw")) $("bulkHw").hidden = lean;
+    var hint = document.querySelector('[data-t="clsHint"]');
+    if (hint) hint.innerHTML = T(lean ? "clsHintAdult" : "clsHint");
+
     renderClassNote(ahead);
     renderNotices(ahead);
     renderGaps(ahead);
@@ -761,7 +769,12 @@
     var box = $("cnoteBox");
     if (!box) return;
     var d = S.dayData, sess = d && d.session;
-    var show = !!sess && sess.status !== "cancelled" && !S.readOnly && !ahead;
+    /* Not in the halaqa. It is read by the families of the class, and the
+       men have no families reading it — each one reads his own page. "We
+       line up, recite our portion and are done" is the whole shape of the
+       evening, and a write-up about it would never be written. */
+    var show = !!sess && sess.status !== "cancelled" && !S.readOnly && !ahead
+               && !adultClass();
     box.hidden = !show;
     if (!show) return;
 
@@ -791,7 +804,9 @@
     var box = $("noticeBox");
     if (!box) return;
     var d = S.dayData, sess = d && d.session;
-    var show = !!sess && !S.readOnly && !ahead;
+    /* Same reasoning as the class note above: there is no notice for the
+       halaqa to carry, school-wide or otherwise. */
+    var show = !!sess && !S.readOnly && !ahead && !adultClass();
     box.hidden = !show;
     if (!show) return;
     var list = (d.notices || []);
@@ -1060,6 +1075,10 @@
     S.student = s;
     show("v-student");
     window.scrollTo(0, 0);
+    /* openSelf hides this, and nothing used to put it back: one visit to
+       his own page and the way out of every student sheet was gone for the
+       rest of that page load — in the children's classes too. */
+    if ($("backCls")) $("backCls").hidden = false;
     $("stuName").textContent = s.name;
     $("stuSub").textContent = "—";
     $("stuBody").innerHTML = '<div class="loading"><span class="spin"></span></div>';
@@ -1091,36 +1110,64 @@
      way round — "due for grading", "the child was present", "the family
      reads these". Same trick as the family page: one chooser, and the keys
      that need a second version get one. */
-  function TS(key) { return S.self ? T(key + "Self") : T(key); }
+  /* Three readers, not two. The page is read by the man himself (Self),
+     by a teacher looking at a grown man (Adult), or by a teacher looking at
+     a child (the plain key). "Tap a child's name" under ten men in their
+     forties is the kind of detail that tells them the thing was not built
+     for them. Falls back to the plain key, so a missing Adult variant shows
+     the children's wording rather than "undefined". */
+  function onAdult() {
+    return !!(S.studentData && S.studentData.student && S.studentData.student.is_adult);
+  }
+  function adultClass() {
+    return !!(S.dayData && S.dayData.class && S.dayData.class.adults);
+  }
+  function TS(key) {
+    if (S.self) return T(key + "Self");
+    if (onAdult()) { var a = T(key + "Adult"); if (a && a !== key + "Adult") return a; }
+    return T(key);
+  }
 
-  /* The switch between the two sessions a device can hold. Shown only when
-     it holds both, which means only to somebody who both teaches here and
-     sits in the halaqa. */
+  /* The switch between his two hats.
+
+     Which hats he owns is a fact about the man, answered by the session he
+     is holding: api_whoami reports `switch` when that session carries both
+     a learner record and a teacher record, and `mode` for the one it is
+     wearing. The old version asked local storage whether this browser
+     happened to be holding two tokens, which is not the same question and
+     gave the wrong answer to anybody who had done things in the wrong
+     order. */
   function renderHats() {
-    /* Shown when the device already holds both sessions, OR when the
-       signed-in teacher has a learner record of his own — in which case
-       the adult session can be minted on the spot. Waiting for him to find
-       a link from three weeks ago is not a feature. */
-    /* Only a device that has opened his own link. The link is the only
-       per-person secret in Sijill: the passphrase is shared by ten people
-       and the name is picked from a list afterwards, which is a signature
-       and not a login. Migration 54 briefly treated it as one, and that
-       handed anybody a button onto anybody else's hifdh. */
-    var has = !!api.getAlt();
-    [["hatCls", !S.self], ["hatStu", S.self]].forEach(function (x) {
-      var b = $(x[0]);
+    var me = S.me || {};
+    var has = !!me.switch;
+    var toTeaching = me.mode === "self";
+    ["hatCls", "hatStu"].forEach(function (id) {
+      var b = $(id);
       if (!b) return;
       b.hidden = !has;
       if (!has) return;
-      b.textContent = S.self ? T("hatTeaching") : T("hatYou");
+      b.textContent = toTeaching ? T("hatTeaching") : T("hatYou");
+      b.disabled = false;
       b.onclick = function () {
-        var go = function () {
+        b.disabled = true;
+        api.rpc("api_switch_hat", {
+          p_token: api.getToken(),
+          p_mode: toTeaching ? "teacher" : "self"
+        }).then(function () {
+          /* Everything on screen belonged to the other hat. S.day is the
+             one that bites: a date carried from the Saturday halaqa into a
+             class that meets on Fridays asks the server for a day that
+             class never had. */
           S.self = false; S.student = null; S.studentData = null;
           S.dayData = null; S.clsId = null; S.day = null; S.days = [];
-          S.recovered = false;
+          S.gapFilter = null; S.recovered = false;
           startup();
-        };
-        if (api.swapHats()) go();
+        }).catch(function (e) {
+          /* The old button failed silently when the pair went stale, which
+             is how you get "I pressed it and nothing happened". */
+          b.disabled = false;
+          fail(e);
+        });
       };
     });
   }
@@ -1400,7 +1447,7 @@
     /* He has a record of his own and this device has no session for it.
        Rather than showing nothing and leaving him hunting for a button
        somebody told him about. */
-    if (!S.self && S.me && S.me.own_record && !api.getAlt() &&
+    if (!S.self && S.me && S.me.own_record && !S.me.switch &&
         d.student && d.student.id === S.me.own_record) {
       html += '<div class="note" style="margin-bottom:16px">' +
               esc(T("ownRecordHint")) + '</div>';
@@ -1492,7 +1539,11 @@
     // Adab for today's class. Optional, and placed after the recitation work
     // rather than among it: conduct is a judgement made at the end of a
     // lesson, not while a child is still reciting.
-    if (!S.readOnly && !S.self && S.dayData && S.dayData.session) {
+    /* Not for the halaqa. Adab is a judgement a teacher makes about a
+       child's conduct in a lesson; the men line up, recite their
+       portion and leave. Gated on the student rather than the class so
+       it is right wherever an adult's page is opened from. */
+    if (!S.readOnly && !S.self && !onAdult() && S.dayData && S.dayData.session) {
       var me = (S.dayData.students || []).filter(function (x) { return x.id === S.student.id; })[0];
       html += adabCard(me && me.adab);
     }
@@ -2812,7 +2863,7 @@
         if (!r || !r.ok) { show("v-gate"); return; }
         /* Keep the staff session if this device already had one. He does not
            stop being a teacher by opening his own link. */
-        api.pushAlt(r.token);
+        api.setToken(r.token);
         return afterWhoami();
       }).catch(function () { show("v-gate"); });
     }
