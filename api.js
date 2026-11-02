@@ -29,7 +29,27 @@
     try { t ? localStorage.setItem(TOKEN_KEY, t) : localStorage.removeItem(TOKEN_KEY); }
     catch (e) { /* private browsing — fall back to memory for this visit */ }
   }
-  var MEM = { token: null };
+  var MEM = { token: null, link: null };
+
+  /* THE LINK, REMEMBERED ON THIS DEVICE.
+     Not a session — a session is the token above and signing out ends it.
+     This is the credential the session was minted from, kept so that the
+     sign-in screen can offer "open my own record" instead of sending a man
+     back to a WhatsApp message from three weeks ago. The link is already in
+     the address he opened, so holding it here adds no exposure that the
+     shortcut on his home screen does not; what it adds is a way to clear it,
+     which a URL in someone's history does not have. Sign-out keeps it by
+     default and offers to forget it, because the common phone is his own. */
+  var LINK_KEY = "sijill.link";
+  function getLink() {
+    try { return JSON.parse(localStorage.getItem(LINK_KEY) || "null") || MEM.link; }
+    catch (e) { return MEM.link; }
+  }
+  function setLink(v) {
+    MEM.link = v || null;
+    try { v ? localStorage.setItem(LINK_KEY, JSON.stringify(v))
+            : localStorage.removeItem(LINK_KEY); } catch (e) {}
+  }
 
   /* The alt-token switch that used to live here is gone.
      A man who both teaches here and sits in the halaqa now holds ONE
@@ -167,6 +187,7 @@
   window.api = {
     rpc: rpc, read: read, write: write,
     getToken: getToken, setToken: setToken,
+    getLink: getLink, setLink: setLink,
     isSignedOut: isSignedOut,
     onSaveState: onSaveState, retryFailed: retryFailed,
     failed: function () { return FAILED.slice(); },

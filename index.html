@@ -157,6 +157,12 @@
     </div>
     <div class="applock"><span class="ar">سِجِلّ</span><span class="en">Sijill</span></div>
     <p class="tagline" data-t="tagline">Attendance · homework · memorization</p>
+    <!-- Shown only on a phone that has opened somebody's own link before.
+         It is the second door, and the only one that can prove who you are. -->
+    <div id="gateMine" hidden>
+      <button class="btn" id="gateMineGo">—</button>
+      <p class="tagline" style="margin:10px 0 18px" data-t="gateOr">or sign in as a teacher</p>
+    </div>
     <h1 data-t="gateTitle">Sign in</h1>
     <p data-t="gateHelp">Type the school passphrase. You only do this once on this phone — it will remember you.</p>
     <form id="gateForm" autocomplete="off">
@@ -185,6 +191,9 @@
     <div class="pick" id="whoList"></div>
     <div style="height:14px"></div>
     <button class="btn ghost sm" id="whoAdd" data-t="whoAdd">My name is not on the list</button>
+    <!-- Only when there is somewhere to go back to: this screen is also the
+         second half of signing in, and a Back on THAT is a dead end. -->
+    <button class="btn ghost sm" id="whoBack" data-t="back" hidden>‹ Back</button>
     <div class="err" id="whoErr" hidden></div>
   </div>
 </section>

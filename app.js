@@ -101,6 +101,44 @@
   }
 
   /* ------------------------------------------------------------- sign in */
+  /* The sign-in screen, drawn for whoever is in front of it. A phone that
+     has opened a man's link gets his own door above the passphrase, because
+     the passphrase cannot give him his record back and nothing on the old
+     screen said so — he just signed in, found one hat, and asked why. */
+  function renderGate() {
+    var box = $("gateMine"), mine = api.getLink();
+    if (!box) return;
+    box.hidden = !mine;
+    if (!mine) return;
+    var b = $("gateMineGo");
+    b.textContent = mine.name
+      ? T("gateMine").split("{n}").join(mine.name.split(" ")[0])
+      : T("gateMineNoName");
+    b.disabled = false;
+    b.onclick = function () {
+      var err = $("gateErr");
+      b.disabled = true; b.innerHTML = '<span class="spin"></span>';
+      api.rpc("api_self_sign_in", { p_link: mine.code }).then(function (r) {
+        if (!r || !r.ok) {
+          /* The link was revoked, or the record was closed. A remembered
+             credential that no longer works is worse than none: it would
+             fail again on every sign-in. Forget it and say so once. */
+          api.setLink(null);
+          renderGate();
+          err.textContent = (r && r.error) || T("gateMineGone");
+          err.hidden = false;
+          return;
+        }
+        api.setLink({ code: mine.code, name: r.name || mine.name });
+        api.setToken(r.token);
+        startup();
+      }).catch(function (e2) {
+        renderGate();
+        err.textContent = e2.message; err.hidden = false;
+      });
+    };
+  }
+
   $("gateForm").onsubmit = function (e) {
     e.preventDefault();
     var pass = $("gatePass").value, btn = $("gateGo"), err = $("gateErr");
@@ -155,6 +193,16 @@
           .catch(function (e) { $("whoErr").textContent = e.message; $("whoErr").hidden = false; });
       };
     });
+    /* A way back, when there is one to go back to. Reached from the sign-in
+       gate this screen is the only thing on the way in and the button would
+       be a dead end of its own; reached from the name in the header it is a
+       choice somebody can change their mind about, and until now changing
+       your mind meant closing the app. */
+    var back = $("whoBack");
+    if (back) {
+      back.hidden = !(S.me && S.me.teacher_id);
+      back.onclick = function () { openClasses(); };
+    }
     show("v-who");
   }
 
@@ -184,8 +232,15 @@
     // phone, which cost the register 40px of the space it needs most; the
     // full name is one tap away on the picker this button opens.
     var full = (S.me && S.me.teacher) || "—";
-    $("whoAmI").textContent = full.split(" ")[0] + " ⌄";
+    /* A session opened with a link teaches under one name and cannot change
+       it — the table refuses any other, so the picker behind this button
+       showed an empty list and no way out of the screen. A caption, then,
+       not a button: no caret, nothing to tap. */
+    var fixed = !!(S.me && S.me.switch);
+    $("whoAmI").textContent = full.split(" ")[0] + (fixed ? "" : " ⌄");
     $("whoAmI").title = full;
+    $("whoAmI").disabled = fixed;
+    $("whoAmI").style.opacity = fixed ? "1" : "";
     return api.read("api_classes").then(function (cs) {
       S.classes = cs || [];
       var sel = $("classPick");
@@ -1328,11 +1383,14 @@
        point is the records rather than the family's view of them. */
     var pv = $("pvOpen");
     if (pv) {
-      pv.hidden = !!S.readOnly || !!S.self;   // an adult IS the family page
-      /* "See what the family sees" is the right words for a child and the
-         wrong ones for a grown man — there is no family on his page, it is
-         his own. */
-      if (d.student.is_adult) pv.textContent = T("pvOpenAdult");
+      /* Gone for adults altogether. It opens the GUARDIAN page, which for a
+         grown man is a worse copy of the page he already has — read-only,
+         with no audit and no homework, and written throughout for somebody
+         reading about their child. There is no family behind a man in the
+         halaqa to see anything, so there is nothing for his teacher to
+         preview. Round 41 tried renaming the button; the right answer was
+         that the button has no job here. */
+      pv.hidden = !!S.readOnly || !!S.self || !!(d.student && d.student.is_adult);
       pv.onclick = function () { openFamilyPreview(d.student.id, d.student.name); };
     }
     var f = d.flags || {};
@@ -2744,9 +2802,10 @@
 
   function doSignOut() {
     api.rpc("api_sign_out", { p_token: api.getToken() }).catch(function () {});
-    api.setToken(null); S.me = null; show("v-gate");
+    api.setToken(null); S.me = null; renderGate(); show("v-gate");
   }
   $("whoAmI").onclick = function () {
+    if (S.me && S.me.switch) return;   // his name comes from his link
     api.read("api_whoami").then(function (me) { S.me = me; pickWho(me.teachers || []); }).catch(fail);
   };
   $("lang").onclick = function () {
@@ -2789,8 +2848,11 @@
       '<div class="setrow"><span>' + (ar ? "الخُرُوج" : "Sign out") + '</span>' +
         '<button class="mini danger" id="setOut">' + (ar ? "اخْرُجْ" : "Sign out") + '</button></div>' +
       '<div class="note" style="margin-top:12px">' +
-        (ar ? "الخُرُوجُ يَعْنِي إِدْخَالَ كَلِمَةِ المَدْرَسَةِ مِنْ جَدِيد."
-            : "Signing out means typing the school passphrase again.") + '</div>';
+        (api.getLink()
+          ? (ar ? "الخُرُوجُ يُبْقِي رَابِطَكَ مَحْفُوظًا عَلَى هَذَا الهَاتِف، إِلَّا أَنْ تَخْتَارَ نِسْيَانَه."
+                : "Signing out keeps your link on this phone unless you choose to forget it.")
+          : (ar ? "الخُرُوجُ يَعْنِي إِدْخَالَ كَلِمَةِ المَدْرَسَةِ مِنْ جَدِيد."
+                : "Signing out means typing the school passphrase again.")) + '</div>';
 
     sheet(ar ? "الإِعْدَادَات" : "Settings", "", null, null, ar ? "تَمَّ" : "Done");
     var host = $("shBody");
@@ -2804,11 +2866,39 @@
     };
     body.querySelector("#setOut").onclick = function () {
       returnChrome(); closeSheet();
+      /* A man who came in through his own link loses more than a session
+         here: the passphrase will sign him back in as a teacher and NOTHING
+         ELSE, because the passphrase is shared by ten people and cannot
+         prove he is him. Only his link can. Saying so before he taps is
+         cheaper than explaining it afterwards. */
+      var mine = api.getLink();
       sheet(ar ? "الخُرُوجُ مِنَ الحِسَاب؟" : "Sign out?",
         '<div style="font-size:13.5px;line-height:1.55">' +
-        (ar ? "سَتَحْتَاجُ إِلَى كَلِمَةِ المَدْرَسَةِ لِلدُّخُولِ مَرَّةً أُخْرَى."
-            : "You will need the school passphrase to get back in.") + '</div>',
-        ar ? "اخْرُجْ" : "Sign out", function () { closeSheet(); doSignOut(); });
+        (mine
+          ? (ar ? "سَيُطْلَبُ مِنْكَ الدُّخُولُ مِنْ جَدِيد. وَرَابِطُكَ مَحْفُوظٌ عَلَى هَذَا " +
+                  "الهَاتِف، فَتَعُودُ بِنَقْرَةٍ وَاحِدَةٍ إِلَى سِجِلِّكَ وَإِلَى التَّعْلِيمِ مَعًا."
+                : "You will be asked to sign in again. Your link is remembered on " +
+                  "this phone, so one tap brings back both your own record and " +
+                  "teaching.")
+          : (ar ? "سَتَحْتَاجُ إِلَى كَلِمَةِ المَدْرَسَةِ لِلدُّخُولِ مَرَّةً أُخْرَى."
+                : "You will need the school passphrase to get back in.")) + '</div>' +
+        /* The way out for a phone that is about to change hands. Default
+           off: the common phone is his own, and a man who signs out of his
+           own phone and then cannot find his link is the complaint this
+           whole thing exists to answer. */
+        (mine
+          ? '<label class="setrow" style="margin-top:14px;cursor:pointer">' +
+              '<span style="font-size:13.5px">' +
+                (ar ? "وَانْسَ رَابِطِي عَلَى هَذَا الهَاتِف"
+                    : "Also forget my link on this phone") + '</span>' +
+              '<input type="checkbox" id="soForget" style="width:20px;height:20px">' +
+            '</label>'
+          : ''),
+        ar ? "اخْرُجْ" : "Sign out", function () {
+          var f = $("soForget");
+          if (f && f.checked) api.setLink(null);
+          closeSheet(); doSignOut();
+        });
     };
   }
   /* The borrowed buttons have to go home, or the next setLang() writes the
@@ -2860,26 +2950,29 @@
       var link = decodeURIComponent(m[1]);
       history.replaceState(null, "", location.pathname + location.search);
       return api.rpc("api_self_sign_in", { p_link: link }).then(function (r) {
-        if (!r || !r.ok) { show("v-gate"); return; }
+        if (!r || !r.ok) { renderGate(); show("v-gate"); return; }
+        /* Remembered on this device, so that signing out does not mean
+           hunting for the message it came in. See api.setLink. */
+        api.setLink({ code: link, name: r.name || "" });
         /* Keep the staff session if this device already had one. He does not
            stop being a teacher by opening his own link. */
         api.setToken(r.token);
         return afterWhoami();
-      }).catch(function () { show("v-gate"); });
+      }).catch(function () { renderGate(); show("v-gate"); });
     }
 
-    if (!api.getToken()) { show("v-gate"); return; }
+    if (!api.getToken()) { renderGate(); show("v-gate"); return; }
     afterWhoami();
   }
 
   function afterWhoami() {
     return api.rpc("api_whoami", { p_token: api.getToken() }).then(function (me) {
-      if (!me || !me.signed_in) { api.setToken(null); show("v-gate"); return; }
+      if (!me || !me.signed_in) { api.setToken(null); renderGate(); show("v-gate"); return; }
       S.me = me;
       if (me.kind === "self") return openSelf(me);
       if (!me.teacher_id) { pickWho(me.teachers || []); return; }
       openClasses();
-    }).catch(function () { show("v-gate"); });
+    }).catch(function () { renderGate(); show("v-gate"); });
   }
 
   /* One person, one page, no navigation. A teacher needs tabs because they
