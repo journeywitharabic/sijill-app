@@ -295,6 +295,11 @@
        so the two languages were naming the same button differently, and
        "away" reads as a softer, vaguer thing than the register records. */
     mHere:"present", mLate:"late", mAway:"absent",
+    // Accessible names. A screen reader has no row to look at, so the
+    // name has to carry the child and the passage as well as the action.
+    attFor:"Attendance for {n}",
+    attMark:"Mark {n} {s}",
+    gradeFor:"{v} — {w} for {n}",
     gGood:"good", gAgain:"again", gNotReady:"not ready",
     /* One tooltip per kind, because round 23 made the rules different. The
        tooltip must never say something the rule printed above the section
@@ -572,6 +577,9 @@
     weeks:"أَسَابِيعَ مَضَتْ", never:"لَمْ يُسْمَعْ بَعْدُ", thisTerm:"هَذَا الفَصْل",
 
     mHere:"حَاضِر", mLate:"مُتَأَخِّر", mAway:"غَائِب",
+    attFor:"حُضُورُ {n}",
+    attMark:"سَجِّلْ {n} {s}",
+    gradeFor:"{v} — {w} لِ{n}",
     gGood:"جَيِّد", gAgain:"أَعِدْ", gNotReady:"لَمْ يُحَضِّرْ",
     gGoodTipNew:"تَلَا عَلَى المُسْتَوَى المَطْلُوب — خَطَأٌ وَاحِدٌ فِي الصَّفْحَةِ أَوْ أَقَلّ",
     gGoodTipRev:"تَلَا عَلَى المُسْتَوَى المَطْلُوب — حَتَّى ثَلَاثَةِ أَخْطَاء",

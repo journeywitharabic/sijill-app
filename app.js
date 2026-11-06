@@ -49,8 +49,17 @@
     clearTimeout(toast._t);
     toast._t = setTimeout(function () { t.hidden = true; }, undoFn ? 7000 : 2600);
   }
-  function sheet(title, bodyHtml, okLabel, onOk, noLabel) {
+  /* `rebuild`, when a caller passes one, is how a sheet survives the
+     language being changed underneath it. Everything a sheet shows is
+     composed in one language at the moment it opens, so a switch left it
+     frozen in the old one — and the language button LIVES in the settings
+     sheet, which made that the single most likely sheet to be open when it
+     happened. Confirmed by driving it: the button flipped to English and
+     every label around it stayed Arabic. */
+  var sheetRebuild = null;
+  function sheet(title, bodyHtml, okLabel, onOk, noLabel, rebuild) {
     var s = $("sheet");
+    sheetRebuild = rebuild || null;
     $("shTitle").textContent = title;
     $("shBody").innerHTML = bodyHtml;
     $("shOk").textContent = okLabel || T("save");
@@ -70,6 +79,7 @@
      however the sheet is dismissed — OK, Cancel or anything added later. */
   function closeSheet() {
     if (window.SijillReturnChrome) window.SijillReturnChrome();
+    sheetRebuild = null;
     $("sheet").hidden = true;
   }
 
@@ -563,13 +573,28 @@
         '</span></button>' +
         // Word labels under the icons. "L" meant nothing to anyone and meant
         // less than nothing in Arabic.
-        '<div class="seg3">' +
-          '<button class="p" data-a="present" aria-pressed="' + (s.state === "present") + '">' +
-            '<span class="ic">✓</span><small>' + esc(T("mHere")) + '</small></button>' +
-          '<button class="l" data-a="late" aria-pressed="' + (s.state === "late") + '">' +
-            '<span class="ic">L</span><small>' + esc(T("mLate")) + '</small></button>' +
-          '<button class="a' + (isExcused(s.state) ? " exc" : "") + '" data-a="absent" aria-pressed="' + isAbsent(s.state) + '">' +
-            '<span class="ic">✗</span><small>' + esc(T("mAway")) + '</small></button>' +
+        /* A screen reader used to announce these three as "button",
+           "button", "button". The tick, the L and the cross are decoration
+           to anything that cannot see them, so the name has to carry both
+           the action and the child: "Mark Jad H. present". aria-pressed
+           stays rather than becoming a radiogroup — a radiogroup needs
+           roving tabindex and arrow keys, and a half-built one is worse for
+           a screen-reader user than a toggle group that is honest about
+           what it is. */
+        '<div class="seg3" role="group" aria-label="' +
+            esc(T("attFor").split("{n}").join(s.name)) + '">' +
+          '<button class="p" data-a="present" aria-pressed="' + (s.state === "present") + '"' +
+            ' aria-label="' + esc(T("attMark").split("{n}").join(s.name)
+                                   .split("{s}").join(T("mHere"))) + '">' +
+            '<span class="ic" aria-hidden="true">✓</span><small>' + esc(T("mHere")) + '</small></button>' +
+          '<button class="l" data-a="late" aria-pressed="' + (s.state === "late") + '"' +
+            ' aria-label="' + esc(T("attMark").split("{n}").join(s.name)
+                                   .split("{s}").join(T("mLate"))) + '">' +
+            '<span class="ic" aria-hidden="true">L</span><small>' + esc(T("mLate")) + '</small></button>' +
+          '<button class="a' + (isExcused(s.state) ? " exc" : "") + '" data-a="absent" aria-pressed="' + isAbsent(s.state) + '"' +
+            ' aria-label="' + esc(T("attMark").split("{n}").join(s.name)
+                                   .split("{s}").join(T("mAway"))) + '">' +
+            '<span class="ic" aria-hidden="true">✗</span><small>' + esc(T("mAway")) + '</small></button>' +
         '</div>' +
       '</div>' +
       '<div class="reasons" data-r="' + i + '"' + (isAbsent(s.state) ? "" : " hidden") + '>' +
@@ -1750,8 +1775,8 @@
                    pencil on his teacher's note and then failing would just
                    be a worse way of saying no. */
                 (S.readOnly || (S.self && !n.mine) ? "" :
-                  '<button class="gb note" data-nedit="' + esc(n.id) + '" title="' + esc(T("edit")) + '">✎</button>' +
-                  '<button class="gb note" data-ndel="' + esc(n.id) + '" title="' + esc(T("remove")) + '">🗑</button>') +
+                  '<button class="gb note" data-nedit="' + esc(n.id) + '" aria-label="' + esc(T("edit")) + '" title="' + esc(T("edit")) + '">✎</button>' +
+                  '<button class="gb note" data-ndel="' + esc(n.id) + '" aria-label="' + esc(T("remove")) + '" title="' + esc(T("remove")) + '">🗑</button>') +
               '</div>';
             }).join("") : '<div class="empty">' + esc(T("noneNotes")) + '</div>') +
             '</div>' +
@@ -1792,6 +1817,17 @@
       ((items || []).length ? items.map(function (x) { return itemRow(x, kind); }).join("")
                             : '<div class="empty">' + esc(T(emptyKey)) + '</div>') +
       '</div></div>';
+  }
+
+  /* The accessible name for one grade button. Everything a sighted
+     teacher reads off the row — whose, which passage, what this button
+     does — in one string, because a screen reader has no row to look at. */
+  function gLabel(x, verb) {
+    var who = (S.student && S.student.name) || "";
+    var what = (x && x.name_en) || "";
+    var r = (x && x.ayah_from) ? " " + x.ayah_from + "\u2013" + x.ayah_to : "";
+    return T("gradeFor").split("{v}").join(verb).split("{w}").join(what + r)
+                        .split("{n}").join(who).replace(/\s+/g, " ").trim();
   }
 
   function itemRow(x, kind) {
@@ -1867,27 +1903,31 @@
            row already wraps so the tajwid line can have its own line; without
            this the buttons wrapped among themselves too and "not ready" ended
            up alone on a third line looking like a mistake. */
-        '<div class="gbrow">' +
-        '<button class="gb note" data-note="1" title="' + esc(T("noteAdd")) + '">✎</button>' +
+        /* Same for the grades: "button" four times over told a screen
+           reader nothing about which passage or whose. gLabel builds
+           "Al-Mulk 1–10 for Jad H.: good". */
+        '<div class="gbrow" role="group" aria-label="' + esc(gLabel(x, "")) + '">' +
+        '<button class="gb note" data-note="1" aria-label="' +
+          esc(T("noteAdd")) + '" title="' + esc(T("noteAdd")) + '">✎</button>' +
         /* The tooltips have to follow the kind too. Round 23 split the rules
            in two and left these behind saying "three mistakes a page or
            fewer" on both — which is now wrong on a new-memorisation row (one
            a page) and wrong on a review row (good is up to 3, again is 6+).
            A tooltip that contradicts the rule printed above it is worse than
            no tooltip, because a teacher trusts the one under their thumb. */
-        '<button class="gb g lab3 t-ok" data-g="good" title="' +
+        '<button class="gb g lab3 t-ok" data-g="good" aria-label="' + esc(gLabel(x, T("gGood"))) + '" title="' +
           esc(T(kind === "new" ? "gGoodTipNew" : "gGoodTipRev")) + '">' +
           '<span class="ic">✓</span><small>' + esc(T("gGood")) + '</small></button>' +
         /* Average sits between good and again because that is what it means,
            and only on review. New memorisation allows one mistake a page —
            there is no room for a middle grade between that and "again". */
         (kind === "new" ? "" :
-          '<button class="gb g lab3 t-avg" data-g="average" title="' + esc(T("gAverageTip")) + '">' +
+          '<button class="gb g lab3 t-avg" data-g="average" aria-label="' + esc(gLabel(x, T("gAverage"))) + '" title="' + esc(T("gAverageTip")) + '">' +
             '<span class="ic">≈</span><small>' + esc(T("gAverage")) + '</small></button>') +
-        '<button class="gb g lab3 t-rev" data-g="repeat" title="' +
+        '<button class="gb g lab3 t-rev" data-g="repeat" aria-label="' + esc(gLabel(x, T("gAgain"))) + '" title="' +
           esc(T(kind === "new" ? "gAgainTipNew" : "gAgainTipRev")) + '">' +
           '<span class="ic">↻</span><small>' + esc(T("gAgain")) + '</small></button>' +
-        '<button class="gb g lab3 t-np" data-g="not_prepared" title="' + esc(T("gNotReadyTip")) + '">' +
+        '<button class="gb g lab3 t-np" data-g="not_prepared" aria-label="' + esc(gLabel(x, T("gNotReady"))) + '" title="' + esc(T("gNotReadyTip")) + '">' +
           '<span class="ic">–</span><small>' + esc(T("gNotReady")) + '</small></button></div>' +
         // Second line: the tajwid grade for THIS passage. It belongs to the
         // recitation, not to the child, so it lives on the row.
@@ -2814,6 +2854,17 @@
   window.addEventListener("sijill:lang", function () {
     if (S.dayData && !$("v-class").hidden) renderDay();
     if (S.studentData && !$("v-student").hidden) renderStudent();
+    /* An open sheet too. Without this the settings sheet — the one holding
+       the language button — kept every label in the language you just left. */
+    if (!$("sheet").hidden && sheetRebuild) {
+      var again = sheetRebuild;
+      /* The settings sheet BORROWS the language and theme buttons out of the
+         footer. Rebuilding it while it still holds them appends a node that
+         is already somewhere else, which throws. Put them back first, the
+         same way every close does. */
+      if (window.SijillReturnChrome) window.SijillReturnChrome();
+      again();
+    }
   });
   $("theme").onclick = function () {
     var r = document.documentElement;
@@ -2854,7 +2905,8 @@
           : (ar ? "الخُرُوجُ يَعْنِي إِدْخَالَ كَلِمَةِ المَدْرَسَةِ مِنْ جَدِيد."
                 : "Signing out means typing the school passphrase again.")) + '</div>';
 
-    sheet(ar ? "الإِعْدَادَات" : "Settings", "", null, null, ar ? "تَمَّ" : "Done");
+    sheet(ar ? "الإِعْدَادَات" : "Settings", "", null, null, ar ? "تَمَّ" : "Done",
+          openSettings);
     var host = $("shBody");
     host.innerHTML = ""; host.appendChild(body);
     // Borrow the real buttons rather than drawing new ones — see index.html.

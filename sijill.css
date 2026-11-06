@@ -4,6 +4,32 @@
    If you change a colour here, re-check it against the attendance states —
    they are the one place colour carries meaning. */
 :root{
+  /* ---------------------------------------------------------------
+     THE TYPE SCALE. Nine steps, floor 12px.
+
+     There were 26 distinct font sizes in this file, including 8px, 8.5px
+     and 9px - small enough that a teacher holding a phone at arm's length
+     in a classroom cannot read them, which is what the UX audit found and
+     what measuring the stylesheet confirmed.
+
+     The floor rises to 12px and the rest moves as little as it can.
+     Raising everything uniformly would have been easier to justify and
+     would have overflowed the register on a 390px screen: the aim is that
+     nothing is too small to read, not that everything is bigger.
+
+     Change a size by moving the rule to another step, never by typing a
+     pixel value back in.
+     --------------------------------------------------------------- */
+  --fs-micro:    12px;     /* was 8px, 8.5px, 9px, 9.5px, 10px, 10.5px */
+  --fs-small:    13px;     /* was 11px, 11.5px */
+  --fs-base:     13.5px;   /* was 12px, 12.5px */
+  --fs-md:       14px;     /* was 13px, 13.5px */
+  --fs-body:     15px;     /* was 14px, 14.5px, 15px */
+  --fs-lg:       16px;     /* was 15.5px, 16px, 16.5px */
+  --fs-xl:       19px;     /* was 17px, 18px, 19px */
+  --fs-2xl:      22px;     /* was 20px, 22px */
+  --fs-display:  27px;     /* was 25px, 26px, 27px */
+
   /* The school's own palette, taken from its website: cream paper, white
      cards, the deep green of the hero band, and the brass of its mark.
      --lapis keeps its name because 40-odd rules refer to it; it is now the
@@ -91,16 +117,16 @@
   --shadow:0 1px 2px rgba(0,0,0,.45), 0 8px 24px -14px rgba(0,0,0,.72);
 }
 *{box-sizing:border-box}
-body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--sans);font-size:15px;line-height:1.45;-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--sans);font-size:var(--fs-body);line-height:1.45;-webkit-text-size-adjust:100%}
 button{font:inherit;color:inherit;cursor:pointer}
 :focus-visible{outline:2px solid var(--lapis);outline-offset:2px;border-radius:5px}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 
 .proto{position:sticky;top:0;z-index:60;background:var(--ink);color:var(--paper);
   padding:calc(7px + env(safe-area-inset-top,0px)) 14px 7px;display:flex;gap:10px;align-items:center;flex-wrap:wrap}
-.proto .tag{font-size:9.5px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;opacity:.65;white-space:nowrap}
+.proto .tag{font-size:var(--fs-micro);font-weight:700;letter-spacing:.14em;text-transform:uppercase;opacity:.65;white-space:nowrap}
 .proto .sw{display:flex;gap:3px;flex-wrap:wrap;flex:1}
-.proto .sw button,.proto .rt button{background:rgba(255,255,255,.1);border:0;border-radius:7px;padding:5px 10px;font-size:12px;font-weight:600;color:inherit;white-space:nowrap}
+.proto .sw button,.proto .rt button{background:rgba(255,255,255,.1);border:0;border-radius:7px;padding:5px 10px;font-size:var(--fs-base);font-weight:600;color:inherit;white-space:nowrap}
 .proto .sw button[aria-current="true"]{background:var(--paper);color:var(--ink)}
 .proto .rt{display:flex;gap:4px}
 
@@ -110,10 +136,10 @@ button{font:inherit;color:inherit;cursor:pointer}
 
 .bar{background:var(--surface);border-bottom:1px solid var(--line);padding:11px 16px;display:flex;align-items:center;gap:13px}
 .logo{display:flex;align-items:baseline;gap:9px;white-space:nowrap}
-.logo .ar{font-family:var(--calig);font-size:27px;font-weight:700;line-height:1;color:var(--lapis)}
+.logo .ar{font-family:var(--calig);font-size:var(--fs-display);font-weight:700;line-height:1;color:var(--lapis)}
 .logo .en{display:flex;flex-direction:column;gap:1px}
-.logo .en b{font-size:13.5px;font-weight:700;line-height:1}
-.logo .en span{font-size:8.5px;font-weight:600;letter-spacing:.13em;text-transform:uppercase;color:var(--ink-3)}
+.logo .en b{font-size:var(--fs-md);font-weight:700;line-height:1}
+.logo .en span{font-size:var(--fs-micro);font-weight:600;letter-spacing:.13em;text-transform:uppercase;color:var(--ink-3)}
 .bar .sp{flex:1}
 /* The light/dark button used to be the character ◐ (U+25D0). It is not in
    every font, and where it is missing the browser substitutes whatever it
@@ -122,16 +148,25 @@ button{font:inherit;color:inherit;cursor:pointer}
    every device, and it takes the button's own colour in both themes. */
 .ticon{width:13px;height:13px;display:block;flex:none}
 button#theme{display:inline-flex;align-items:center;justify-content:center}
-.mini{background:var(--surface-2);border:1px solid var(--line);border-radius:8px;padding:5px 9px;font-size:12px;font-weight:600;color:var(--ink-2)}
-.back{background:var(--surface-2);border:1px solid var(--line);border-radius:8px;padding:6px 11px;font-size:12.5px;font-weight:600;color:var(--ink-2)}
+/* 44px minimum on everything else that can be tapped. The visible box
+   stays the size it looks; the target grows around it. */
+.mini{background:var(--surface-2);border:1px solid var(--line);border-radius:8px;
+  padding:5px 9px;min-height:44px;display:inline-flex;align-items:center;
+  /* Truncate with an ellipsis rather than being cut off mid-letter. The
+     header holds a class name, a teacher's name and three controls; at
+     390px something has to give, and "Abdulaziz" hard-clipped to "ulaziz"
+     in Arabic reads as a different word. */
+  min-width:0;max-width:40vw;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:var(--fs-base);font-weight:600;color:var(--ink-2)}
+.back{background:var(--surface-2);border:1px solid var(--line);border-radius:8px;
+  padding:6px 11px;min-height:44px;display:inline-flex;align-items:center;font-size:var(--fs-base);font-weight:600;color:var(--ink-2)}
 
 .ctx{padding:13px 16px 0}
-.ctx h1{margin:0;font-size:20px;font-weight:700;letter-spacing:-.01em}
-.ctx .sub{font-family:var(--mono);font-size:11.5px;color:var(--ink-3);margin-top:3px;font-variant-numeric:tabular-nums}
+.ctx h1{margin:0;font-size:var(--fs-2xl);font-weight:700;letter-spacing:-.01em}
+.ctx .sub{font-family:var(--mono);font-size:var(--fs-small);color:var(--ink-3);margin-top:3px;font-variant-numeric:tabular-nums}
 .pad{padding:14px 16px}
 
 .pill{display:inline-flex;align-items:center;gap:5px;border-radius:99px;padding:2.5px 9px 2.5px 7px;
-  font-size:11px;font-weight:700;white-space:nowrap;border:1px solid transparent}
+  font-size:var(--fs-small);font-weight:700;white-space:nowrap;border:1px solid transparent}
 .pill i{width:8px;height:8px;border-radius:50%;flex:none}
 .pill.ok{background:var(--ok-soft);color:var(--ok);border-color:color-mix(in srgb,var(--ok) 58%,transparent)}
 .pill.ok i{background:var(--ok)}
@@ -144,16 +179,17 @@ button#theme{display:inline-flex;align-items:center;justify-content:center}
 .pill.mute{background:var(--surface-2);color:var(--ink-3);border-color:var(--line)}
 .pill.mute i{background:var(--ink-3)}
 
-.banner{display:flex;gap:10px;align-items:flex-start;border-radius:11px;padding:11px 13px;font-size:13px;line-height:1.5;margin-bottom:12px}
-.banner .ic{font-size:14px;flex:none;font-weight:700}
+.banner{display:flex;gap:10px;align-items:flex-start;border-radius:11px;padding:11px 13px;font-size:var(--fs-md);line-height:1.5;margin-bottom:12px}
+.banner .ic{font-size:var(--fs-body);flex:none;font-weight:700}
 .banner.exc{background:var(--exc-soft);border:1px solid color-mix(in srgb,var(--exc) 34%,transparent)}
 .banner.crit{background:var(--crit-soft);border:1px solid color-mix(in srgb,var(--crit) 36%,transparent)}
 
 .actionrow{display:flex;gap:9px;flex-wrap:wrap;margin-bottom:13px}
-.btn{display:inline-flex;align-items:center;justify-content:center;gap:7px;background:var(--lapis);color:var(--lapis-ink);
-  border:1px solid transparent;border-radius:9px;padding:10px 15px;font-size:14px;font-weight:600}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:7px;min-height:44px;
+  background:var(--lapis);color:var(--lapis-ink);
+  border:1px solid transparent;border-radius:9px;padding:10px 15px;font-size:var(--fs-body);font-weight:600}
 .btn.ghost{background:var(--surface);color:var(--ink);border-color:var(--line)}
-.btn.sm{padding:7px 12px;font-size:13px}
+.btn.sm{padding:7px 12px;min-height:44px;font-size:var(--fs-md)}
 .tally{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:12px}
 
 .slist{background:var(--surface);border:1px solid var(--line);border-radius:12px;overflow:hidden}
@@ -161,59 +197,69 @@ button#theme{display:inline-flex;align-items:center;justify-content:center}
 .srow:last-child{border-bottom:0}
 .srow.absent{background:var(--surface-2)}
 .srow.absent .nm{color:var(--ink-2)}
-.donebar{display:flex;align-items:center;gap:10px;border-radius:11px;padding:11px 13px;margin-bottom:12px;font-size:14px;font-weight:600}
+.donebar{display:flex;align-items:center;gap:10px;border-radius:11px;padding:11px 13px;margin-bottom:12px;font-size:var(--fs-body);font-weight:600}
 .donebar.part{background:var(--late-soft);border:1px solid color-mix(in srgb,var(--late) 34%,transparent);color:var(--ink)}
 .donebar.all{background:var(--ok-soft);border:1px solid color-mix(in srgb,var(--ok) 34%,transparent);color:var(--ink)}
-.donebar .big{font-family:var(--mono);font-size:19px;font-weight:600}
+.donebar .big{font-family:var(--mono);font-size:var(--fs-xl);font-weight:600}
 .mtabs{display:flex;gap:3px;background:var(--surface-2);border:1px solid var(--line);border-radius:9px;padding:2px;margin-bottom:14px;flex-wrap:wrap}
-.mtabs button{background:none;border:0;border-radius:7px;padding:7px 14px;font-size:13px;font-weight:600;color:var(--ink-3)}
+.mtabs button{background:none;border:0;border-radius:7px;padding:7px 14px;font-size:var(--fs-md);font-weight:600;color:var(--ink-3)}
 .mtabs button[aria-pressed="true"]{background:var(--surface);color:var(--ink);box-shadow:var(--shadow)}
-.chk{display:flex;gap:10px;align-items:flex-start;padding:10px 0;border-bottom:1px solid var(--line);font-size:13.5px}
+.chk{display:flex;gap:10px;align-items:flex-start;padding:10px 0;border-bottom:1px solid var(--line);font-size:var(--fs-md)}
 .chk:last-child{border-bottom:0}
-.chk .w{font-family:var(--mono);font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3);flex:0 0 76px;padding-top:3px}
+.chk .w{font-family:var(--mono);font-size:var(--fs-micro);letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3);flex:0 0 76px;padding-top:3px}
 .srow .nmb{flex:1;min-width:0;background:none;border:0;text-align:start;padding:0;display:flex;flex-direction:column;gap:3px;align-items:flex-start}
 [dir="rtl"] .srow .nmb{align-items:flex-end}
-.srow .nm{font-weight:600;font-size:14.5px;line-height:1.25}
-.srow .meta{display:flex;gap:6px;align-items:center;flex-wrap:wrap;font-family:var(--mono);font-size:10.5px;color:var(--ink-3)}
+.srow .nm{font-weight:600;font-size:var(--fs-body);line-height:1.25}
+.srow .meta{display:flex;gap:6px;align-items:center;flex-wrap:wrap;font-family:var(--mono);font-size:var(--fs-micro);color:var(--ink-3)}
 [dir="rtl"] .srow .meta{justify-content:flex-end}
 .seg3{display:flex;gap:2px;background:var(--surface-2);border:1px solid var(--line);border-radius:9px;padding:2px;flex:none}
-.seg3 button{background:none;border:0;border-radius:7px;width:34px;height:30px;font-size:13px;font-weight:700;color:var(--ink-3);padding:0}
+/* 34x30 was the real size of the three controls a teacher taps most
+   often in the whole app, with an 8.5px caption under each. 48px high,
+   and wide enough that the word under the icon is not the target. */
+.seg3 button{background:none;border:0;border-radius:7px;min-width:52px;min-height:48px;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;
+  font-size:var(--fs-md);font-weight:700;color:var(--ink-3);padding:2px 4px}
 .seg3 button[aria-pressed="true"].p{background:var(--ok);color:var(--ok-ink)}
 .seg3 button[aria-pressed="true"].l{background:var(--late-fill);color:var(--late-ink)}
 .seg3 button[aria-pressed="true"].a{background:var(--crit);color:var(--crit-ink)}
 .seg3 button[aria-pressed="true"].a.exc{background:var(--exc);color:var(--exc-ink)}
 .reasons{display:flex;gap:6px;flex-wrap:wrap;padding:0 12px 11px;border-bottom:1px solid var(--line)}
 .reasons[hidden]{display:none}
-.chip{background:var(--surface-2);border:1px solid var(--line);border-radius:99px;padding:5px 11px;font-size:12px;font-weight:600;color:var(--ink-2)}
+.chip{background:var(--surface-2);border:1px solid var(--line);border-radius:99px;
+  padding:5px 11px;min-height:44px;display:inline-flex;align-items:center;font-size:var(--fs-base);font-weight:600;color:var(--ink-2)}
 .chip.un[aria-pressed="true"]{background:var(--crit);color:var(--crit-ink);border-color:var(--crit)}
 .chip.ex[aria-pressed="true"]{background:var(--exc);color:var(--exc-ink);border-color:var(--exc)}
 
 .grp{margin-bottom:18px}
 .grph{display:flex;align-items:baseline;gap:8px;margin:0 0 7px}
-.grph h2{margin:0;font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-3)}
-.grph .n{font-family:var(--mono);font-size:11px;color:var(--ink-3)}
+.grph h2{margin:0;font-size:var(--fs-small);font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-3)}
+.grph .n{font-family:var(--mono);font-size:var(--fs-small);color:var(--ink-3)}
 /* The day a section's homework is due back, beside its heading. Not
    letter-spaced and not upper-cased with the heading: it is a date, and an
    upper-cased date with tracking is unreadable at 11px. */
 .grph h2 .when{display:inline-block;margin-inline-start:8px;font-weight:600;
-  letter-spacing:0;text-transform:none;font-size:11.5px;color:var(--ink-2)}
+  letter-spacing:0;text-transform:none;font-size:var(--fs-small);color:var(--ink-2)}
 .card{background:var(--surface);border:1px solid var(--line);border-radius:12px;overflow:hidden}
 .irow{display:flex;align-items:center;gap:10px;padding:10px 12px;border-bottom:1px solid var(--line)}
 .irow:last-child{border-bottom:0}
 .irow .lab{flex:1;min-width:0;display:flex;flex-direction:column;gap:3px;align-items:flex-start}
 /* removed in round 32: see below */
-.irow .ar{font-family:var(--serif);font-size:19px;font-weight:700;line-height:1.3}
-.irow .tr{font-size:13px;font-weight:600;color:var(--ink-2)}
-.irow .m{font-family:var(--mono);font-size:10.5px;color:var(--ink-3)}
+.irow .ar{font-family:var(--serif);font-size:var(--fs-xl);font-weight:700;line-height:1.3}
+.irow .tr{font-size:var(--fs-md);font-weight:600;color:var(--ink-2)}
+.irow .m{font-family:var(--mono);font-size:var(--fs-micro);color:var(--ink-3)}
 .irow .m.stale{color:var(--rev)}
-.gb{width:36px;height:34px;border-radius:9px;border:1px solid var(--line);background:var(--surface-2);color:var(--ink-3);
-  display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:700;padding:0;flex:none}
+/* 48px in class. These are tapped with a thumb, at speed, by somebody
+   whose eyes are on a child reciting rather than on the screen. They were
+   36x34, which is under every guideline there is and is why a mis-tap on
+   the wrong grade was a weekly event. */
+.gb{min-width:48px;min-height:48px;border-radius:9px;border:1px solid var(--line);background:var(--surface-2);color:var(--ink-3);
+  display:flex;align-items:center;justify-content:center;font-size:var(--fs-body);font-weight:700;padding:0;flex:none}
 .gb.on-ok{background:var(--ok);border-color:var(--ok);color:var(--ok-ink)}
 .gb.on-rev{background:var(--late-fill);border-color:var(--late-fill);color:var(--late-ink)}
 .gb.on-np{background:var(--exc);border-color:var(--exc);color:var(--exc-ink)}
-.gb.note{font-size:12px}
-.hwbox{background:var(--lapis-soft);border:1px solid color-mix(in srgb,var(--lapis) 24%,transparent);border-radius:11px;padding:12px 14px;font-size:13.5px;line-height:1.55}
-.hwbox h3{margin:0 0 5px;font-size:10.5px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-3)}
+.gb.note{font-size:var(--fs-base)}
+.hwbox{background:var(--lapis-soft);border:1px solid color-mix(in srgb,var(--lapis) 24%,transparent);border-radius:11px;padding:12px 14px;font-size:var(--fs-md);line-height:1.55}
+.hwbox h3{margin:0 0 5px;font-size:var(--fs-micro);font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-3)}
 /* One piece of set homework. It used to be a .kv — a single flex line with
    the surah on the left and a pill plus a 38x26 pencil squeezed on the right,
    which on a phone wrapped the pencil onto a line of its own where it looked
@@ -223,12 +269,12 @@ button#theme{display:inline-flex;align-items:center;justify-content:center}
   padding:9px 0;border-top:1px solid color-mix(in srgb,var(--lapis) 16%,transparent)}
 .hwrow:first-child{border-top:0;padding-top:2px}
 .hwrow .hwmain{flex:1 1 170px;min-width:0}
-.hwrow .hwmain .k{font-size:10px;letter-spacing:.09em;text-transform:uppercase;color:var(--ink-3)}
+.hwrow .hwmain .k{font-size:var(--fs-micro);letter-spacing:.09em;text-transform:uppercase;color:var(--ink-3)}
 .hwrow .hwside{display:flex;gap:7px;align-items:center;flex-wrap:wrap}
 /* A real tap target, and a word on it. 36px tall rather than 26, and it says
    what it does instead of leaving a pencil glyph to be guessed at. */
-.hwrow .hw-edit{min-height:36px;padding:7px 14px;font-size:13px}
-.hwage{font-size:11.5px;color:var(--ink-3);margin-top:2px}
+.hwrow .hw-edit{min-height:36px;padding:7px 14px;font-size:var(--fs-md)}
+.hwage{font-size:var(--fs-small);color:var(--ink-3);margin-top:2px}
 /* Three weeks open means a child who has not been heard on it. Worth seeing
    without reading the date. */
 .hwage.old{color:var(--late);font-weight:600}
@@ -238,29 +284,29 @@ button#theme{display:inline-flex;align-items:center;justify-content:center}
 /* Naming the homework inside a confirmation. surahLabel emits the Arabic name
    and the transliteration as two bare spans with nothing between them, which
    is fine inside a flex row and runs the two words together anywhere else. */
-.hwname{display:flex;gap:9px;align-items:baseline;flex-wrap:wrap;font-size:15px}
-.hwname .ar{font-family:var(--serif);font-size:19px;font-weight:700}
+.hwname{display:flex;gap:9px;align-items:baseline;flex-wrap:wrap;font-size:var(--fs-body)}
+.hwname .ar{font-family:var(--serif);font-size:var(--fs-xl);font-weight:700}
 
 /* undo toast */
 .toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(18px + env(safe-area-inset-bottom,0px));z-index:70;
-  background:var(--ink);color:var(--paper);padding:10px 12px 10px 16px;border-radius:99px;font-size:13px;font-weight:600;
+  background:var(--ink);color:var(--paper);padding:10px 12px 10px 16px;border-radius:99px;font-size:var(--fs-md);font-weight:600;
   box-shadow:var(--shadow);display:flex;align-items:center;gap:12px;max-width:calc(100vw - 32px)}
 .toast[hidden]{display:none}
-.toast button{background:rgba(255,255,255,.16);border:0;border-radius:99px;padding:5px 13px;font-size:12.5px;font-weight:700;color:inherit}
+.toast button{background:rgba(255,255,255,.16);border:0;border-radius:99px;padding:5px 13px;font-size:var(--fs-base);font-weight:700;color:inherit}
 /* confirm sheet */
 .sheet{position:fixed;inset:0;z-index:80;background:rgba(10,12,18,.5);display:flex;align-items:flex-end;justify-content:center}
 .sheet[hidden]{display:none}
 .sheet .in{background:var(--surface);border-radius:16px 16px 0 0;padding:20px 18px calc(20px + env(safe-area-inset-bottom,0px));max-width:520px;width:100%}
-.sheet h3{margin:0 0 7px;font-size:17px}
-.sheet p{margin:0 0 15px;font-size:13.5px;color:var(--ink-2);line-height:1.55}
+.sheet h3{margin:0 0 7px;font-size:var(--fs-xl)}
+.sheet p{margin:0 0 15px;font-size:var(--fs-md);color:var(--ink-2);line-height:1.55}
 
 /* parent */
 .pcard{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:15px 16px;margin-bottom:12px}
-.pcard h2{margin:0 0 10px;font-size:10.5px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-3)}
+.pcard h2{margin:0 0 10px;font-size:var(--fs-micro);font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-3)}
 .hero{background:var(--lapis);color:var(--lapis-ink);border:0}
 .hero h2{color:rgba(255,255,255,.72)}
 :root[data-theme="dark"] .hero h2{color:rgba(16,20,32,.64)}
-.hero .line{display:flex;gap:9px;align-items:baseline;padding:6px 0;border-bottom:1px solid rgba(255,255,255,.18);font-size:15px}
+.hero .line{display:flex;gap:9px;align-items:baseline;padding:6px 0;border-bottom:1px solid rgba(255,255,255,.18);font-size:var(--fs-body)}
 :root[data-theme="dark"] .hero .line{border-color:rgba(16,20,32,.18)}
 /* One homework entry: the surah, then who set it and when. The rule goes
    round the ENTRY, so it separates one piece of homework from the next
@@ -271,12 +317,12 @@ button#theme{display:inline-flex;align-items:center;justify-content:center}
 .hero .hwitem .line{border-bottom:0;padding:0}
 :root[data-theme="dark"] .hero .hwitem{border-color:rgba(16,20,32,.18)}
 /* The provenance line, set under its surah with room to breathe. */
-.hero .line.sub{font-size:12.5px;opacity:.78;padding:0;margin-top:5px}
+.hero .line.sub{font-size:var(--fs-base);opacity:.78;padding:0;margin-top:5px}
 .hero .line:last-child{border-bottom:0}
-.hero .k{font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;opacity:.75;flex:none;width:78px}
-.hero .ar{font-family:var(--serif);font-size:19px;font-weight:700}
+.hero .k{font-size:var(--fs-micro);font-weight:700;letter-spacing:.1em;text-transform:uppercase;opacity:.75;flex:none;width:78px}
+.hero .ar{font-family:var(--serif);font-size:var(--fs-xl);font-weight:700}
 .kids{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:13px}
-.kid{background:var(--surface);border:1px solid var(--line);border-radius:99px;padding:7px 14px;font-size:13.5px;font-weight:600;color:var(--ink-2)}
+.kid{background:var(--surface);border:1px solid var(--line);border-radius:99px;padding:7px 14px;font-size:var(--fs-md);font-weight:600;color:var(--ink-2)}
 .kid[aria-pressed="true"]{background:var(--lapis);border-color:var(--lapis);color:var(--lapis-ink)}
 .dots{display:flex;gap:5px;flex-wrap:wrap;margin-bottom:10px}
 .dot{display:flex;flex-direction:column;align-items:center;gap:4px;width:40px}
@@ -303,27 +349,27 @@ button#theme{display:inline-flex;align-items:center;justify-content:center}
   background-image:repeating-linear-gradient(135deg,
     transparent 0 2px, color-mix(in srgb,var(--ink-2) 62%,transparent) 2px 3.5px)}
 .pill.mute i.sw-none{background:var(--surface);border:1px dashed var(--ink-3)}
-.dot span{font-family:var(--mono);font-size:8.5px;color:var(--ink-3);white-space:nowrap}
-.kv{display:flex;justify-content:space-between;gap:12px;padding:6px 0;border-bottom:1px solid var(--line);font-size:13.5px}
+.dot span{font-family:var(--mono);font-size:var(--fs-micro);color:var(--ink-3);white-space:nowrap}
+.kv{display:flex;justify-content:space-between;gap:12px;padding:6px 0;border-bottom:1px solid var(--line);font-size:var(--fs-md)}
 .kv:last-child{border-bottom:0}
 .kv b{font-family:var(--mono);font-variant-numeric:tabular-nums}
 .rlist{display:flex;flex-direction:column;gap:7px}
 .rlist .r{display:flex;justify-content:space-between;align-items:baseline;gap:10px}
-.rlist .r .ar{font-family:var(--serif);font-size:18px;font-weight:700}
-.rlist .r .tr{font-size:12px;color:var(--ink-3)}
+.rlist .r .ar{font-family:var(--serif);font-size:var(--fs-xl);font-weight:700}
+.rlist .r .tr{font-size:var(--fs-base);color:var(--ink-3)}
 .sess{border-inline-start:2px solid var(--line);padding-inline-start:12px;margin-inline-start:3px}
 .sess .s{padding-bottom:11px}
 .sess .s:last-child{padding-bottom:0}
-.sess .d{font-family:var(--mono);font-size:10.5px;color:var(--ink-3)}
-.sess .w{font-size:13.5px;margin-top:2px}
-.sess .n{font-size:12.5px;color:var(--ink-2);font-style:italic;margin-top:2px}
+.sess .d{font-family:var(--mono);font-size:var(--fs-micro);color:var(--ink-3)}
+.sess .w{font-size:var(--fs-md);margin-top:2px}
+.sess .n{font-size:var(--fs-base);color:var(--ink-2);font-style:italic;margin-top:2px}
 
 /* dashboard */
 .tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:14px}
 .tile{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:13px 14px}
-.tile .k{font-size:10px;font-weight:700;letter-spacing:.11em;text-transform:uppercase;color:var(--ink-3)}
-.tile .v{font-family:var(--mono);font-size:26px;font-weight:600;margin-top:5px;font-variant-numeric:tabular-nums}
-.tile .f{font-size:11.5px;color:var(--ink-3);margin-top:3px}
+.tile .k{font-size:var(--fs-micro);font-weight:700;letter-spacing:.11em;text-transform:uppercase;color:var(--ink-3)}
+.tile .v{font-family:var(--mono);font-size:var(--fs-display);font-weight:600;margin-top:5px;font-variant-numeric:tabular-nums}
+.tile .f{font-size:var(--fs-small);color:var(--ink-3);margin-top:3px}
 .tile.alert .v{color:var(--crit)}
 .filters{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:12px}
 /* A row of filter buttons where one is chosen. The count rides inside the
@@ -333,43 +379,43 @@ button#theme{display:inline-flex;align-items:center;justify-content:center}
 .mini.lk-f{display:inline-flex;align-items:center;gap:6px}
 .mini.lk-f .n{font-family:var(--mono);font-variant-numeric:tabular-nums;
   background:var(--surface);border:1px solid var(--line);border-radius:6px;
-  padding:0 5px;font-size:11px;font-weight:700;color:var(--ink-3)}
+  padding:0 5px;font-size:var(--fs-small);font-weight:700;color:var(--ink-3)}
 .mini.lk-f.on{border-color:var(--lapis);background:var(--lapis-soft);color:var(--lapis)}
 .mini.lk-f.on .n{background:var(--lapis);border-color:var(--lapis);color:var(--lapis-ink)}
-select,input[type=search],input[type=date]{background:var(--surface);color:var(--ink);border:1px solid var(--line);border-radius:9px;padding:8px 10px;font:inherit;font-size:13.5px}
+select,input[type=search],input[type=date]{background:var(--surface);color:var(--ink);border:1px solid var(--line);border-radius:9px;padding:8px 10px;font:inherit;font-size:var(--fs-md)}
 .tw{overflow-x:auto;border:1px solid var(--line);border-radius:12px;background:var(--surface)}
-table{width:100%;border-collapse:collapse;font-size:13px}
+table{width:100%;border-collapse:collapse;font-size:var(--fs-md)}
 th,td{text-align:left;padding:9px 11px;border-bottom:1px solid var(--line);white-space:nowrap;vertical-align:middle}
-th{font-size:10px;letter-spacing:.09em;text-transform:uppercase;color:var(--ink-3);font-weight:700;position:sticky;top:0;background:var(--surface-2);z-index:1}
+th{font-size:var(--fs-micro);letter-spacing:.09em;text-transform:uppercase;color:var(--ink-3);font-weight:700;position:sticky;top:0;background:var(--surface-2);z-index:1}
 td.n{font-family:var(--mono);font-variant-numeric:tabular-nums}
 tbody tr{cursor:pointer}
 tbody tr:hover{background:var(--surface-2)}
 tbody tr[aria-selected="true"]{background:var(--lapis-soft)}
 .jz{display:flex;flex-direction:column;gap:3px;min-width:132px}
-.jz .t{font-size:11px;color:var(--ink-3);font-family:var(--mono);display:flex;justify-content:space-between;gap:8px}
+.jz .t{font-size:var(--fs-small);color:var(--ink-3);font-family:var(--mono);display:flex;justify-content:space-between;gap:8px}
 .bar2{display:flex;height:8px;border-radius:99px;overflow:hidden;background:var(--surface-3);gap:2px}
 .bar2 i{display:block;height:100%}
 .bar2 i.a{background:var(--ok)} .bar2 i.r{background:var(--rev)}
-.mo{display:flex;flex-direction:column;gap:2px;font-family:var(--mono);font-size:11.5px}
+.mo{display:flex;flex-direction:column;gap:2px;font-family:var(--mono);font-size:var(--fs-small)}
 .mo .up{color:var(--ok);font-weight:600}
 .mo .flat{color:var(--crit);font-weight:600}
 .drill{margin-top:12px;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:15px 16px}
-.drill h3{margin:0 0 3px;font-size:18px}
-.drill .sub{font-family:var(--mono);font-size:11.5px;color:var(--ink-3);margin-bottom:13px}
+.drill h3{margin:0 0 3px;font-size:var(--fs-xl)}
+.drill .sub{font-family:var(--mono);font-size:var(--fs-small);color:var(--ink-3);margin-bottom:13px}
 .dtabs{display:flex;gap:3px;background:var(--surface-2);border:1px solid var(--line);border-radius:9px;padding:2px;margin-bottom:14px;flex-wrap:wrap}
-.dtabs button{background:none;border:0;border-radius:7px;padding:6px 13px;font-size:12.5px;font-weight:600;color:var(--ink-3)}
+.dtabs button{background:none;border:0;border-radius:7px;padding:6px 13px;font-size:var(--fs-base);font-weight:600;color:var(--ink-3)}
 .dtabs button[aria-pressed="true"]{background:var(--surface);color:var(--ink);box-shadow:var(--shadow)}
 .cols{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:18px}
-.cols h4{margin:0 0 7px;font-size:10px;letter-spacing:.11em;text-transform:uppercase;color:var(--ink-3)}
+.cols h4{margin:0 0 7px;font-size:var(--fs-micro);letter-spacing:.11em;text-transform:uppercase;color:var(--ink-3)}
 .tree{border:1px solid var(--line);border-radius:10px;overflow:hidden}
-.trow{display:flex;align-items:center;gap:9px;padding:7px 11px;border-bottom:1px solid var(--line);font-size:13px}
+.trow{display:flex;align-items:center;gap:9px;padding:7px 11px;border-bottom:1px solid var(--line);font-size:var(--fs-md)}
 .trow:last-child{border-bottom:0}
 .trow .st{flex:0 0 4px;height:20px;border-radius:2px;background:var(--surface-3)}
 .trow .st.ok{background:var(--ok)} .trow .st.rev{background:var(--rev)} .trow .st.mix{background:linear-gradient(var(--ok) 50%,var(--rev) 50%)}
 .trow .lbl{flex:1;display:flex;gap:9px;align-items:baseline}
-.trow .lbl .ar{font-family:var(--serif);font-size:16px;font-weight:700}
-.trow .dt{font-family:var(--mono);font-size:10.5px;color:var(--ink-3)}
-.note{background:var(--surface-2);border:1px solid var(--line);border-radius:10px;padding:10px 12px;font-size:12.5px;color:var(--ink-2)}
+.trow .lbl .ar{font-family:var(--serif);font-size:var(--fs-lg);font-weight:700}
+.trow .dt{font-family:var(--mono);font-size:var(--fs-micro);color:var(--ink-3)}
+.note{background:var(--surface-2);border:1px solid var(--line);border-radius:10px;padding:10px 12px;font-size:var(--fs-base);color:var(--ink-2)}
 .legendrow{display:flex;gap:7px;flex-wrap:wrap;margin-top:10px}
 /* ---- tajwīd stars -------------------------------------------------------
    Stars for tajwīd, faces for adab. Two five-point scales on one screen that
@@ -378,7 +424,10 @@ tbody tr[aria-selected="true"]{background:var(--lapis-soft)}
    this app colour already means attendance state and borrowing it here would
    put a red "1" next to a crimson "no reason" dot. */
 .stars{display:inline-flex;align-items:center;gap:2px;vertical-align:middle}
-.stars .st{background:none;border:0;padding:2px;line-height:0;cursor:pointer;
+/* The star itself stays 15px; the thumb gets 44px around it. A tajwid
+   grade set by accident is as wrong as one not set at all. */
+.stars .st{background:none;border:0;padding:14px 5px;min-width:25px;min-height:44px;
+  display:inline-flex;align-items:center;justify-content:center;line-height:0;cursor:pointer;
   min-width:0;min-height:0}
 .stars .st svg{width:15px;height:15px;display:block;fill:none;
   stroke:var(--ink-3);stroke-width:1.4;stroke-linejoin:round}
@@ -395,9 +444,9 @@ tbody tr[aria-selected="true"]{background:var(--lapis-soft)}
 .irow.grad .lab{flex:1 1 130px;min-width:110px}
 .tjline{display:flex;align-items:center;gap:8px;flex:1 0 100%;
   margin-top:7px;padding-top:7px;border-top:1px dashed var(--line)}
-.tjlab{font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;
+.tjlab{font-size:var(--fs-small);font-weight:700;letter-spacing:.06em;text-transform:uppercase;
   color:var(--ink-3)}
-.tjask{font-size:11.5px;color:var(--late);font-weight:600;display:none}
+.tjask{font-size:var(--fs-small);color:var(--late);font-weight:600;display:none}
 /* The grade was tapped but the tajwīd is still missing. The tap is never
    thrown away — the row just says what it is still waiting for. */
 .irow.needtj .tjask{display:inline}
@@ -405,7 +454,7 @@ tbody tr[aria-selected="true"]{background:var(--lapis-soft)}
 .irow.needtj .stars .st svg{stroke:var(--late)}
 
 /* what the recitation did to the mushaf */
-.basel{font-size:10.5px;font-weight:700;letter-spacing:.04em;color:var(--ok);
+.basel{font-size:var(--fs-micro);font-weight:700;letter-spacing:.04em;color:var(--ok);
   margin-inline-start:7px;white-space:nowrap}
 .basel.rev{color:var(--late)}
 
@@ -424,12 +473,12 @@ tbody tr[aria-selected="true"]{background:var(--lapis-soft)}
 .faces .fb:hover{opacity:.8}
 .faces .fb.on{opacity:1;border-color:currentColor;background:var(--surface-2)}
 .adabnote{display:flex;gap:8px;align-items:center}
-.adabnote input{flex:1 1 auto;min-width:0;font:inherit;font-size:13px;
+.adabnote input{flex:1 1 auto;min-width:0;font:inherit;font-size:var(--fs-md);
   padding:8px 10px;border:1px solid var(--line);border-radius:9px;
   background:var(--surface);color:var(--ink)}
 .adabnote input.need{border-color:var(--crit);background:var(--crit-soft)}
-.adabcard .hint{font-size:11.5px;color:var(--ink-3);margin-top:9px;line-height:1.5}
-.adabline{display:inline-flex;align-items:center;gap:6px;font-size:12px;
+.adabcard .hint{font-size:var(--fs-small);color:var(--ink-3);margin-top:9px;line-height:1.5}
+.adabline{display:inline-flex;align-items:center;gap:6px;font-size:var(--fs-base);
   color:var(--ink-2);margin-top:3px}
 .adabline .face{width:17px;height:17px}
 
@@ -439,12 +488,13 @@ tbody tr[aria-selected="true"]{background:var(--lapis-soft)}
 .aheadnote{background:var(--late-soft);color:var(--ink);
   border:1px solid color-mix(in srgb,var(--late) 58%,transparent);
   border-radius:11px;padding:10px 13px;margin-bottom:12px;
-  font-size:12.5px;line-height:1.5}
+  font-size:var(--fs-base);line-height:1.5}
 .aheadnote[hidden]{display:none}
 .slist.ahead .seg3, .slist.ahead .heard{opacity:.4;pointer-events:none}
 .slist.ahead .seg3 button{cursor:default}
 
-@media (max-width:520px){ .ctx h1{font-size:18px} .irow .ar{font-size:17px} .seg3 button{width:31px} }
+@media (max-width:520px){ .ctx h1{font-size:var(--fs-xl)} .irow .ar{font-size:var(--fs-xl)}
+  .seg3 button{min-width:46px} }
 
 /* ======================================================================
    ARABIC TYPOGRAPHY
@@ -480,7 +530,7 @@ html[lang="ar"]{
   --mono: system-ui, -apple-system, "SF Arabic", "Segoe UI", "Noto Sans Arabic",
           Roboto, "Helvetica Neue", Arial, sans-serif;
 }
-html[lang="ar"] body{ font-size:15.5px; line-height:1.7 }
+html[lang="ar"] body{ font-size:var(--fs-lg); line-height:1.7 }
 
 /* the small print, which was the worst of it */
 html[lang="ar"] .ctx .sub,
@@ -491,18 +541,18 @@ html[lang="ar"] .sess .n,
 html[lang="ar"] .trow .dt,
 html[lang="ar"] .drill .sub,
 html[lang="ar"] .jz .t,
-html[lang="ar"] .mo{ font-size:12.5px; line-height:1.75 }
+html[lang="ar"] .mo{ font-size:var(--fs-base); line-height:1.75 }
 
-html[lang="ar"] .note{ font-size:13.5px; line-height:1.85 }
-html[lang="ar"] .srow .nm{ font-size:16px; line-height:1.4 }
-html[lang="ar"] .irow .tr{ font-size:14px }
-html[lang="ar"] .kv, html[lang="ar"] .chk{ font-size:14.5px; line-height:1.7 }
-html[lang="ar"] .hero .line{ font-size:16px; line-height:1.75 }
-html[lang="ar"] .btn{ font-size:15px }
-html[lang="ar"] .pill{ font-size:12px; padding:4px 10px 4px 8px }
-html[lang="ar"] .dot span{ font-size:10px }
-html[lang="ar"] .banner{ font-size:14px; line-height:1.75 }
-html[lang="ar"] th, html[lang="ar"] td{ font-size:14px }
+html[lang="ar"] .note{ font-size:var(--fs-md); line-height:1.85 }
+html[lang="ar"] .srow .nm{ font-size:var(--fs-lg); line-height:1.4 }
+html[lang="ar"] .irow .tr{ font-size:var(--fs-body) }
+html[lang="ar"] .kv, html[lang="ar"] .chk{ font-size:var(--fs-body); line-height:1.7 }
+html[lang="ar"] .hero .line{ font-size:var(--fs-lg); line-height:1.75 }
+html[lang="ar"] .btn{ font-size:var(--fs-body) }
+html[lang="ar"] .pill{ font-size:var(--fs-base); padding:4px 10px 4px 8px }
+html[lang="ar"] .dot span{ font-size:var(--fs-micro) }
+html[lang="ar"] .banner{ font-size:var(--fs-body); line-height:1.75 }
+html[lang="ar"] th, html[lang="ar"] td{ font-size:var(--fs-body) }
 
 /* Arabic has no capitals, and its letters join — so no tracking, no caps. */
 html[lang="ar"] .grph h2,
@@ -514,7 +564,7 @@ html[lang="ar"] .cols h4,
 html[lang="ar"] th,
 html[lang="ar"] .logo .en span,
 html[lang="ar"] .proto .tag{
-  letter-spacing:normal; text-transform:none; font-size:12.5px;
+  letter-spacing:normal; text-transform:none; font-size:var(--fs-base);
 }
 
 /* The class names are written in Latin ("Hizb 54 - Surat Ar-Rahman"), so in
@@ -535,7 +585,7 @@ html[lang="ar"] .tile .v, html[lang="ar"] .donebar .big{ font-variant-numeric:ta
 /* U9 · nothing said a student row was tappable, so the student page went
    undiscovered. The chevron is the standard way of saying "there is more
    behind this" and costs no vertical space. */
-.srow .chev{color:var(--ink-3);font-weight:400;margin-inline-start:6px;font-size:15px;line-height:1}
+.srow .chev{color:var(--ink-3);font-weight:400;margin-inline-start:6px;font-size:var(--fs-body);line-height:1}
 .srow .nmb:hover .chev{color:var(--ink-2)}
 
 /* U4 · ✓ / L / ✗ were unlabelled, and "L" for late is meaningless in Arabic.
@@ -543,9 +593,9 @@ html[lang="ar"] .tile .v, html[lang="ar"] .donebar .big{ font-variant-numeric:ta
    Taller as well, which fixes the small tap targets at the same time. */
 .seg3 button{width:auto;min-width:44px;height:42px;padding:3px 6px;
   display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;line-height:1}
-.seg3 button .ic{font-size:13px;font-weight:700}
-.seg3 button small{font-size:8.5px;font-weight:600;letter-spacing:.02em;opacity:.85;white-space:nowrap}
-html[lang="ar"] .seg3 button small{font-size:9px;letter-spacing:0}
+.seg3 button .ic{font-size:var(--fs-md);font-weight:700}
+.seg3 button small{font-size:var(--fs-micro);font-weight:600;letter-spacing:.02em;opacity:.85;white-space:nowrap}
+html[lang="ar"] .seg3 button small{font-size:var(--fs-micro);letter-spacing:0}
 html[lang="ar"] .seg3 button{min-width:50px}
 
 /* The workflow fix · the ordinary child, heard and marked without leaving
@@ -554,10 +604,10 @@ html[lang="ar"] .seg3 button{min-width:50px}
 .heard{flex:none;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;
   min-width:42px;height:42px;padding:3px 7px;border-radius:9px;line-height:1;
   background:var(--ok-soft);border:1px solid color-mix(in srgb,var(--ok) 40%,transparent);color:var(--ok)}
-.heard .ic{font-size:14px;font-weight:700}
-.heard small{font-size:8.5px;font-weight:700;white-space:nowrap}
+.heard .ic{font-size:var(--fs-body);font-weight:700}
+.heard small{font-size:var(--fs-micro);font-weight:700;white-space:nowrap}
 .heard:disabled{opacity:.45}
-html[lang="ar"] .heard small{font-size:9px}
+html[lang="ar"] .heard small{font-size:var(--fs-micro)}
 
 /* U2 · "3 of 8 still to go" is the most useful thing on the screen and it
    used to scroll out of sight the moment you started working. */
@@ -566,14 +616,14 @@ html[lang="ar"] .heard small{font-size:9px}
 /* U1 · three stacked full-width buttons pushed the first student's name
    below the fold on a 390px phone. The list IS the screen. */
 .actionrow.tight{gap:7px;margin-top:-6px}
-.actionrow.tight .btn{flex:1 1 0;min-width:0;font-size:12.5px;padding:8px 10px}
+.actionrow.tight .btn{flex:1 1 0;min-width:0;font-size:var(--fs-base);padding:8px 10px}
 
 /* U3 + U11 · Sign out used to sit beside Coordinator tools at the foot of the
    register, one mis-tap from a passphrase re-entry mid-class; language and
    theme held a permanent strip across the bottom of every screen. Both now
    live behind the ⚙ in the top bar. */
 .setrow{display:flex;align-items:center;justify-content:space-between;gap:12px;
-  padding:11px 0;border-bottom:1px solid var(--line);font-size:14px;font-weight:600}
+  padding:11px 0;border-bottom:1px solid var(--line);font-size:var(--fs-body);font-weight:600}
 .setrow:last-of-type{border-bottom:0}
 .setrow .rt,.setrow button{flex:none}
 .mini.danger{color:var(--crit);border-color:color-mix(in srgb,var(--crit) 40%,transparent)}
@@ -586,15 +636,15 @@ html[lang="ar"] .heard small{font-size:9px}
 /* The gear came out at 31px wide, under the 32px floor the rest of the app
    holds to. A settings button that needs aiming at is a settings button
    people mis-tap on the way to something else. */
-#gear,#gearStu,#gearCoord,#gearMushaf{min-width:36px;text-align:center;font-size:14px}
+#gear,#gearStu,#gearCoord,#gearMushaf{min-width:36px;text-align:center;font-size:var(--fs-body)}
 
 /* U1, second pass · the class title and date block was costing 70px above a
    list that IS the screen. Same information, one line, half the height. */
 #v-class .ctx{padding-top:8px;padding-bottom:8px}
-#v-class .ctx h1{font-size:16px;margin:0}
-#v-class .ctx .sub{font-size:11.5px;margin-top:2px}
-#doneBar.sticky .donebar{padding:8px 11px;font-size:13px;margin-bottom:9px}
-#doneBar.sticky .donebar .big{font-size:16px}
+#v-class .ctx h1{font-size:var(--fs-lg);margin:0}
+#v-class .ctx .sub{font-size:var(--fs-small);margin-top:2px}
+#doneBar.sticky .donebar{padding:8px 11px;font-size:var(--fs-md);margin-bottom:9px}
+#doneBar.sticky .donebar .big{font-size:var(--fs-lg)}
 
 /* U1, third pass · measured, not guessed. The top bar was 101px because the
    full wordmark plus the school name plus the class picker plus the teacher
@@ -617,14 +667,14 @@ html[lang="ar"] .heard small{font-size:9px}
 
 /* B4 · a recitation, with the way back beside it. */
 .rec{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:2px}
-.rec .w{font-family:var(--mono);font-size:10.5px;color:var(--ink-3)}
-.undoRec{background:none;border:0;padding:2px 6px;border-radius:6px;font-size:10.5px;font-weight:700;
+.rec .w{font-family:var(--mono);font-size:var(--fs-micro);color:var(--ink-3)}
+.undoRec{background:none;border:0;padding:2px 6px;border-radius:6px;font-size:var(--fs-micro);font-weight:700;
   color:var(--ink-3);border:1px solid var(--line);min-height:26px}
 .undoRec:hover{color:var(--crit);border-color:color-mix(in srgb,var(--crit) 40%,transparent)}
 
 /* B5 · notes are a list now, not a write-only box. */
 .noterow .lab{gap:4px}
-.noterow .gb{width:32px;height:30px;font-size:12px}
+.noterow .gb{width:32px;height:30px;font-size:var(--fs-base)}
 
 /* Walking the class without going back to the list every time. */
 #stuNav{padding-top:0}
@@ -639,10 +689,10 @@ html[lang="ar"] .heard small{font-size:9px}
    ask for — they are the most-tapped controls in the app. */
 .gb.lab3{width:auto;min-width:46px;height:44px;padding:3px 5px;
   display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;line-height:1}
-.gb.lab3 .ic{font-size:14px;font-weight:700}
-.gb.lab3 small{font-size:8.5px;font-weight:600;white-space:nowrap;opacity:.9}
+.gb.lab3 .ic{font-size:var(--fs-body);font-weight:700}
+.gb.lab3 small{font-size:var(--fs-micro);font-weight:600;white-space:nowrap;opacity:.9}
 html[lang="ar"] .gb.lab3{min-width:52px}
-html[lang="ar"] .gb.lab3 small{font-size:9px}
+html[lang="ar"] .gb.lab3 small{font-size:var(--fs-micro)}
 /* A review row carries four grades now, not three, and with the note button
    that is five controls on a 390px phone. They were wrapping, and a lone
    "not ready" on a line of its own reads like a mistake rather than a
@@ -653,8 +703,8 @@ html[lang="ar"] .gb.lab3 small{font-size:9px}
    three predictable bands: what it is, how it went, how it was read. */
 .irow .gbrow{flex:1 1 100%;display:flex;gap:6px;align-items:center}
 .irow.grad.g4 .gb.g{flex:1 1 0;min-width:44px;max-width:88px}
-.irow.grad.g4 .gb.g small{font-size:8px}
-html[lang="ar"] .irow.grad.g4 .gb.g small{font-size:8.5px}
+.irow.grad.g4 .gb.g small{font-size:var(--fs-micro)}
+html[lang="ar"] .irow.grad.g4 .gb.g small{font-size:var(--fs-micro)}
 .irow{gap:6px}
 
 /* B2 · the dead Save button on the "here is your link" panel.
@@ -689,18 +739,18 @@ html[lang="ar"] .irow.grad.g4 .gb.g small{font-size:8.5px}
 .juztile{display:flex;flex-direction:column;align-items:stretch;gap:6px;text-align:start;
   background:var(--surface);border:1px solid var(--line);border-radius:11px;padding:10px 11px;min-height:74px}
 .juztile:hover{border-color:var(--lapis)}
-.juztile .jn{font-size:13.5px;font-weight:700;color:var(--ink)}
-.juztile .jw{font-family:var(--mono);font-size:10px;color:var(--ink-3)}
+.juztile .jn{font-size:var(--fs-md);font-weight:700;color:var(--ink)}
+.juztile .jw{font-family:var(--mono);font-size:var(--fs-micro);color:var(--ink-3)}
 
-.crumbs{display:flex;align-items:center;gap:8px;margin-bottom:12px;font-size:12.5px;color:var(--ink-3)}
-.crumbs button{background:none;border:0;color:var(--lapis);font-weight:700;font-size:12.5px;padding:4px 0;min-height:32px}
+.crumbs{display:flex;align-items:center;gap:8px;margin-bottom:12px;font-size:var(--fs-base);color:var(--ink-3)}
+.crumbs button{background:none;border:0;color:var(--lapis);font-weight:700;font-size:var(--fs-base);padding:4px 0;min-height:32px}
 
 .lvl{display:flex;align-items:center;gap:10px;flex-wrap:wrap;
   background:var(--surface);border:1px solid var(--line);border-radius:11px;padding:10px 12px;margin-bottom:8px}
 .lvl.hizb{background:var(--surface-2);margin-top:14px}
 .lvlh{flex:1 1 180px;min-width:0;display:flex;align-items:center;gap:9px;flex-wrap:wrap}
-.lvlh b{font-size:13.5px;white-space:nowrap}
-.lvlh .w{font-family:var(--mono);font-size:10px;color:var(--ink-3);flex:1 1 100%}
+.lvlh b{font-size:var(--fs-md);white-space:nowrap}
+.lvlh .w{font-family:var(--mono);font-size:var(--fs-micro);color:var(--ink-3);flex:1 1 100%}
 .setg{display:flex;gap:4px;flex:none}
 
 .prow{border:1px solid var(--line);border-top:0;background:var(--surface);
@@ -710,23 +760,23 @@ html[lang="ar"] .irow.grad.g4 .gb.g small{font-size:8.5px}
 .prow.open{background:var(--surface-2)}
 .phead{flex:1 1 180px;min-width:0;display:flex;align-items:center;gap:9px;flex-wrap:wrap;
   background:none;border:0;padding:0;text-align:start;min-height:34px}
-.phead .pn{font-family:var(--mono);font-size:11.5px;font-weight:700;color:var(--ink);white-space:nowrap}
-.phead .pw{font-size:11.5px;color:var(--ink-2);flex:1 1 100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-top:1px}
-.phead .chev{color:var(--ink-3);flex:none;font-size:15px}
+.phead .pn{font-family:var(--mono);font-size:var(--fs-small);font-weight:700;color:var(--ink);white-space:nowrap}
+.phead .pw{font-size:var(--fs-small);color:var(--ink-2);flex:1 1 100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-top:1px}
+.phead .chev{color:var(--ink-3);flex:none;font-size:var(--fs-body)}
 .segs{flex:1 1 100%;margin-top:6px;border-top:1px solid var(--line);padding-top:6px}
 .seg{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:7px 0;border-bottom:1px solid var(--line)}
 .seg:last-child{border-bottom:0}
 .seg .lab{flex:1 1 160px;min-width:0;display:flex;flex-direction:column;gap:2px;align-items:flex-start}
 [dir="rtl"] .seg .lab{align-items:flex-end}
-.seg .ar{font-family:var(--serif);font-size:17px;font-weight:700;line-height:1.25}
-.seg .tr{font-size:12.5px;font-weight:600;color:var(--ink-2)}
-.seg .m{font-family:var(--mono);font-size:10px;color:var(--ink-3)}
+.seg .ar{font-family:var(--serif);font-size:var(--fs-xl);font-weight:700;line-height:1.25}
+.seg .tr{font-size:var(--fs-base);font-weight:600;color:var(--ink-2)}
+.seg .m{font-family:var(--mono);font-size:var(--fs-micro);color:var(--ink-3)}
 
 /* U7 · the key to the flag colours, once, above the table. A tooltip would
    have been the obvious answer and is useless on the device most of these
    screens are read on. */
 .legend{display:grid;grid-template-columns:auto 1fr;align-items:start;gap:8px 10px;
-  font-size:11.5px;color:var(--ink-2);
+  font-size:var(--fs-small);color:var(--ink-2);
   background:var(--surface-2);border:1px solid var(--line);border-radius:10px;
   padding:9px 12px;margin-bottom:10px}
 /* pill and sentence travel together; the sentence wraps inside the item so
@@ -746,9 +796,9 @@ html[lang="ar"] .irow.grad.g4 .gb.g small{font-size:8.5px}
 }
 
 /* U6 · the pages column used to read "11+3". */
-.pgcell{display:inline-flex;align-items:baseline;gap:5px;flex-wrap:wrap;font-size:12.5px}
-.pgcell b{font-family:var(--mono);font-size:13px}
-.pgcell .m{font-family:var(--mono);font-size:10.5px;color:var(--ink-3)}
+.pgcell{display:inline-flex;align-items:baseline;gap:5px;flex-wrap:wrap;font-size:var(--fs-base)}
+.pgcell b{font-family:var(--mono);font-size:var(--fs-md)}
+.pgcell .m{font-family:var(--mono);font-size:var(--fs-micro);color:var(--ink-3)}
 
 /* The language and theme buttons are borrowed out of the (hidden) bottom bar
    into the settings sheet. They were styled for that bar — a translucent white
@@ -762,14 +812,14 @@ html[lang="ar"] .irow.grad.g4 .gb.g small{font-size:8.5px}
   color:var(--ink);
   border-radius:8px;
   padding:7px 13px;
-  font-size:13px;
+  font-size:var(--fs-md);
   font-weight:600;
   min-height:36px;
   min-width:44px;
 }
 .setrow #lang:hover, .setrow #theme:hover,
 #slotLang #lang:hover, #slotTheme #theme:hover{ border-color:var(--lapis); }
-#slotTheme #theme{ font-size:15px; }
+#slotTheme #theme{ font-size:var(--fs-body); }
 
 /* ==========================================================================
    Second round of testing feedback
@@ -791,7 +841,7 @@ html[lang="ar"] .irow.grad.g4 .gb.g small{font-size:8.5px}
 
 /* A past recitation now says its outcome in words and in colour, instead of
    a bare glyph you had to remember the meaning of. */
-.rec .outc{font-size:10.5px;font-weight:700;padding:2px 7px;border-radius:99px;white-space:nowrap}
+.rec .outc{font-size:var(--fs-micro);font-weight:700;padding:2px 7px;border-radius:99px;white-space:nowrap}
 .rec .outc.t-ok { background:var(--ok-soft);   color:var(--ok) }
 .rec .outc.t-rev{ background:var(--late-soft); color:var(--late) }
 .rec .outc.t-np { background:var(--exc-soft);  color:var(--exc) }
@@ -800,12 +850,12 @@ html[lang="ar"] .irow.grad.g4 .gb.g small{font-size:8.5px}
 /* Surah numbers. Teachers say "surah 78", every printed mushaf is numbered,
    and it is the fastest thing to type into a filter. */
 .snum{flex:none;min-width:26px;height:22px;display:inline-flex;align-items:center;justify-content:center;
-  font-family:var(--mono);font-size:10.5px;font-weight:700;
+  font-family:var(--mono);font-size:var(--fs-micro);font-weight:700;
   background:var(--surface-2);border:1px solid var(--line);border-radius:6px;color:var(--ink-3)}
 .trow .snum{margin-inline-end:2px}
 
 /* Where a juz begins and ends. */
-.juztile .jr{font-size:9.5px;line-height:1.35;color:var(--ink-3);
+.juztile .jr{font-size:var(--fs-micro);line-height:1.35;color:var(--ink-3);
   display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
 .juztile{min-height:92px}
 
@@ -815,9 +865,9 @@ html[lang="ar"] .irow.grad.g4 .gb.g small{font-size:8.5px}
 
 /* The coordinator's tables scroll sideways on a phone and nothing said so. */
 .tw{position:relative}
-.scrollhint{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--ink-3);
+.scrollhint{display:flex;align-items:center;gap:6px;font-size:var(--fs-small);color:var(--ink-3);
   margin:0 0 6px;font-weight:600}
-.scrollhint .ar{font-size:13px}
+.scrollhint .ar{font-size:var(--fs-md)}
 
 /* The chosen surah stays marked in the picker, so clearing the search box
    shows you where you were rather than dropping you back into 114 rows. */
@@ -829,7 +879,7 @@ html[lang="ar"] .irow.grad.g4 .gb.g small{font-size:8.5px}
    eye while a child stands waiting.
    ========================================================================== */
 .trend{display:inline-flex;align-items:center;gap:5px;vertical-align:-3px}
-.trend .t{font-size:11.5px;font-weight:700;white-space:nowrap}
+.trend .t{font-size:var(--fs-small);font-weight:700;white-space:nowrap}
 /* Drawn rather than typed: the text arrows came out of the system font as
    hairlines and simply vanished at 14px beside a name. */
 .tarrow{flex:none;display:block}
@@ -852,15 +902,15 @@ html[lang="ar"] .irow.grad.g4 .gb.g small{font-size:8.5px}
 .trlegend{display:flex;align-items:center;gap:14px;flex-wrap:wrap;
   background:var(--surface-2);border:1px solid var(--line);border-radius:10px;
   padding:8px 12px;margin-bottom:10px}
-.trlegend .trend .t{font-size:11px;font-weight:600;color:var(--ink-2)}
+.trlegend .trend .t{font-size:var(--fs-small);font-weight:600;color:var(--ink-2)}
 
 /* On the child's own page it gets a line, with the reason spelled out —
    the one place with room to say WHY, so it does. */
 .trendbar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;
   border:1px solid var(--line);border-radius:11px;padding:11px 13px;margin-bottom:14px;
   background:var(--surface)}
-.trendbar .why{font-size:12px;color:var(--ink-2)}
-.trendbar .trend .t{font-size:13px}
+.trendbar .why{font-size:var(--fs-base);color:var(--ink-2)}
+.trendbar .trend .t{font-size:var(--fs-md)}
 .trendbar .tarrow{width:19px;height:19px;stroke-width:3}
 .trendbar.tr-up   { background:var(--ok-soft);   border-color:color-mix(in srgb,var(--ok) 58%,transparent) }
 .trendbar.tr-flat { background:var(--late-soft); border-color:color-mix(in srgb,var(--late) 58%,transparent) }
@@ -927,7 +977,7 @@ tr.opens:hover .rowgo{color:var(--lapis)}
 .barschool{display:none}
 .barrule{width:1px;align-self:stretch;background:var(--line);margin:5px 0;flex:none}
 .bar .logo.applogo{gap:7px}
-.bar .logo.applogo .ar{font-size:22px}
+.bar .logo.applogo .ar{font-size:var(--fs-2xl)}
 /* Back stays first — a thumb goes there without looking — and the mark
    follows it. Below 380px there is no room, so it simply is not there. */
 .brandsub{display:none}
@@ -945,7 +995,7 @@ tr.opens:hover .rowgo{color:var(--lapis)}
 @media (min-width:520px){
   .brandsub .crest{border-inline-end:1px solid var(--line);padding-inline-end:8px}
   .brandsub .logo{display:flex;align-items:baseline;gap:6px}
-  .brandsub .logo .ar{font-family:var(--calig);font-size:20px;font-weight:700;
+  .brandsub .logo .ar{font-family:var(--calig);font-size:var(--fs-2xl);font-weight:700;
     line-height:1;color:var(--lapis)}
 }
 /* Pre-existing, and nothing to do with the brand: at 320px this bar's own
@@ -954,7 +1004,7 @@ tr.opens:hover .rowgo{color:var(--lapis)}
   #v-student .bar, #v-mushaf .bar, #v-coord .bar{gap:6px}
 }
 @media (min-width:520px){
-  .barschool{display:inline;font-family:var(--serif);font-size:11.5px;font-weight:600;
+  .barschool{display:inline;font-family:var(--serif);font-size:var(--fs-small);font-weight:600;
     letter-spacing:.12em;text-transform:uppercase;color:var(--lapis);white-space:nowrap}
 }
 :root[data-theme="dark"] .brandsub .logo .ar,
@@ -973,23 +1023,23 @@ tr.opens:hover .rowgo{color:var(--lapis)}
 .slock .school{box-sizing:content-box;height:58px;width:33px;flex:none}
 .slock-rule{width:1px;align-self:stretch;background:var(--line-2);margin:4px 0}
 .slock-t{display:flex;flex-direction:column;gap:8px;text-align:start}
-.slock-en{font-family:var(--serif);font-size:17px;font-weight:600;line-height:1.05;
+.slock-en{font-family:var(--serif);font-size:var(--fs-xl);font-weight:600;line-height:1.05;
   letter-spacing:.15em;text-transform:uppercase;color:var(--lapis);white-space:nowrap}
-.slock-ar{font-family:var(--serif);font-size:16.5px;line-height:1.35;color:var(--ink-2);white-space:nowrap}
+.slock-ar{font-family:var(--serif);font-size:var(--fs-lg);line-height:1.35;color:var(--ink-2);white-space:nowrap}
 
 /* Sijill sits under the school, smaller, as the name of the tool. */
 .applock{display:flex;align-items:baseline;justify-content:center;gap:9px;margin-bottom:5px}
-.applock .ar{font-family:var(--calig);font-size:25px;font-weight:700;line-height:1;color:var(--ink)}
-.applock .en{font-size:15px;font-weight:700;letter-spacing:.02em;color:var(--ink)}
+.applock .ar{font-family:var(--calig);font-size:var(--fs-display);font-weight:700;line-height:1;color:var(--ink)}
+.applock .en{font-size:var(--fs-body);font-weight:700;letter-spacing:.02em;color:var(--ink)}
 /* The parent bar names the school, not the tool — bold line then the Arabic. */
-.logo.barlock .en b{font-size:12.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--lapis)}
-.logo.barlock .en span{font-family:var(--serif);font-size:11px;letter-spacing:0;
+.logo.barlock .en b{font-size:var(--fs-base);letter-spacing:.06em;text-transform:uppercase;color:var(--lapis)}
+.logo.barlock .en span{font-family:var(--serif);font-size:var(--fs-small);letter-spacing:0;
   text-transform:none;color:var(--ink-2)}
 :root[data-theme="dark"] .logo.barlock .en b{color:var(--brass)}
 @media (prefers-color-scheme: dark){
   :root:not([data-theme="light"]) .logo.barlock .en b{color:var(--brass)}
 }
-.tagline{margin:0 0 22px;text-align:center;font-size:12px;font-weight:500;
+.tagline{margin:0 0 22px;text-align:center;font-size:var(--fs-base);font-weight:500;
   letter-spacing:.04em;color:var(--ink-3)}
 
 :root[data-theme="dark"] .slock-en{color:var(--brass)}
@@ -1001,8 +1051,8 @@ tr.opens:hover .rowgo{color:var(--lapis)}
   .slock{gap:10px}
   .slock-t{gap:6px}
   .slock .school{height:50px;width:28px}
-  .slock-en{font-size:15px;letter-spacing:.12em}
-  .slock-ar{font-size:14.5px}
+  .slock-en{font-size:var(--fs-body);letter-spacing:.12em}
+  .slock-ar{font-size:var(--fs-body)}
 }
 
 .crown .school{box-sizing:content-box;height:86px;width:48px}
@@ -1033,22 +1083,22 @@ tr.opens:hover .rowgo{color:var(--lapis)}
    change.
    ========================================================================== */
 /* "To hear today": work surface. Full-strength cards, grade buttons. */
-.grp.sect .subh{font-size:11px;font-weight:700;letter-spacing:.1em;
+.grp.sect .subh{font-size:var(--fs-small);font-weight:700;letter-spacing:.1em;
   text-transform:uppercase;color:var(--ink-3);margin:12px 0 5px}
-html[lang="ar"] .grp.sect .subh{letter-spacing:0;text-transform:none;font-size:12.5px}
+html[lang="ar"] .grp.sect .subh{letter-spacing:0;text-transform:none;font-size:var(--fs-base)}
 /* The rule for THIS group, inside it. The thresholds differ between review
    and new memorisation now, so a single line at the foot of the page would
    have been wrong for whichever one you were not looking at. */
-.note.rule{margin:0 0 7px;font-size:12.5px;padding:7px 11px}
+.note.rule{margin:0 0 7px;font-size:var(--fs-base);padding:7px 11px}
 /* "Homework for next week": nothing to do here today. Quieter, no buttons. */
 .grp.next .hwbox{background:var(--surface-2);
   border-color:color-mix(in srgb,var(--ink-3) 22%,transparent)}
-.hwrow .hw-now{min-height:36px;padding:7px 12px;font-size:13px;
+.hwrow .hw-now{min-height:36px;padding:7px 12px;font-size:var(--fs-md);
   border-color:color-mix(in srgb,var(--lapis) 45%,transparent);color:var(--lapis)}
 
 /* Who did what. Small, grey, and always next to the fact it belongs to —
    never once per day standing in for everything under it. */
-.who{font-size:11px;color:var(--ink-3);white-space:nowrap}
+.who{font-size:var(--fs-small);color:var(--ink-3);white-space:nowrap}
 
 /* Labelled fields, replacing placeholder-only boxes.
    A placeholder vanishes the moment you type, so you cannot check which box
@@ -1057,14 +1107,14 @@ html[lang="ar"] .grp.sect .subh{letter-spacing:0;text-transform:none;font-size:1
    is how An-Naba came to be assigned as 20-1. */
 .fieldrow{display:flex;gap:8px;margin:0 0 8px}
 .fld{flex:1 1 0;min-width:0;display:flex;flex-direction:column;gap:3px}
-.fld>span{font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;
+.fld>span{font-size:var(--fs-small);font-weight:700;letter-spacing:.06em;text-transform:uppercase;
   color:var(--ink-3)}
-html[lang="ar"] .fld>span{letter-spacing:0;text-transform:none;font-size:12px}
-.fld input,.fld select{width:100%;padding:9px 10px;font-size:15px;
+html[lang="ar"] .fld>span{letter-spacing:0;text-transform:none;font-size:var(--fs-base)}
+.fld input,.fld select{width:100%;padding:9px 10px;font-size:var(--fs-body);
   border:1px solid var(--line);border-radius:9px;background:var(--surface);color:var(--ink)}
-.narrowh{font-size:11px;font-weight:700;letter-spacing:.09em;text-transform:uppercase;
+.narrowh{font-size:var(--fs-small);font-weight:700;letter-spacing:.09em;text-transform:uppercase;
   color:var(--ink-3);margin:12px 0 6px}
-html[lang="ar"] .narrowh{letter-spacing:0;text-transform:none;font-size:12.5px}
+html[lang="ar"] .narrowh{letter-spacing:0;text-transform:none;font-size:var(--fs-base)}
 .note.warn{background:var(--crit-soft);border-color:color-mix(in srgb,var(--crit) 30%,transparent);
   color:var(--crit);font-weight:600}
 /* A ticked row in the multi-select list. */
@@ -1078,39 +1128,39 @@ html[lang="ar"] .narrowh{letter-spacing:0;text-transform:none;font-size:12.5px}
    building — it should not look like the hints around it. */
 .cnote{background:var(--surface);border:1px solid var(--line-2);border-radius:13px;
   padding:12px 13px;margin:0 0 14px}
-.cnote h2{margin:0 0 6px;font-size:11px;font-weight:700;letter-spacing:.12em;
+.cnote h2{margin:0 0 6px;font-size:var(--fs-small);font-weight:700;letter-spacing:.12em;
   text-transform:uppercase;color:var(--ink-3)}
-html[lang="ar"] .cnote h2{letter-spacing:0;text-transform:none;font-size:13px}
+html[lang="ar"] .cnote h2{letter-spacing:0;text-transform:none;font-size:var(--fs-md)}
 /* The warning is a line of the form, not a tooltip: there are no tooltips on
    a phone, and this is the only text in Sijill one person writes and
    thirty-five families read. */
-.cnote p.warn{margin:0 0 8px;font-size:12.5px;line-height:1.5;color:var(--late);
+.cnote p.warn{margin:0 0 8px;font-size:var(--fs-base);line-height:1.5;color:var(--late);
   background:var(--late-soft);border:1px solid color-mix(in srgb,var(--late) 30%,transparent);
   border-radius:9px;padding:7px 9px}
-.cnote textarea{width:100%;box-sizing:border-box;font:inherit;font-size:15px;
+.cnote textarea{width:100%;box-sizing:border-box;font:inherit;font-size:var(--fs-body);
   line-height:1.5;padding:9px 10px;border:1px solid var(--line);border-radius:9px;
   background:var(--paper);color:var(--ink);resize:vertical;min-height:72px}
 .cnote textarea:focus{outline:2px solid var(--lapis);outline-offset:1px}
 .cnote .row{display:flex;align-items:center;gap:8px;margin-top:8px;flex-wrap:wrap}
 .cnote .row .sp{flex:1}
-.cnote .count{font-family:var(--mono);font-size:11px;color:var(--ink-3)}
+.cnote .count{font-family:var(--mono);font-size:var(--fs-small);color:var(--ink-3)}
 .cnote .count.over{color:var(--crit);font-weight:700}
-.cnote .who{margin-top:7px;font-size:11.5px;color:var(--ink-3)}
+.cnote .who{margin-top:7px;font-size:var(--fs-small);color:var(--ink-3)}
 /* The class note as a family reads it: the day it happened, then what was
    done. Each entry separated by a rule, so three weeks do not read as one
    paragraph. */
 .cn{padding:9px 0;border-top:1px solid var(--line)}
 .cn:first-of-type{border-top:0;padding-top:2px}
-.cn-when{font-size:11.5px;color:var(--ink-3);margin-bottom:3px}
-.cn-txt{font-size:14.5px;line-height:1.55}
-html[lang="ar"] .cn-txt{font-size:15.5px;line-height:1.85}
+.cn-when{font-size:var(--fs-small);color:var(--ink-3);margin-bottom:3px}
+.cn-txt{font-size:var(--fs-body);line-height:1.55}
+html[lang="ar"] .cn-txt{font-size:var(--fs-lg);line-height:1.85}
 
 /* The two-way kind chooser before the class picker opens. Full-width
    stacked buttons rather than a select: a thumb on a 320px phone hits
    these, and the choice decides whether the next screen offers one surah
    or several, which is too consequential to bury in a dropdown. */
 .kindpick{display:flex;flex-direction:column;gap:8px}
-.kindpick .btn{width:100%;min-height:48px;font-size:15.5px}
+.kindpick .btn{width:100%;min-height:48px;font-size:var(--fs-lg)}
 
 /* ------------------------------------------------- what is still missing
    On the register, under the "N still to go" bar. Amber, not red: these are
@@ -1123,10 +1173,10 @@ html[lang="ar"] .cn-txt{font-size:15.5px;line-height:1.85}
    one above. */
 .gaps{margin:-4px 0 12px;padding:2px 0 2px 26px;list-style:disc;
   border-inline-start:3px solid color-mix(in srgb,var(--late) 45%,transparent);
-  color:var(--late);font-size:13.5px;line-height:1.65}
+  color:var(--late);font-size:var(--fs-md);line-height:1.65}
 html[dir="rtl"] .gaps{padding:2px 26px 2px 0}
 .gaps li{margin:2px 0}
-html[lang="ar"] .gaps{font-size:14.5px;line-height:1.85}
+html[lang="ar"] .gaps{font-size:var(--fs-body);line-height:1.85}
 
 /* ------------------------------------------------- the coordinator's list
    One card per class day with something left in it. Not red: a half-marked
@@ -1135,19 +1185,19 @@ html[lang="ar"] .gaps{font-size:14.5px;line-height:1.85}
 .gapcard{background:var(--surface);border:1px solid var(--line-2);border-radius:13px;
   padding:12px 13px;margin:0 0 11px}
 .gaphead{display:flex;align-items:baseline;gap:9px;flex-wrap:wrap;margin-bottom:8px}
-.gaphead b{font-size:15.5px}
-.gaphead .when{font-family:var(--mono);font-size:11.5px;color:var(--ink-3)}
+.gaphead b{font-size:var(--fs-lg)}
+.gaphead .when{font-family:var(--mono);font-size:var(--fs-small);color:var(--ink-3)}
 .gaphead .sp{flex:1}
 .gapgrp{padding:7px 0;border-top:1px solid var(--line)}
 .gapgrp:first-of-type{border-top:0}
-.gapgrp b{display:block;font-size:12.5px;color:var(--late);margin-bottom:5px}
+.gapgrp b{display:block;font-size:var(--fs-base);color:var(--late);margin-bottom:5px}
 .gapnames{display:flex;flex-wrap:wrap;gap:5px}
 /* Names as chips so a list of eight does not read as a paragraph. */
-.gapnames .chip{font-size:12.5px;padding:3px 9px;border-radius:99px;
+.gapnames .chip{font-size:var(--fs-base);padding:3px 9px;border-radius:99px;
   background:var(--surface-2);border:1px solid var(--line);color:var(--ink-2)}
 .gapfoot{margin-top:9px;padding-top:8px;border-top:1px solid var(--line);
-  font-size:11.5px;color:var(--ink-3)}
-html[lang="ar"] .gapgrp b,html[lang="ar"] .gapnames .chip{font-size:13.5px}
+  font-size:var(--fs-small);color:var(--ink-3)}
+html[lang="ar"] .gapgrp b,html[lang="ar"] .gapnames .chip{font-size:var(--fs-md)}
 /* A class day nobody has opened at all. Dashed, the same way an unmarked
    attendance square is dashed: nothing has been recorded here yet, as
    opposed to recorded and incomplete. */
@@ -1158,7 +1208,7 @@ html[lang="ar"] .gapgrp b,html[lang="ar"] .gapnames .chip{font-size:13.5px}
    320px phone. Underlined, because an unadorned coloured word on a line of
    grey metadata is not discoverable as something you can press. */
 .lnk{position:relative;background:none;border:0;padding:0 0 0 2px;margin:0;
-  font:inherit;font-family:var(--sans);font-size:11px;color:var(--lapis);
+  font:inherit;font-family:var(--sans);font-size:var(--fs-small);color:var(--lapis);
   cursor:pointer;text-decoration:underline;text-underline-offset:2px}
 .lnk:hover{color:var(--ink)}
 /* The tap target is bigger than the ink: a thumb needs more than 11px of
@@ -1191,21 +1241,21 @@ html[lang="ar"] .gapgrp b,html[lang="ar"] .gapnames .chip{font-size:13.5px}
 .addhw-b::before{content:"";position:absolute;inset-inline-start:0;top:0;bottom:0;
   width:4px;background:var(--edge)}
 .addhw-b .ic{flex:none;width:26px;height:26px;border-radius:50%;
-  display:flex;align-items:center;justify-content:center;font-size:15px;
+  display:flex;align-items:center;justify-content:center;font-size:var(--fs-body);
   background:var(--chip);border:1px solid var(--edge);color:var(--edge)}
 .addhw-b.new{--edge:var(--hw-new); --chip:var(--hw-new-soft)}
 .addhw-b.rev{--edge:var(--hw-rev); --chip:var(--hw-rev-soft)}
 .addhw-b .t{display:flex;flex-direction:column;gap:1px;min-width:0}
-.addhw-b .t b{font-size:14.5px;line-height:1.3;color:var(--edge)}
-.addhw-b .t small{font-size:11.5px;font-weight:400;color:var(--ink-3);line-height:1.35}
-html[lang="ar"] .addhw-b .t b{font-size:15.5px}
-html[lang="ar"] .addhw-b .t small{font-size:12.5px}
+.addhw-b .t b{font-size:var(--fs-body);line-height:1.3;color:var(--edge)}
+.addhw-b .t small{font-size:var(--fs-small);font-weight:400;color:var(--ink-3);line-height:1.35}
+html[lang="ar"] .addhw-b .t b{font-size:var(--fs-lg)}
+html[lang="ar"] .addhw-b .t small{font-size:var(--fs-base)}
 
 /* The "already set" mark in the surah picker. Quiet on purpose: it is
    information the teacher needs at the moment of choosing, not a warning —
    setting the same passage again is sometimes exactly right. Amber would
    make it a verdict, and amber is a grade here besides. */
-.trow .hasopen{flex:1 1 100%;font-size:11px;color:var(--ink-3);
+.trow .hasopen{flex:1 1 100%;font-size:var(--fs-small);color:var(--ink-3);
   padding-inline-start:30px;margin-top:-2px}
 .trow:has(.hasopen){flex-wrap:wrap}
 
@@ -1219,7 +1269,7 @@ html[lang="ar"] .addhw-b .t small{font-size:12.5px}
   text-decoration:underline;text-decoration-style:dotted;
   text-underline-offset:3px;min-height:28px}
 .gaps .gapline.on{color:var(--lapis);font-weight:700;text-decoration-style:solid}
-.gaphint{font-size:11px;color:var(--ink-3);margin-top:5px}
+.gaphint{font-size:var(--fs-small);color:var(--ink-3);margin-top:5px}
 .gapall{margin-top:8px;width:100%;min-height:38px}
 /* The per-row mark. Quiet, because it is on every row that has open work
    and a loud one would make the whole register look like a problem. */
@@ -1231,29 +1281,29 @@ html[lang="ar"] .addhw-b .t small{font-size:12.5px}
    being narrowed, so it must not sit inside the narrowing block. */
 .duepick{display:flex;align-items:center;gap:10px;margin-top:12px;
   padding-top:11px;border-top:1px solid var(--line)}
-.duepick .lab{font-size:11px;font-weight:700;letter-spacing:.07em;
+.duepick .lab{font-size:var(--fs-small);font-weight:700;letter-spacing:.07em;
   text-transform:uppercase;color:var(--ink-3);flex:none}
-html[lang="ar"] .duepick .lab{letter-spacing:0;text-transform:none;font-size:12.5px}
+html[lang="ar"] .duepick .lab{letter-spacing:0;text-transform:none;font-size:var(--fs-base)}
 .duepick select{flex:1 1 auto;min-width:0;min-height:40px;padding:8px 10px;
   border:1px solid var(--line);border-radius:9px;
-  background:var(--surface);color:var(--ink);font-size:14.5px}
+  background:var(--surface);color:var(--ink);font-size:var(--fs-body)}
 
 /* Notices on the register. Same card language as the class note above it,
    one step quieter: the note is something the teacher writes every week and
    this is something they write occasionally. */
 .ntbox{background:var(--surface);border:1px solid var(--line);border-radius:13px;
   padding:12px 13px;margin:0 0 14px}
-.ntbox h2{margin:0 0 9px;font-size:13px;font-weight:700;letter-spacing:.07em;
+.ntbox h2{margin:0 0 9px;font-size:var(--fs-md);font-weight:700;letter-spacing:.07em;
   text-transform:uppercase;color:var(--ink-3)}
-html[lang="ar"] .ntbox h2{letter-spacing:0;text-transform:none;font-size:14px}
+html[lang="ar"] .ntbox h2{letter-spacing:0;text-transform:none;font-size:var(--fs-body)}
 .ntrow{border-top:1px solid var(--line);padding:9px 0;display:flex;
   flex-wrap:wrap;gap:6px;align-items:flex-start}
 .ntrow:first-child{border-top:0;padding-top:0}
-.ntrow .ntb{flex:1 1 100%;font-size:14px;line-height:1.5}
-.ntrow .ntm{flex:1 1 auto;font-size:11px;color:var(--ink-3);
+.ntrow .ntb{flex:1 1 100%;font-size:var(--fs-body);line-height:1.5}
+.ntrow .ntm{flex:1 1 auto;font-size:var(--fs-small);color:var(--ink-3);
   display:flex;align-items:center;gap:6px;flex-wrap:wrap}
 .ntrow.school .ntb{font-weight:600}
-.ntnone{font-size:13px;color:var(--ink-3);padding-bottom:9px}
+.ntnone{font-size:var(--fs-md);color:var(--ink-3);padding-bottom:9px}
 .ntbox .btn{margin-top:4px}
 
 /* The family-page preview. Full height inside the sheet so the teacher sees
@@ -1272,7 +1322,7 @@ html[data-preview] .langbtn, html[data-preview] .themebtn{display:none}
 .pcard.notice{border-color:color-mix(in srgb,var(--lapis) 32%,transparent);
   background:var(--lapis-soft)}
 .pcard.notice h2{color:var(--lapis)}
-.pcard.notice .line span{font-size:15px;line-height:1.6}
+.pcard.notice .line span{font-size:var(--fs-body);line-height:1.6}
 
 /* A Latin run inside an Arabic line. Without an INLINE isolating box the
    bidi algorithm reorders across the boundary: "Al-Waaqia 1–86" followed by
@@ -1295,10 +1345,10 @@ html[data-preview] .langbtn, html[data-preview] .themebtn{display:none}
 .kindbox.new{--edge:var(--hw-new); --tint:var(--hw-new-soft)}
 .kindbox.rev{--edge:var(--hw-rev); --tint:var(--hw-rev-soft)}
 .kindbox .kindlab{position:absolute;top:-10px;inset-inline-start:13px;
-  background:var(--paper);padding:0 8px;font-size:11.5px;font-weight:700;
+  background:var(--paper);padding:0 8px;font-size:var(--fs-small);font-weight:700;
   letter-spacing:.1em;text-transform:uppercase;color:var(--edge);
   border-radius:6px;line-height:19px}
-html[lang="ar"] .kindbox .kindlab{letter-spacing:0;text-transform:none;font-size:13px}
+html[lang="ar"] .kindbox .kindlab{letter-spacing:0;text-transform:none;font-size:var(--fs-md)}
 .kindbox > .note.rule{margin-bottom:9px}
 .kindbox > .card{border:0;background:none;padding:0;margin:0}
 .kindbox > .card > .irow:last-child{border-bottom:0}
@@ -1313,14 +1363,14 @@ html[lang="ar"] .kindbox .kindlab{letter-spacing:0;text-transform:none;font-size
 .lgf{padding:12px 13px;margin-bottom:10px}
 .lgf .fieldrow{display:flex;gap:8px;margin:0 0 8px}
 .lgf .fld{flex:1 1 0;min-width:0;display:flex;flex-direction:column;gap:3px}
-.lgf .fld>span{font-size:10.5px;font-weight:700;letter-spacing:.06em;
+.lgf .fld>span{font-size:var(--fs-micro);font-weight:700;letter-spacing:.06em;
   text-transform:uppercase;color:var(--ink-3)}
-.lgf input,.lgf select{width:100%;min-height:38px;padding:7px 9px;font-size:14px;
+.lgf input,.lgf select{width:100%;min-height:38px;padding:7px 9px;font-size:var(--fs-body);
   border:1px solid var(--line);border-radius:9px;background:var(--surface);color:var(--ink)}
 .lgbtns{display:flex;gap:8px;justify-content:flex-end;margin-top:10px}
 /* "50 of 312" and "50 of 50" look identical without the total, and only one
    of them means you have seen everything. */
-.lgcount{font-size:12.5px;color:var(--ink-3);margin:0 0 8px}
+.lgcount{font-size:var(--fs-base);color:var(--ink-3);margin:0 0 8px}
 .lgpage{display:flex;gap:8px;justify-content:space-between;margin-top:10px}
 .lgpage button[disabled]{opacity:.4}
 
@@ -1329,9 +1379,9 @@ html[lang="ar"] .kindbox .kindlab{letter-spacing:0;text-transform:none;font-size
    counts who was enrolled on the day it shows, the picker counts who is in
    the class now, and both are right. */
 .joined{background:var(--lapis-soft);border:1px solid rgba(29,59,44,.2);
-  border-radius:11px;padding:9px 12px;margin:0 0 12px;font-size:13px;
+  border-radius:11px;padding:9px 12px;margin:0 0 12px;font-size:var(--fs-md);
   line-height:1.5;color:var(--ink-2)}
-.joined .who{font-size:12px;color:var(--ink-3);margin-top:3px}
+.joined .who{font-size:var(--fs-base);color:var(--ink-3);margin-top:3px}
 
 /* Round 34 — a teacher's note, on the family's page. Each carries its own
    day: a notice is current by definition and expires on its own, but a note
@@ -1339,7 +1389,7 @@ html[lang="ar"] .kindbox .kindlab{letter-spacing:0;text-transform:none;font-size
    September's. */
 .pcard.notice .line + .line{margin-top:11px;padding-top:11px;
   border-top:1px solid rgba(29,59,44,.16)}
-.pcard .nby{font-family:var(--mono);font-size:11.5px;color:var(--ink-3);margin-top:4px}
+.pcard .nby{font-family:var(--mono);font-size:var(--fs-small);color:var(--ink-3);margin-top:4px}
 
 /* ===========================================================================
    Round 35 — the day strip
@@ -1364,13 +1414,13 @@ html[lang="ar"] .kindbox .kindlab{letter-spacing:0;text-transform:none;font-size
 .daychip{flex:none;display:flex;flex-direction:column;align-items:center;gap:3px;
   min-width:58px;padding:6px 9px 6px;border:1px solid var(--line);
   border-radius:11px;background:var(--surface);color:var(--ink-2);
-  font-size:12px;font-weight:600;line-height:1.25;cursor:pointer;gap:2px}
-.daychip .dow{font-size:10px;font-weight:700;letter-spacing:.06em;
+  font-size:var(--fs-base);font-weight:600;line-height:1.25;cursor:pointer;gap:2px}
+.daychip .dow{font-size:var(--fs-micro);font-weight:700;letter-spacing:.06em;
   text-transform:uppercase;color:var(--ink-3)}
 /* Arabic has no three-letter weekday, so the chip takes the whole word and
    widens for it rather than clipping it. */
 html[lang="ar"] .daychip{min-width:72px}
-html[lang="ar"] .daychip .dow{letter-spacing:0;text-transform:none;font-size:11.5px}
+html[lang="ar"] .daychip .dow{letter-spacing:0;text-transform:none;font-size:var(--fs-small)}
 /* Each state gets a different SHAPE as well as a different colour. Colour
    alone would be four tones to learn on a strip where the nearest row of
    buttons already spends colour on grades — and a filled dot against a
@@ -1378,10 +1428,10 @@ html[lang="ar"] .daychip .dow{letter-spacing:0;text-transform:none;font-size:11.
 /* Weekday, month, day — a calendar tile. The day number is the thing being
    scanned for, so it stays the only line at full size; the other two are
    labels and are sized like labels. */
-.daychip .dmon{font-size:9.5px;font-weight:700;letter-spacing:.05em;
+.daychip .dmon{font-size:var(--fs-micro);font-weight:700;letter-spacing:.05em;
   text-transform:uppercase;color:var(--ink-3);margin-top:-2px}
-html[lang="ar"] .daychip .dmon{letter-spacing:0;text-transform:none;font-size:11px}
-.daychip .dnum{font-size:15px;font-weight:700;line-height:1.1;color:var(--ink)}
+html[lang="ar"] .daychip .dmon{letter-spacing:0;text-transform:none;font-size:var(--fs-small)}
+.daychip .dnum{font-size:var(--fs-body);font-weight:700;line-height:1.1;color:var(--ink)}
 .daychip[aria-current="date"] .dmon{color:rgba(255,255,255,.82)}
 .daychip[aria-current="date"] .dnum{color:#fff}
 .daychip .dot{width:8px;height:8px;border-radius:50%;background:transparent}
@@ -1406,7 +1456,7 @@ html[lang="ar"] .daychip .dmon{letter-spacing:0;text-transform:none;font-size:11
 .backnote{background:var(--surface-2);color:var(--ink);
   border:1px solid var(--brass);border-inline-start-width:4px;
   border-radius:11px;padding:10px 13px;margin-bottom:12px;
-  font-size:12.5px;line-height:1.5}
+  font-size:var(--fs-base);line-height:1.5}
 .backnote[hidden]{display:none}
 .backnote b{font-weight:700}
 .backnote .lat{unicode-bidi:isolate;direction:ltr}
@@ -1425,11 +1475,11 @@ html[lang="ar"] .daychip .dmon{letter-spacing:0;text-transform:none;font-size:11
    what fixes both: the chevron is inside the control's own edge. */
 .daylink{appearance:none;border:1px solid var(--line-2);border-radius:9px;
   background:var(--surface-2);padding:5px 8px 5px 9px;margin:0;
-  font:inherit;font-size:13px;color:var(--lapis);font-weight:700;cursor:pointer;
+  font:inherit;font-size:var(--fs-md);color:var(--lapis);font-weight:700;cursor:pointer;
   display:inline-flex;align-items:center;gap:6px;text-align:start;line-height:1.2}
 .daylink:hover{background:var(--surface-3);border-color:var(--lapis)}
-.daylink .cal{font-size:12px;opacity:.65;font-weight:400}
-.daylink .chev{font-size:15px;opacity:.75;font-weight:400;margin-inline-start:1px}
+.daylink .cal{font-size:var(--fs-base);opacity:.65;font-weight:400}
+.daylink .chev{font-size:var(--fs-body);opacity:.75;font-weight:400;margin-inline-start:1px}
 
 /* ===========================================================================
    Round 37 — the coordinator's calendar
@@ -1444,16 +1494,16 @@ html[lang="ar"] .daychip .dmon{letter-spacing:0;text-transform:none;font-size:11
    single colour throws away the only fact worth having.
    ======================================================================== */
 .calnav{display:flex;align-items:center;gap:8px;margin:0 0 10px}
-.calnav .calname{font-size:15px;font-weight:700;min-width:9em}
+.calnav .calname{font-size:var(--fs-body);font-weight:700;min-width:9em}
 .calgrid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;
   background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:8px}
-.calhead{font-size:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;
+.calhead{font-size:var(--fs-micro);font-weight:700;letter-spacing:.06em;text-transform:uppercase;
   color:var(--ink-3);text-align:center;padding:2px 0 4px}
-html[lang="ar"] .calhead{letter-spacing:0;text-transform:none;font-size:12px}
+html[lang="ar"] .calhead{letter-spacing:0;text-transform:none;font-size:var(--fs-base)}
 .calcell{min-height:46px;border:1px solid transparent;border-radius:9px;
   background:none;padding:4px 3px;display:flex;flex-direction:column;
   align-items:center;gap:3px;color:var(--ink-3);font:inherit}
-.calcell .n{font-size:12px;font-weight:600}
+.calcell .n{font-size:var(--fs-base);font-weight:600}
 .calcell.blank{visibility:hidden}
 /* A day with classes is the only thing worth pressing, so it is the only
    thing that looks pressable. */
@@ -1478,21 +1528,21 @@ html[lang="ar"] .calhead{letter-spacing:0;text-transform:none;font-size:12px}
   box-shadow:inset 0 0 0 1px var(--line-2)}
 .calcell.has.open .dot.s-empty{box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.75)}
 .callegend{display:flex;gap:12px;flex-wrap:wrap;margin:8px 0 14px;
-  font-size:11.5px;color:var(--ink-3)}
+  font-size:var(--fs-small);color:var(--ink-3)}
 .callegend span{display:inline-flex;align-items:center;gap:5px}
 
 /* One day, opened in place under the grid. Checking three Fridays in a row
    should not mean navigating back and forth. */
 .dayp{border:1px solid var(--line);border-radius:12px;background:var(--surface);
   padding:12px 13px;margin:0 0 6px}
-.dayph{display:flex;align-items:center;gap:10px;margin-bottom:8px;font-size:14px}
+.dayph{display:flex;align-items:center;gap:10px;margin-bottom:8px;font-size:var(--fs-body)}
 .dayph b{flex:1}
 .dayrow{display:flex;align-items:center;gap:9px;padding:8px 0;
   border-top:1px solid var(--line)}
 .dayrow:first-of-type{border-top:0}
 .dayrow .w{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
-.dayrow .w b{font-size:13.5px}
-.dayrow .m{font-family:var(--mono);font-size:11px;color:var(--ink-3)}
+.dayrow .w b{font-size:var(--fs-md)}
+.dayrow .m{font-family:var(--mono);font-size:var(--fs-small);color:var(--ink-3)}
 
 /* Still to log. The grid says what October looked like; this says what has
    to be chased, which is the question actually asked on a Saturday. */
@@ -1503,9 +1553,9 @@ html[lang="ar"] .calhead{letter-spacing:0;text-transform:none;font-size:12px}
   color:var(--ink);text-align:start;cursor:pointer}
 .chaserow:first-child{border-top:0}
 .chaserow .w{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
-.chaserow .w b{font-size:13.5px}
-.chaserow .m{font-family:var(--mono);font-size:11px;color:var(--ink-3)}
-.chaserow .chev{color:var(--ink-3);font-size:16px}
+.chaserow .w b{font-size:var(--fs-md)}
+.chaserow .m{font-family:var(--mono);font-size:var(--fs-small);color:var(--ink-3)}
+.chaserow .chev{color:var(--ink-3);font-size:var(--fs-lg)}
 
 /* A disclosure chevron points the way the screen opens, and in a
    right-to-left layout that is leftwards. Every one of these has pointed the
@@ -1540,21 +1590,21 @@ html[lang="ar"] .calhead{letter-spacing:0;text-transform:none;font-size:12px}
   padding:15px 17px}
 .psheet header{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;
   border-bottom:2px solid var(--lapis);padding-bottom:8px;margin-bottom:10px}
-.psheet header h3{margin:0;font-size:18px;line-height:1.25;flex:1}
-.psheet header .cls{font-family:var(--mono);font-size:11.5px;color:var(--ink-3)}
+.psheet header h3{margin:0;font-size:var(--fs-xl);line-height:1.25;flex:1}
+.psheet header .cls{font-family:var(--mono);font-size:var(--fs-small);color:var(--ink-3)}
 .shrow{display:flex;gap:12px;padding:7px 0;border-top:1px solid var(--line);
-  font-size:13.5px;line-height:1.5}
+  font-size:var(--fs-md);line-height:1.5}
 .shrow:first-of-type{border-top:0}
-.shrow .k{flex:0 0 34%;max-width:170px;font-size:11px;font-weight:700;
+.shrow .k{flex:0 0 34%;max-width:170px;font-size:var(--fs-small);font-weight:700;
   letter-spacing:.06em;text-transform:uppercase;color:var(--ink-3);padding-top:2px}
-html[lang="ar"] .shrow .k{letter-spacing:0;text-transform:none;font-size:12.5px}
+html[lang="ar"] .shrow .k{letter-spacing:0;text-transform:none;font-size:var(--fs-base)}
 .shrow .v{flex:1;min-width:0}
-.shrow .sub{color:var(--ink-3);font-size:12px}
+.shrow .sub{color:var(--ink-3);font-size:var(--fs-base)}
 .shrow .hw{padding:1px 0}
 .shrow .nt{font-style:italic;padding:1px 0}
-.shrow .revlist{font-size:13px}
+.shrow .revlist{font-size:var(--fs-md)}
 .psheet footer{margin-top:11px;padding-top:8px;border-top:1px solid var(--line);
-  font-size:10.5px;color:var(--ink-3);text-align:center}
+  font-size:var(--fs-micro);color:var(--ink-3);text-align:center}
 
 @media print {
   /* Everything that is the app rather than the sheets. */
@@ -1576,10 +1626,10 @@ html[lang="ar"] .shrow .k{letter-spacing:0;text-transform:none;font-size:12.5px}
 .sincebar{background:var(--surface);border:1px solid var(--line);
   border-inline-start:3px solid var(--lapis);border-radius:13px;
   padding:11px 12px;margin:0 0 12px;box-shadow:var(--shadow)}
-.sincebar .ct{font-family:var(--mono);font-size:10px;letter-spacing:.08em;
+.sincebar .ct{font-family:var(--mono);font-size:var(--fs-micro);letter-spacing:.08em;
   text-transform:uppercase;color:var(--lapis);margin-bottom:6px}
-.sincebar p{margin:4px 0;font-size:13.5px;color:var(--ink-2)}
+.sincebar p{margin:4px 0;font-size:var(--fs-md);color:var(--ink-2)}
 .sincebar p b{font-weight:650;color:var(--ink)}
-.youtag{font-family:var(--mono);font-size:9.5px;letter-spacing:.06em;
+.youtag{font-family:var(--mono);font-size:var(--fs-micro);letter-spacing:.06em;
   text-transform:uppercase;padding:1.5px 6px;border-radius:5px;
   background:var(--surface-3);color:var(--ink-3);margin-inline-start:6px}

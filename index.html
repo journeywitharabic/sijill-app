@@ -21,22 +21,25 @@
   /* screens that only exist in the real app, not in the mockup */
   .gate{max-width:420px;margin:0 auto;padding:28px 18px}
   .gate .logo{justify-content:center;margin-bottom:22px}
-  .gate h1{font-size:19px;margin:0 0 6px;text-align:center}
-  .gate p{font-size:13.5px;color:var(--ink-2);text-align:center;margin:0 0 20px;line-height:1.55}
+  .gate h1{font-size:var(--fs-xl);margin:0 0 6px;text-align:center}
+  .gate p{font-size:var(--fs-md);color:var(--ink-2);text-align:center;margin:0 0 20px;line-height:1.55}
+  /* 16px exactly, not a token: below 16px iOS Safari zooms the page when
+     the field takes focus, and a teacher then has to pinch back out
+     before they can read the error. */
   .gate input[type=password],.gate input[type=text]{width:100%;padding:13px 14px;font-size:16px;
     border:1px solid var(--line);border-radius:10px;background:var(--surface);color:var(--ink)}
   .gate .btn{width:100%;margin-top:12px;padding:13px}
   .err{background:var(--crit-soft);border:1px solid var(--crit);color:var(--crit);
-    border-radius:10px;padding:10px 12px;font-size:13px;font-weight:600;margin-top:12px}
+    border-radius:10px;padding:10px 12px;font-size:var(--fs-md);font-weight:600;margin-top:12px}
   .err[hidden]{display:none}
   .pick{display:flex;flex-direction:column;gap:7px;margin-top:6px}
   .pick button{background:var(--surface);border:1px solid var(--line);border-radius:10px;
-    padding:13px 15px;font-size:15px;font-weight:600;text-align:start;color:var(--ink)}
+    padding:13px 15px;font-size:var(--fs-body);font-weight:600;text-align:start;color:var(--ink)}
   .pick button:hover{background:var(--surface-2)}
   .spin{display:inline-block;width:14px;height:14px;border:2px solid var(--line-2);
     border-top-color:var(--lapis);border-radius:50%;animation:sp .7s linear infinite;vertical-align:-2px}
   @keyframes sp{to{transform:rotate(360deg)}}
-  .loading{padding:26px;text-align:center;color:var(--ink-3);font-size:13.5px}
+  .loading{padding:26px;text-align:center;color:var(--ink-3);font-size:var(--fs-md)}
 
   /* Phones. A teacher holding a phone one-handed in a classroom must never
      have to scroll sideways to find a button, so nothing is allowed to push
@@ -52,11 +55,13 @@
   html,body{max-width:100%;overflow-x:clip}
   .wrap,.pad,.ctx{max-width:100%}
   .srow .nm{overflow-wrap:anywhere}
-  /* Comfortable tap targets — Apple and Google both say 44px. */
-  .seg3 button{min-width:42px;height:38px}
-  .gb{min-width:38px;height:36px}
+  /* Tap targets. This block used to say "Apple and Google both say 44px"
+     and then set 38px and 36px, and because it is inline it beat
+     sijill.css — so the real sizes on a phone were 42x38 for attendance
+     and 38x36 for a grade, which is what the UX audit measured. The
+     numbers now match the sentence, and the sizes live in sijill.css
+     where they can be found; what stays here is only what has to. */
   .chip{padding:8px 13px}
-  .mini,#whoAmI{min-height:34px}
   /* The language/theme bar is pinned to the bottom, so the page needs room
      underneath it or the last card sits behind it and cannot be read. */
   body{padding-bottom:calc(64px + env(safe-area-inset-bottom,0px))}
@@ -76,8 +81,8 @@
   }
   /* Lines that genuinely mix both scripts only need the parts kept apart. */
   #clsDate, #stuSub, .sess .d, .dt, .irow .m{ unicode-bidi:isolate; }
-  .proto .rt button{min-height:34px;min-width:44px}
-  .empty{padding:22px;text-align:center;color:var(--ink-3);font-size:13.5px}
+  .proto .rt button{min-height:44px;min-width:44px}
+  .empty{padding:22px;text-align:center;color:var(--ink-3);font-size:var(--fs-md)}
 </style>
 </head>
 <body>
