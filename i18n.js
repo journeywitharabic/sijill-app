@@ -33,6 +33,17 @@
     whoAddTitle:"Add your name",
     whoAddHelp:"You will be able to teach straight away. A coordinator confirms your name afterwards.",
     markAll:"Mark all present", bulkHw:"+ Homework for the class",
+    // The button names the number it will touch. It used to say "all" and
+    // mean it, over the top of marks the teacher had already made.
+    markAllN:"Mark {n} unmarked present",
+    finishCls:"Finish class ›", finishTitle:"Before you go",
+    finishAllDone:"Everything is recorded. Nothing is waiting.",
+    finishLead:"Nothing here is blocked — this is a list, not a gate.",
+    finishAtt:"{n} still need attendance", finishAtt1:"1 still needs attendance",
+    finishMark:"{n} were here and have not been heard", finishMark1:"1 was here and has not been heard",
+    finishNext:"{n} have nothing set for next class", finishNext1:"1 has nothing set for next class",
+    finishGo:"Show me", finishNote:"The class note", finishDone:"Done",
+    markAll1:"Mark the 1 unmarked present",
     /* The class-wide assign. It used to be a cut-down picker of its own —
        a radio list, no page numbers, no running total — which is how it
        came to be missing the multi-select that the student page had. It now
@@ -371,6 +382,15 @@
     whoAddTitle:"أَضِفِ اسْمَك",
     whoAddHelp:"يُمْكِنُكَ التَّدْرِيسُ فَوْرًا. يُؤَكِّدُ المُنَسِّقُ اسْمَكَ لَاحِقًا.",
     markAll:"تَسْجِيلُ الجَمِيعِ حَاضِرِين", bulkHw:"+ وَاجِبٌ لِلْحَلْقَةِ كُلِّهَا",
+    markAllN:"تَسْجِيلُ {n} غَيْرِ المُسَجَّلِينَ حَاضِرِين",
+    finishCls:"إِنْهَاءُ الحَلْقَة ›", finishTitle:"قَبْلَ أَنْ تَنْصَرِف",
+    finishAllDone:"كُلُّ شَيْءٍ مُسَجَّل، وَلَا شَيْءَ مُنْتَظِر.",
+    finishLead:"لَا شَيْءَ هُنَا يَمْنَعُك — هِيَ قَائِمَةٌ لَا بَوَّابَة.",
+    finishAtt:"{n} لَمْ يُسَجَّلْ حُضُورُهُم", finishAtt1:"وَاحِدٌ لَمْ يُسَجَّلْ حُضُورُه",
+    finishMark:"{n} حَضَرُوا وَلَمْ يُسْمَعُوا", finishMark1:"وَاحِدٌ حَضَرَ وَلَمْ يُسْمَع",
+    finishNext:"{n} بِلَا وَاجِبٍ لِلْحَلْقَةِ القَادِمَة", finishNext1:"وَاحِدٌ بِلَا وَاجِبٍ لِلْحَلْقَةِ القَادِمَة",
+    finishGo:"أَرِنِي", finishNote:"مُلَاحَظَةُ الحَلْقَة", finishDone:"تَمَّ",
+    markAll1:"تَسْجِيلُ الطَّالِبِ غَيْرِ المُسَجَّلِ حَاضِرًا",
     bulkKind:"مَا نَوْعُ الوَاجِب؟",
     bulkKindNew:"حِفْظٌ جَدِيد", bulkKindRev:"مُرَاجَعَة",
     bulkTitleNew:"حِفْظٌ جَدِيدٌ لِلْحَلْقَةِ كُلِّهَا",

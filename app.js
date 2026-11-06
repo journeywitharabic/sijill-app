@@ -623,6 +623,7 @@
           : "Everyone is recorded excused and it counts against nobody. Recitation cannot be recorded — none happened — but you can still set homework for next week.") +
         '</div></div>';
       $("allPresent").hidden = true;
+      if ($("finishCls")) $("finishCls").hidden = true;
     } else {
       // Also hidden when the day has not arrived: the database would only
       // refuse it. Homework stays available, because setting it in advance is
@@ -632,7 +633,18 @@
          would mark twelve of them present who may never have been in the
          room. The ordinary catch-up — Saturday morning, Friday's register —
          keeps it, because that day is not `deep`. */
-      $("allPresent").hidden = ahead || deep;
+      /* It used to say "Mark all present" and mean it: every enrolled
+         child, over the top of whatever the teacher had already decided.
+         Mark three absent, tap it to speed through the rest, and those
+         three were present again with their reasons gone (migration 58).
+         It now names the number it will touch, and when that number is
+         zero there is nothing for it to do. */
+      var unmarked = d.students.filter(function (x) { return !x.state; }).length;
+      $("allPresent").hidden = ahead || deep || unmarked === 0;
+      if ($("finishCls")) $("finishCls").hidden = ahead;
+      $("allPresent").textContent = unmarked === 1
+        ? T("markAll1")
+        : T("markAllN").split("{n}").join(unmarked);
     }
 
     // "3 of 8 not yet marked" — Tarek asked for this up top and very visible
@@ -996,8 +1008,20 @@
   function mark(s, state) {
     var was = s.state, wasReason = s.reason;
     s.state = state; renderDay();
-    S.undo = { label: s.name, fn: function () { return mark(s, was); } };
+    S.undo = { label: s.name, fn: function () { return mark(s, was || null); } };
     showUndo();
+    /* Undoing a child's FIRST mark means putting them back to unmarked, and
+       there was no way to say that: it called this with a null state, which
+       the column refuses outright (23502), so the teacher got a database
+       error and kept the mark they had just made by accident. The one case
+       undo exists for was the one case it could not do. See migration 58. */
+    if (!state) {
+      return api.write("api_clear_attendance",
+        { p_session: S.dayData.session.id, p_student: s.id }, s.name
+      ).then(function () {
+        s.state = null; s.reason = null; renderDay();
+      }).catch(function (e) { s.state = was; s.reason = wasReason; renderDay(); fail(e); });
+    }
     return api.write("api_mark_attendance",
       { p_session: S.dayData.session.id, p_student: s.id, p_state: state, p_reason: null },
       s.name
@@ -1012,16 +1036,67 @@
     }).catch(function (e) { s.state = was; s.reason = wasReason; renderDay(); fail(e); });
   }
 
+  /* THE END OF THE EVENING, in one place.
+
+     "Today is complete" only ever counted attendance and recitation, so
+     homework for next week could be skipped in silence and the register
+     still looked finished. This says all three, names how many, and offers
+     to take you to them. It writes nothing and blocks nothing: a teacher
+     who has to leave at eight should not be arguing with a checklist. */
+  if ($("finishCls")) $("finishCls").onclick = function () {
+    var d = S.dayData;
+    if (!d || !d.session) return;
+    var g = gapCounts(d), rows = [];
+    function row(key, n, one, many) {
+      if (!n) return;
+      rows.push('<div class="setrow"><span>' +
+        esc(n === 1 ? T(one) : T(many).split("{n}").join(n)) + '</span>' +
+        '<button class="mini" data-fin="' + key + '">' + esc(T("finishGo")) + '</button></div>');
+    }
+    row("att",  g.att,  "finishAtt1",  "finishAtt");
+    row("mark", g.mark, "finishMark1", "finishMark");
+    row("next", g.next, "finishNext1", "finishNext");
+
+    var body = rows.length
+      ? '<p class="note" style="margin:0 0 10px">' + esc(T("finishLead")) + '</p>' + rows.join("")
+      : '<p style="margin:0 0 4px;font-weight:600">' + esc(T("finishAllDone")) + '</p>';
+
+    /* The class note belongs here rather than at the bottom of the register.
+       It is the last thing written about the evening, and at the bottom of a
+       long list it was written about one evening in four. */
+    var note = (d.session.class_note || "").trim();
+    body += '<div class="setrow" style="margin-top:12px"><span>' + esc(T("finishNote")) +
+            '</span><span class="mini" style="max-width:55vw">' +
+            esc(note ? note.slice(0, 40) + (note.length > 40 ? "\u2026" : "") : T("cnEmpty")) +
+            '</span></div>';
+
+    sheet(T("finishTitle"), body, null, null, T("finishDone"));
+    $("shBody").querySelectorAll("[data-fin]").forEach(function (b) {
+      b.onclick = function () {
+        /* Straight to exactly those children, using the filter the gap
+           lines already drive. One tap from "4 have not been heard" to the
+           four of them. */
+        S.gapFilter = b.dataset.fin;
+        closeSheet();
+        renderDay();
+        var l = $("slist"); if (l) l.scrollIntoView({ block: "start" });
+      };
+    });
+  };
+
   $("allPresent").onclick = function () {
-    var snapshot = S.dayData.students.map(function (s) { return s.state; });
-    S.dayData.students.forEach(function (s) { s.state = "present"; });
+    /* Only the children nobody has decided about, on the screen as well as
+       in the database. The undo then has only those to put back, instead of
+       re-marking the whole class and writing a change-log line for every
+       child whether or not this button touched them. */
+    var touched = S.dayData.students.filter(function (s) { return !s.state; });
+    if (!touched.length) return;
+    touched.forEach(function (s) { s.state = "present"; });
     renderDay();
     S.undo = {
       label: T("markAll"),
       fn: function () {
-        return Promise.all(S.dayData.students.map(function (s, i) {
-          return snapshot[i] ? mark(s, snapshot[i]) : Promise.resolve();
-        }));
+        return Promise.all(touched.map(function (s) { return mark(s, null); }));
       }
     };
     showUndo();
