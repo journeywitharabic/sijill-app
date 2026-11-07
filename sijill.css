@@ -862,6 +862,10 @@ html[lang="ar"] .irow.grad.g4 .gb.g small{font-size:var(--fs-micro)}
 /* The whole-surah rows in a juz. */
 .seg.srh{padding:9px 12px;border-bottom:1px solid var(--line)}
 .seg.srh:last-child{border-bottom:0}
+/* Where a surah's state came from. Quiet — it answers a question a
+   teacher asks occasionally, and must not compete with the surah name. */
+.seg .src{font-family:var(--mono);font-size:var(--fs-micro);color:var(--ink-3);
+  unicode-bidi:isolate}
 
 /* The coordinator's tables scroll sideways on a phone and nothing said so. */
 .tw{position:relative}

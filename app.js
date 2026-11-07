@@ -389,7 +389,18 @@
     // furniture above the first child's name.
     strip.hidden = days.length < 2;
     if (strip.hidden) { strip.innerHTML = ""; return; }
-    strip.innerHTML = days.map(function (x) {
+    /* OLDEST FIRST, so the strip runs forwards in time in the direction the
+       language is read: left to right in English, right to left in Arabic.
+       The server sends newest first, which put the future at the left-hand
+       end in English and made the whole strip read backwards — and then
+       mirrored in Arabic, so it was wrong in both, in opposite ways. The
+       flex container already follows `dir`, so rendering in logical order
+       is all it takes. */
+    days = days.slice().reverse();
+    strip.innerHTML =
+      // "Earlier" now sits at the OLD end, which is the end it extends.
+      '<button class="daychip more" id="dayMore">' + esc(T("dayEarlier")) + '</button>' +
+      days.map(function (x) {
       /* The schema allows friday and sunday and nothing else, but a chip for
          a weekday the dictionary has not heard of is still better than a
          blank one. */
@@ -407,13 +418,18 @@
         '<span class="dmon">' + esc(i18n.fmtMonth(x.held_on)) + '</span>' +
         '<span class="dnum">' + esc(dayNum(x.held_on)) + '</span>' +
         '<span class="dot" aria-hidden="true"></span></button>';
-    }).join("") +
-      // Deliberately not a month grid in this round. "Earlier" extends the
-      // strip; a real calendar screen belongs with the coordinator's.
-      '<button class="daychip more" id="dayMore">' + esc(T("dayEarlier")) + '</button>';
+    }).join("");
     strip.querySelectorAll(".daychip[data-on]").forEach(function (b) {
       b.onclick = function () { goToDay(b.dataset.on); };
     });
+    /* With the newest at the far end, the day being looked at can start off
+       scrolled out of sight. Bring it into view without scrolling the page
+       itself — `block: "nearest"` keeps the register where it is. */
+    var here = strip.querySelector('.daychip[aria-current="date"]');
+    if (here && here.scrollIntoView) {
+      try { here.scrollIntoView({ block: "nearest", inline: "center" }); } catch (e) {}
+    }
+
     var more = $("dayMore");
     if (more) more.onclick = function () {
       S.dayBack = (S.dayBack || 8) + 8;

@@ -39,6 +39,11 @@
   /* ---------------------------------------------------------------- open */
   function open(studentId, studentName) {
     M.student = studentId; M.name = studentName || ""; M.juz = null; M.open = {};
+    /* Land where the child actually is rather than on a grid of thirty
+       tiles. The server works it out (migration 60): the surah being
+       learned, else the one heard most recently, else Juz 30, which is
+       where a child starts. "All juz" is still one tap away. */
+    M.jumped = false;
     window.SijillShow("v-mushaf");
     $("mtWho").textContent = M.name;
     load();
@@ -48,7 +53,15 @@
     busy();
     return api.read("api_mushaf_tree",
       { p_student: M.student, p_juz: M.juz }
-    ).then(function (d) { M.data = d; render(); })
+    ).then(function (d) {
+       M.data = d;
+       if (!M.jumped && d && d.level === "mushaf" && d.current_juz) {
+         M.jumped = true;          // once per visit, never on an explicit "All juz"
+         M.juz = +d.current_juz;
+         return load();
+       }
+       render();
+     })
      .catch(function (e) { $("mtBody").innerHTML =
        '<div class="banner crit"><span class="ic">●</span><div>' + esc(e.message) + '</div></div>'; });
   }
@@ -73,13 +86,36 @@
     return na + " " + a.ayah + " → " + nb + " " + b.ayah;
   }
 
+  /* "564 solid · 20 to review" — 564 of WHAT? The counting is in ayat and
+     nothing said so, which the audit picked up and which is the kind of
+     number a teacher quotes to a parent. The unit is named once, on the
+     first figure, rather than three times. */
   function words(solid, review, total) {
     var ar = i18n.isAr(), out = [];
-    if (solid)  out.push(solid + " " + (ar ? "مُتْقَن" : "solid"));
-    if (review) out.push(review + " " + (ar ? "لِلْمُرَاجَعَة" : "to review"));
+    var unit = ar ? " آيَة" : " ayat";
+    if (solid)  out.push(solid + unit + " " + (ar ? "مُتْقَنَة" : "solid"));
+    if (review) out.push(review + (out.length ? "" : unit) + " " +
+                         (ar ? "لِلْمُرَاجَعَة" : "to review"));
     var left = total - solid - review;
-    if (left > 0) out.push(left + " " + (ar ? "لَمْ يُبْدَأْ" : "not started"));
+    if (left > 0) out.push(left + (out.length ? "" : unit) + " " +
+                           (ar ? "لَمْ يُبْدَأْ" : "not started"));
     return out.join(" · ") || (ar ? "لَمْ يُبْدَأْ" : "not started");
+  }
+
+  /* Where a surah's state came from — the question a teacher picking up
+     somebody else's student actually asks. Empty for a surah nobody has
+     touched; an honest blank rather than a guess (migration 59, 60). */
+  function origin(g) {
+    if (!g || !g.set_how) return "";
+    var ar = i18n.isAr();
+    var when = g.set_at ? i18n.fmtDate(g.set_at, true) : "";
+    var how = g.set_how === "recitation"
+      ? (ar ? "مِنْ تِلَاوَة" : "from a recitation")
+      : g.set_how === "setup"
+        ? (ar ? "مِنَ التَّسْجِيل" : "recorded at setup")
+        : (g.set_by ? (ar ? "ضَبَطَهَا " : "set by ") + g.set_by
+                    : (ar ? "ضُبِطَتْ يَدَوِيًّا" : "set by hand"));
+    return how + (when ? " · " + when : "");
   }
 
   /* The three marks, at whatever level the row represents. */
@@ -160,7 +196,9 @@
                   (g.whole ? "" :
                     " · " + esc(ar ? "مِنْهَا فِي هَذَا الجُزْء " : "in this juz ") +
                     g.in_juz_from + "–" + g.in_juz_to) +
-                '</span></span>' +
+                '</span>' +
+                (origin(g) ? '<span class="src">' + esc(origin(g)) + '</span>' : '') +
+                '</span>' +
                 // No from/to: this marks the WHOLE surah, including any part
                 // of it that sits in the neighbouring juz. The line above
                 // says so when that is the case.
@@ -209,7 +247,9 @@
     }).join("") + '</div>';
 
     $("mtBody").innerHTML = html;
-    $("mtUp").onclick = function () { M.juz = null; M.open = {}; load(); };
+    /* Going up is a deliberate choice, so it must not be bounced straight
+       back down to the juz it came from. */
+    $("mtUp").onclick = function () { M.jumped = true; M.juz = null; M.open = {}; load(); };
     wire();
   }
 

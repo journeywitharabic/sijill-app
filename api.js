@@ -118,9 +118,28 @@
   }
 
   /* ------------------------------------------------------------ read paths */
+  /* A READ gets one more go before it is called a failure.
+
+     The classroom is a masjid basement on a phone, and a single request
+     that never completes is a fact of life there — Tarek hit it picking a
+     surah, where the page numbers failed to load and the error said the
+     database could not be reached. It could: the request just did not make
+     it. One retry turns that into nothing at all.
+
+     ONLY reads. A write that may or may not have landed must never be sent
+     twice on its own — that is how a child gets marked twice, or an undo
+     undoes something that was never done. The write path has its own
+     confirmation machinery and keeps it.
+
+     Only on a 'network' failure, too: a 42501 or a 22023 is an answer, and
+     asking the same question again will get the same answer more slowly. */
   function read(fn, args) {
     args = Object.assign({ p_token: getToken() }, args || {});
-    return rpc(fn, args);
+    return rpc(fn, args).catch(function (e) {
+      if (!e || e.code !== "network") throw e;
+      return new Promise(function (go) { setTimeout(go, 600); })
+        .then(function () { return rpc(fn, args); });
+    });
   }
 
   /* ----------------------------------------------------------- write paths */
