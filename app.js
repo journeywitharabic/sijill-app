@@ -10,6 +10,13 @@
     classes: [], clsId: null, day: null, dayData: null,
     student: null, studentData: null,
     undo: null, ctab: "dash",
+    /* EX-2: the register opens on the work that is left, not on the roll.
+       Sticky for the whole session rather than reset per day: a teacher who
+       has deliberately asked for the whole class should not have to ask
+       again every time they change day or come back from a child's page,
+       and the chip says which mode it is in at all times, so nothing is
+       hidden without saying so. */
+    todoOnly: true,
     /* An adult looking at their own record. Not a second app: the same
        student sheet, with the things only a teacher may do taken off it.
        The boundary is the twenty-odd api_ functions, not this flag — this
@@ -523,8 +530,28 @@
     /* When a gap line is tapped, the register shows only those children.
        Index i still comes from the FULL list, because every handler below
        addresses children by it. */
+    /* Two filters, and they are not the same thing. A tapped gap line shows
+       ONE category; the to-do switch shows anyone with anything outstanding
+       at all, and it is on by default so the register opens on the work.
+
+       The guard at the end matters more than it looks: with nothing left to
+       do, "show only what is left" would empty the register completely, and
+       an empty register on a finished evening reads as a broken app rather
+       than as a finished one. When there is no work left, everyone is shown.
+
+       Index i still comes from the FULL list, because every handler below
+       addresses children by it. */
+    var anyLeft = (d.students || []).some(function (s) {
+      return inGap(s, "att") || inGap(s, "mark") || inGap(s, "next");
+    });
     var shown = (d.students || []).map(function (s, i) { return { s: s, i: i }; })
-      .filter(function (x) { return !S.gapFilter || inGap(x.s, S.gapFilter); });
+      .filter(function (x) {
+        if (S.gapFilter) return inGap(x.s, S.gapFilter);
+        if (S.todoOnly && anyLeft && !ahead && !S.readOnly) {
+          return inGap(x.s, "att") || inGap(x.s, "mark") || inGap(x.s, "next");
+        }
+        return true;
+      });
     $("slist").innerHTML = shown.map(function (x) {
       var s = x.s, i = x.i;
       var reasonIdx = Math.max(0, REASONS.findIndex(function (r) { return r[0] === s.state; }));
@@ -757,37 +784,89 @@
     var g = gapCounts(d);
     var nextLabel = d.next_class ? i18n.fmtDate(d.next_class, true) : T("gNoNextClass");
     var lines = [];
-    /* Each line is a button now. "5 have nothing for Friday" was a riddle:
-       it counts children with nothing due at the NEXT class, which is not the
-       same as children with nothing to do — several of them are carrying work
-       that was never heard. Teachers were opening all five to find out which.
-       Tapping the line filters the register to exactly those children, so the
-       count answers its own question in one tap instead of five. */
-    function line(key, n, one, many, sub) {
-      if (!n) return;
-      var txt = (n === 1 ? T(one) : T(many).split("{n}").join(n));
+    /* All three categories, every time — ticked when they are done rather
+       than silently absent. A line that disappears when it is finished means
+       the teacher cannot tell "attendance is complete" from "attendance was
+       never going to be asked about on this class", and those are different
+       answers to the only question this card exists for.
+
+       Each unfinished line still filters the register when tapped: "5 have
+       nothing for Friday" was a riddle — it counts children with nothing due
+       at the NEXT class, which is not the same as children with nothing to
+       do — and teachers were opening all five to find out which. */
+    function line(key, n, one, many, doneKey, sub) {
+      var txt;
+      if (!n) {
+        lines.push('<li class="gapdone" data-cat="' + key + '">' +
+          '<span class="tick" aria-hidden="true">\u2713</span>' +
+          esc(T(doneKey)) + '</li>');
+        return;
+      }
+      txt = (n === 1 ? T(one) : T(many).split("{n}").join(n));
       if (sub) txt = txt.split("{d}").join(sub);
-      lines.push('<li><button type="button" class="gapline' +
+      /* ...and the names of the children it means, each one a way in. The
+         count answered its own question in one tap; the names answer it in
+         none, and a teacher with four minutes left reads a name faster than
+         they re-derive a filter. */
+      var who = (d.students || []).map(function (s, i) { return { s: s, i: i }; })
+        .filter(function (x) { return inGap(x.s, key); })
+        .map(function (x) {
+          return '<button type="button" class="whochip" data-who="' + x.i + '">' +
+                 esc(x.s.name) + '</button>';
+        }).join("");
+      lines.push('<li data-cat="' + key + '"><button type="button" class="gapline' +
         (S.gapFilter === key ? " on" : "") + '" data-gap="' + key + '">' +
-        esc(txt) + '</button></li>');
+        esc(txt) + '</button><div class="who">' + who + '</div></li>');
     }
-    line("att",  g.att,  "gapAtt1",  "gapAtt");
-    line("mark", g.mark, "gapMark1", "gapMark");
-    if (d.next_class) line("next", g.next, "gapNext1", "gapNext", nextLabel);
-    else              line("next", g.next, "gapNextNone1", "gapNextNone");
-    bar.hidden = !lines.length;
-    if (!lines.length) { S.gapFilter = null; return; }
-    bar.innerHTML = '<ul class="gaps">' + lines.join("") + '</ul>' +
+    line("att",  g.att,  "gapAtt1",  "gapAtt",  "gapAttDone");
+    line("mark", g.mark, "gapMark1", "gapMark", "gapMarkDone");
+    if (d.next_class) line("next", g.next, "gapNext1", "gapNext", "gapNextDone", nextLabel);
+    else              line("next", g.next, "gapNextNone1", "gapNextNone", "gapNextDone");
+
+    var left = g.att + g.mark + g.next;
+    /* The card takes the done count over from #doneBar rather than sitting
+       under it. Two counts of the same evening, stacked and disagreeing —
+       "2 of 2 not yet complete" above "1 still to do" — is precisely the
+       scattered state EX-2 exists to end. One card, one headline. */
+    var done = (d.students || []).filter(function (x) { return x.state && x.recited > 0; }).length;
+    var tot = (d.students || []).length;
+    if ($("doneBar")) $("doneBar").innerHTML = "";
+    bar.hidden = false;
+    bar.innerHTML =
+      '<div class="proghead"><b>' +
+        esc(T("progDoneN").split("{n}").join(done).split("{t}").join(tot)) +
+      '</b><span class="progleft">' +
+        esc(left ? T("progLeft").split("{n}").join(left) : T("progDone")) +
+      '</span>' +
+      /* The to-do switch. On by default, so the register opens on the work
+         rather than on the roll — but never hidden, because a teacher who
+         wants the whole class has to be one tap from it and has to be able
+         to SEE that something is being left out. */
+      (left
+        ? '<button type="button" class="todochip' + (S.todoOnly ? " on" : "") +
+          '" id="todoChip" aria-pressed="' + (!!S.todoOnly) + '">' +
+          esc(S.todoOnly ? T("todoOnly") : T("todoAll")) + '</button>'
+        : '') +
+      '</div><ul class="gaps">' + lines.join("") + '</ul>' +
       (S.gapFilter
         ? '<button type="button" class="btn ghost gapall" id="gapAll">' +
             esc(T("gapAll")) + '</button>'
-        : '<div class="gaphint">' + esc(T("gapTapHint")) + '</div>');
+        : '');
     bar.querySelectorAll(".gapline").forEach(function (b) {
       b.onclick = function () {
         S.gapFilter = (S.gapFilter === b.dataset.gap) ? null : b.dataset.gap;
         renderDay();
       };
     });
+    bar.querySelectorAll(".whochip").forEach(function (b) {
+      b.onclick = function () {
+        var x = (S.dayData.students || [])[+b.dataset.who];
+        if (x) openStudent(x, +b.dataset.who);
+      };
+    });
+    if ($("todoChip")) $("todoChip").onclick = function () {
+      S.todoOnly = !S.todoOnly; renderDay();
+    };
     if ($("gapAll")) $("gapAll").onclick = function () { S.gapFilter = null; renderDay(); };
   }
 
@@ -1065,8 +1144,17 @@
     var g = gapCounts(d), rows = [];
     function row(key, n, one, many) {
       if (!n) return;
+      /* Named, not counted (EX-5). "Set for 4 students" sends a teacher to
+         find out who; the four names answer it here, and at eight o'clock
+         on a Sunday that is the difference between fixing it and going
+         home. Capped, because a whole unmarked class would be a wall of
+         names and the Go button is the answer for that case. */
+      var who = (d.students || []).filter(function (x) { return inGap(x, key); });
+      var names = who.slice(0, 6).map(function (x) { return x.name; }).join(", ") +
+                  (who.length > 6 ? " \u2026" : "");
       rows.push('<div class="setrow"><span>' +
-        esc(n === 1 ? T(one) : T(many).split("{n}").join(n)) + '</span>' +
+        esc(n === 1 ? T(one) : T(many).split("{n}").join(n)) +
+        '<span class="finwho">' + esc(names) + '</span></span>' +
         '<button class="mini" data-fin="' + key + '">' + esc(T("finishGo")) + '</button></div>');
     }
     row("att",  g.att,  "finishAtt1",  "finishAtt");
@@ -1706,6 +1794,15 @@
             '<span class="when">' + esc(nextLabel) + '</span></h2>' +
             (hw.length ? '<span class="n">' + hw.length + '</span>' : '') +
             '</div><div class="hwbox">' +
+            /* The parent's view, offered where the homework is decided (EX-4)
+               rather than only from a link at the top of the page. It opens
+               the REAL family page through api_family_preview — not a second
+               rendering of it here, which would be two versions of one
+               screen to keep in step and the first one to drift.
+               Not for an adult: there is no family behind a grown man in the
+               halaqa, and nothing for his teacher to preview. */
+            ((S.readOnly || S.self || (d.student && d.student.is_adult) || !hw.length) ? '' :
+              '<button class="lnk hwpv" id="hwPv">' + esc(T("hwPreview")) + '</button>') +
             (hw.length ? hw.map(function (h) {
               /* The control used to be a bare ✎, 38x26, with its only
                  explanation in a title= tooltip — which does not exist on a
@@ -1779,6 +1876,52 @@
     }
 
     // recent classes
+    /* Notes before the register history (EX-6). A teacher opening a
+       child they do not usually take needs what somebody wrote about
+       them before they need four weeks of attendance, and the notes
+       were under all of it. */
+    html += '<div class="grp"><div class="grph"><h2>' + esc(T("gNotes")) + '</h2>' +
+            '<span class="n">' + (S.notes || []).length + '</span></div>' +
+            '<div class="note rule">' + esc(TS("gNotesSeen")) + '</div>' +
+            '<div class="card">' +
+            ((S.notes || []).length ? S.notes.map(function (n) {
+              return '<div class="irow noterow" style="align-items:flex-start">' +
+                '<div class="lab">' +
+                  '<span class="tr" style="font-weight:400;font-style:italic">“' + esc(n.body) + '”</span>' +
+                  '<span class="m">' +
+                    (n.name_en ? esc(n.name_en) + " · " : "") +
+                    i18n.fmtDate(n.created_at ? String(n.created_at).slice(0, 10) : null) +
+                    (n.by ? " · " + T("noteBy") + " " + esc(n.by) : "") +
+                    (n.edited_at ? " · " + T("noteEdited") : "") +
+                  '</span>' +
+                '</div>' +
+                /* An adult may change a note he wrote and not one written
+                   about him. The server refuses either way; showing the
+                   pencil on his teacher's note and then failing would just
+                   be a worse way of saying no. */
+                (S.readOnly || (S.self && !n.mine) ? "" :
+                  /* Labelled, not bare icons (EX-6). A pencil and a bin at
+                     30px were both too small and too vague — and the bin
+                     overstates what happens: the note is kept and a
+                     coordinator can put it back. */
+                  '<button class="mini nbtn" data-nedit="' + esc(n.id) + '">✎ ' + esc(T("edit")) + '</button>' +
+                  '<button class="mini nbtn" data-ndel="' + esc(n.id) + '">🗑 ' + esc(T("remove")) + '</button>') +
+              '</div>';
+            }).join("") : '<div class="empty">' + esc(T("noneNotes")) + '</div>') +
+            '</div>' +
+            (S.readOnly ? "" :
+              '<div class="actionrow" style="margin-top:8px">' +
+              '<button class="btn ghost sm" id="noteAdd">' + esc(T("noteAdd")) + '</button></div>') +
+            '</div>';
+
+    /* The rotation. For a child who knows most of juz 30 this was twelve
+       rows of four buttons each, and it sat between the teacher and the
+       bottom of the page every single time. Three now — and because the
+       order puts anything owed or average first, those three are the three
+       worth hearing. The rest is one tap away and stays open while you work
+       through it. */
+    var rot = d.rotation || [];
+    var rotN = S.rotAll ? rot.length : 3;
     html += '<div class="grp"><div class="grph"><h2>' + esc(T("recentCls")) + '</h2>' +
             '<span class="n">' + Math.min((d.history || []).length, histN()) + '</span></div><div class="card">' +
             ((d.history || []).length ? d.history.slice(0, histN()).map(function (h) {
@@ -1902,44 +2045,6 @@
        And the heading now says who else reads them, because until round 34
        nothing on this screen did: a teacher could write a note here, see it
        listed, and have no way of knowing whether it had reached anyone. */
-    html += '<div class="grp"><div class="grph"><h2>' + esc(T("gNotes")) + '</h2>' +
-            '<span class="n">' + (S.notes || []).length + '</span></div>' +
-            '<div class="note rule">' + esc(TS("gNotesSeen")) + '</div>' +
-            '<div class="card">' +
-            ((S.notes || []).length ? S.notes.map(function (n) {
-              return '<div class="irow noterow" style="align-items:flex-start">' +
-                '<div class="lab">' +
-                  '<span class="tr" style="font-weight:400;font-style:italic">“' + esc(n.body) + '”</span>' +
-                  '<span class="m">' +
-                    (n.name_en ? esc(n.name_en) + " · " : "") +
-                    i18n.fmtDate(n.created_at ? String(n.created_at).slice(0, 10) : null) +
-                    (n.by ? " · " + T("noteBy") + " " + esc(n.by) : "") +
-                    (n.edited_at ? " · " + T("noteEdited") : "") +
-                  '</span>' +
-                '</div>' +
-                /* An adult may change a note he wrote and not one written
-                   about him. The server refuses either way; showing the
-                   pencil on his teacher's note and then failing would just
-                   be a worse way of saying no. */
-                (S.readOnly || (S.self && !n.mine) ? "" :
-                  '<button class="gb note" data-nedit="' + esc(n.id) + '" aria-label="' + esc(T("edit")) + '" title="' + esc(T("edit")) + '">✎</button>' +
-                  '<button class="gb note" data-ndel="' + esc(n.id) + '" aria-label="' + esc(T("remove")) + '" title="' + esc(T("remove")) + '">🗑</button>') +
-              '</div>';
-            }).join("") : '<div class="empty">' + esc(T("noneNotes")) + '</div>') +
-            '</div>' +
-            (S.readOnly ? "" :
-              '<div class="actionrow" style="margin-top:8px">' +
-              '<button class="btn ghost sm" id="noteAdd">' + esc(T("noteAdd")) + '</button></div>') +
-            '</div>';
-
-    /* The rotation. For a child who knows most of juz 30 this was twelve
-       rows of four buttons each, and it sat between the teacher and the
-       bottom of the page every single time. Three now — and because the
-       order puts anything owed or average first, those three are the three
-       worth hearing. The rest is one tap away and stays open while you work
-       through it. */
-    var rot = d.rotation || [];
-    var rotN = S.rotAll ? rot.length : 3;
     html += '<div class="grp"><div class="grph"><h2>' + esc(T("gRot")) + '</h2>' +
             '<span class="n">' + rot.length + '</span></div><div class="card">' +
             (rot.length ? rot.slice(0, rotN).map(function (r) {
@@ -2419,6 +2524,11 @@
     /* Taking a recitation back. */
     var sa = $("startAuditGo");
     if (sa) sa.onclick = function () { window.SijillOpenTree(); };
+    var hp = $("hwPv");
+    if (hp) hp.onclick = function () {
+      openFamilyPreview(S.student.id, S.student.name);
+    };
+
     var hm = $("histMore");
     if (hm) hm.onclick = histMore;
 

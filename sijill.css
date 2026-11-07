@@ -1343,12 +1343,51 @@ html[lang="ar"] .addhw-b .t small{font-size:var(--fs-base)}
    as something to do, and these are something to READ, which happens to
    also be tappable. The underline is the only affordance, and the selected
    one gets the brand green it already uses for "you are here". */
-.gaps .gapline{display:block;width:100%;text-align:start;background:none;
+/* 44px, like every other control. These were 29px high — below the
+   project floor — and round 47 only exposed it by making the lines
+   visible on days the old bar hid them on. */
+.gaps .gapline{min-height:44px;display:flex;align-items:center;width:100%;text-align:start;background:none;
   border:0;padding:3px 0;font:inherit;color:inherit;cursor:pointer;
   text-decoration:underline;text-decoration-style:dotted;
-  text-underline-offset:3px;min-height:28px}
+  text-underline-offset:3px}   /* the 28px that used to close this rule
+     overrode the 44px above it — same block, later declaration wins */
 .gaps .gapline.on{color:var(--lapis);font-weight:700;text-decoration-style:solid}
 .gaphint{font-size:var(--fs-small);color:var(--ink-3);margin-top:5px}
+
+/* ------------------------------------------- EX-2, the progress card
+   The three categories gathered at the top instead of scattered down the
+   page, each ticked when it is done and naming its children when it is not.
+   Deliberately NOT a grade colour: this is about the register's
+   completeness, not about how anyone recited. Green here would read as a
+   mark. */
+.proghead{display:flex;align-items:center;flex-wrap:wrap;gap:8px;
+  margin:0 0 6px;font-size:var(--fs-md)}
+.proghead b{font-weight:700}
+.progleft{color:var(--ink-3);font-size:var(--fs-small)}
+.progleft::before{content:"\00b7";margin:0 6px;color:var(--line-2)}
+.todochip{margin-inline-start:auto;min-height:44px;padding:6px 11px;
+  border-radius:999px;border:1px solid var(--line-2);background:var(--surface);
+  color:var(--ink-2);font-size:var(--fs-small);font-weight:600}
+.todochip.on{background:var(--surface-2);border-color:var(--ink-3);color:var(--ink)}
+/* A finished category: no longer a bullet in the "what is missing" list, so
+   it drops the disc and the warning hue and simply states the fact. */
+.gaps li.gapdone{list-style:none;margin-inline-start:-26px;color:var(--ink-3);
+  display:flex;align-items:center;gap:7px;font-size:var(--fs-small)}
+html[dir="rtl"] .gaps li.gapdone{margin-inline-start:0;margin-inline-end:-26px}
+.gaps li.gapdone .tick{font-weight:700;color:var(--ok)}
+/* The children a line means, each one a way straight in. 44px, because they
+   are tapped with a thumb in a classroom like everything else. */
+.gaps .who{display:flex;flex-wrap:wrap;gap:6px;margin:5px 0 9px}
+/* The children behind a line on the finish checklist (EX-5). Quiet and
+   wrapping, under the sentence rather than beside it. */
+/* The parent preview, at the point the homework is decided (EX-4). */
+.hwpv{display:inline-block;margin:0 0 10px;min-height:44px}
+.finwho{display:block;margin-top:3px;font-size:var(--fs-small);
+  color:var(--ink-3);font-weight:400;line-height:1.45}
+.whochip{min-height:44px;padding:5px 11px;border-radius:999px;
+  border:1px solid color-mix(in srgb,var(--late) 40%,transparent);
+  background:var(--late-soft);color:var(--late);
+  font-size:var(--fs-small);font-weight:600;white-space:nowrap}
 .gapall{margin-top:8px;width:100%;min-height:38px}
 /* The per-row mark. Quiet, because it is on every row that has open work
    and a loud one would make the whole register look like a problem. */
