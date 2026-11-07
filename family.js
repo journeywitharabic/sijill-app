@@ -61,10 +61,12 @@
       breakdown:"Present / late / excused / no reason",
       present:"Present", late:"Late", excused:"Excused", noreason:"No reason", closed:"Class closed",
       where:"Where {n} is", pagesSolid:"Pages solid", ofPages:"of {n} in this juz",
-      surahsSolid:"Surahs solid", needsReview:"Needs review",
+      surahsSolid:"Learned well", needsReview:"To revise at home",
+      learningNow:"Being learned now",
+      learningNote:"Leave these to the teacher — they are mid-lesson, not behind.",
       ofWhole:"in the whole Qur\u2019an",
       scope:"The pages are counted inside juz {j} \u2014 the part {n} is memorising now. The two lines under it count the whole Qur\u2019an. Pages are a fairer measure than surahs, because surah lengths vary enormously.",
-      helpHome:"Needs review — help at home", recent:"Recent classes",
+      helpHome:"To revise at home", learningHome:"Being learned now", recent:"Recent classes",
       nothingYet:"Nothing set yet.", noClasses:"No classes recorded yet.",
       /* "Nothing set yet" on a child who is holding three unheard pieces of
          work reads as "your child has been given nothing", and that is the
@@ -81,7 +83,8 @@
       contact:"Any question about homework or attendance — message the school on ClassDojo.",
       contactSelf:"Any question about your homework — speak to your teacher at the halaqa.",
       tajweed:"Tajwīd", adab:"Adab", tr_up:"moving forward", tr_flat:"standing still", tr_down:"needs attention", tr_away:"not enough to say", trHelp:"over the last few classes", wholeSurah:"whole surah", ayat:"ayat", notMarked:"not marked",
-      noneRecorded:"Here — nothing recorded", guideLink:"A short guide to this page",
+      noneRecorded:"Attended · no recitation recorded that day",
+      guideLink:"A short guide to this page",
       notAssessed:"We haven't done this year's review with your child yet. Once their teacher has been through it — usually in the first few weeks — their progress appears here.",
       notAssessedSelf:"Your memorization has not been written down yet. Once you have been through it with your teacher it appears here." 
     },
@@ -97,10 +100,12 @@
       present:"حَاضِر", late:"مُتَأَخِّر", excused:"بِعُذْر", noreason:"بِدُونِ عُذْر",
       closed:"الحَلْقَةُ مُغْلَقَة",
       where:"مُسْتَوَى {n}", pagesSolid:"صَفَحَاتٌ مُتْقَنَة", ofPages:"مِنْ {n} فِي هَذَا الجُزْء",
-      surahsSolid:"سُوَرٌ مُتْقَنَة", needsReview:"يَحْتَاجُ مُرَاجَعَة",
+      surahsSolid:"مُتْقَنَة", needsReview:"لِلْمُرَاجَعَةِ فِي الْبَيْت",
+      learningNow:"يَحْفَظُهَا الْآن",
+      learningNote:"اُتْرُكْهَا لِلْمُعَلِّم، فَهِيَ فِي أَثْنَاءِ الدَّرْسِ وَلَيْسَتْ مُتَأَخِّرَةً.",
       ofWhole:"فِي القُرْآنِ كُلِّه",
       scope:"الصَّفَحَاتُ مَحْسُوبَةٌ ضِمْنَ الجُزْءِ {j} — القِسْمِ الَّذِي يَحْفَظُهُ {n} الآنَ. أَمَّا السَّطْرَانِ تَحْتَهُ فَيَشْمَلَانِ القُرْآنَ كُلَّه. وَالصَّفَحَاتُ مِقْيَاسٌ أَدَقُّ مِنَ السُّوَرِ لِأَنَّ أَطْوَالَ السُّوَرِ مُتَفَاوِتَة.",
-      helpHome:"يَحْتَاجُ مُرَاجَعَة — لِلْمُسَاعَدَةِ فِي البَيْت", recent:"الحِصَصُ الأَخِيرَة",
+      helpHome:"لِلْمُرَاجَعَةِ فِي البَيْت", learningHome:"يَحْفَظُهَا الآن", recent:"الحِصَصُ الأَخِيرَة",
       nothingYet:"لَمْ يُحَدَّدْ شَيْءٌ بَعْد.", noClasses:"لَا حِصَصَ مُسَجَّلَةٌ بَعْد.",
       nothingNewBut:"لَمْ يُحَدَّدْ جَدِيدٌ لِهَذِهِ الحِصَّةِ بَعْد — غَيْرَ أَنَّ {n} مَا زَالَتْ لِلتَّحْضِيرِ أَعْلَاه.",
       nothingNewBut1:"لَمْ يُحَدَّدْ جَدِيدٌ لِهَذِهِ الحِصَّةِ بَعْد — غَيْرَ أَنَّ وَاحِدًا مَا زَالَ لِلتَّحْضِيرِ أَعْلَاه.",
@@ -114,7 +119,8 @@
       noticeTeacherSelf:"مِنْ مُعَلِّمِك",
       notAssessedSelf:"لَمْ يُسَجَّلْ حِفْظُكَ بَعْد. وَإِذَا رَاجَعْتَهُ مَعَ مُعَلِّمِكَ ظَهَرَ هُنَا.",
       tajweed:"التَّجْوِيد", adab:"الأَدَب", tr_up:"يَتَقَدَّم", tr_flat:"ثَابِت", tr_down:"يَحْتَاجُ انْتِبَاهًا", tr_away:"لَا يُمْكِنُ الحُكْمُ بَعْد", trHelp:"خِلَالَ الحِصَصِ الأَخِيرَة", wholeSurah:"السُّورَةُ كَامِلَة", ayat:"آيَة", notMarked:"لَمْ يُسَجَّل",
-      noneRecorded:"حَاضِر — لَمْ يُسَجَّلْ شَيْء", guideLink:"دَلِيلٌ مُخْتَصَرٌ لِهَذِهِ الصَّفْحَة",
+      noneRecorded:"حَضَرَ · وَلَمْ تُسَجَّلْ تِلَاوَةٌ فِي ذَلِكَ اليَوْم",
+      guideLink:"دَلِيلٌ مُخْتَصَرٌ لِهَذِهِ الصَّفْحَة",
       notAssessed:"لَمْ نُجْرِ جَرْدَ هَذَا العَامِ مَعَ اِبْنِكُمْ بَعْد. وَحَالَمَا يُنْجِزُهُ مُعَلِّمُهُ — عَادَةً فِي الأَسَابِيعِ الأُولَى — سَيَظْهَرُ تَقَدُّمُهُ هُنَا." 
     }
   };
@@ -346,6 +352,15 @@
           ' <span style="font-weight:400;color:var(--ink-3)">' + esc(t("ofWhole")) + '</span></b></div>' +
         '<div class="kv"><span>' + esc(t("needsReview")) + '</span><b>' + (c.needs_review || []).length +
           ' <span style="font-weight:400;color:var(--ink-3)">' + esc(t("ofWhole")) + '</span></b></div>' +
+        /* A surah being learned used to be counted here too, so a child
+           halfway through Ar-Rahman was reported to their parents as needing
+           to revise it — in a card headed "help at home", beside the ones
+           that really had slipped. Two different things, said separately
+           (migration 59). */
+        ((c.learning || []).length
+          ? '<div class="kv"><span>' + esc(t("learningNow")) + '</span><b>' + c.learning.length +
+            ' <span style="font-weight:400;color:var(--ink-3)">' + esc(t("ofWhole")) + '</span></b></div>'
+          : '') +
         '<div style="height:10px"></div>' +
         '<span class="bar2" style="width:100%;height:10px"><i class="a" style="width:' + pct + '%"></i>' +
           '<i class="r" style="width:' + pctP + '%"></i></span>' +
@@ -360,6 +375,17 @@
           return '<div class="r"><span class="ar" dir="rtl">' + esc(r.name_ar) +
                  '</span><span class="tr">' + esc(r.name_en) + '</span></div>';
         }).join("") + '</div></div>';
+    }
+
+    /* What the teacher is teaching right now. A parent seeing it listed
+       should know it is in hand, not that they have something to fix. */
+    if ((c.learning || []).length) {
+      h += '<div class="pcard"><h2>' + esc(t("learningHome")) + '</h2><div class="rlist">' +
+        c.learning.map(function (r) {
+          return '<div class="r"><span class="ar" dir="rtl">' + esc(r.name_ar) +
+                 '</span><span class="tr">' + esc(r.name_en) + '</span></div>';
+        }).join("") +
+        '</div><div class="note" style="margin-top:9px">' + esc(t("learningNote")) + '</div></div>';
     }
 
     // recent classes. recent_attendance already carries the state for each
