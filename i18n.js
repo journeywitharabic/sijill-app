@@ -9,6 +9,22 @@
   var EN = {
     tajweed:"Tajwīd",
     tajweedAsk:"pick a tajwīd grade",
+    /* The grade shown before anybody has tapped. Said in words as well as
+       drawn as an outline, because a column of outlined ticks is only
+       obvious once you already know what it means. */
+    notSaved:"not saved yet",
+    /* The line above the gradable rows. It is the one place the new
+       behaviour is explained, so it says the rule rather than naming the
+       control. */
+    startsGood:"Every row starts as good \u2014 change only what was different, then tap to confirm it.",
+    /* What the grade will do, shown while it is chosen and waiting for a
+       taj\u0101w\u012bd grade. Each line is what api_record really does. */
+    whatNext:"What happens next",
+    conGood:"Marked solid, and the homework on it closes.",
+    conAverage:"Marked solid and the homework closes \u2014 but it comes round again sooner.",
+    conRepeat:"Comes back as homework on {d}, and stays in revision until it is graded good.",
+    conRepeatNoDay:"Comes back as homework at the next class, and stays in revision until it is graded good.",
+    conNotReady:"Nothing is recorded \u2014 there was nothing to hear.",
     adab:"Adab — behaviour",
     adabNotePh:"What happened? (needed for 1)",
     adabClear:"Remove",
@@ -180,7 +196,7 @@
     spFromAyah:"From ayah", spToAyah:"To ayah",
     spFromPage:"From page", spToPage:"To page", spPage:"p.",
     spPageFail:"Page numbers could not be loaded, so pick by ayah instead.",
-    spPageFailWhy:"The server did not answer \u2014 tell Tarek.",
+    spPageFailWhy:"The server did not answer \u2014 tell a coordinator.",
     spBad:"That is not a range inside this surah (1\u2013{n}).",
     spPickOne:"Pick a surah first.",
     spFullName:"Full name", spNameHint:"First name and surname initial, e.g. Bilal N.",
@@ -214,7 +230,7 @@
     noneHw:"No homework set for next week yet.", noneHist:"No classes recorded yet.",
     saving:"saving…", savedAll:"All changes saved", retryNow:"Retry now",
     failOne:"change did not save", failMany:"changes did not save",
-    failHelp:"Nothing has been lost. Tap retry — if it keeps failing, write the marks on paper and tell Tarek.",
+    failHelp:"Nothing has been lost. Tap retry — if it keeps failing, write the marks on paper and tell a coordinator.",
     signedAs:"Signed in as", notYou:"Not you?",
     reasonAsk:"Why were they away?",
     close:"Close", cancel:"Cancel", save:"Save", add:"Add", remove:"Remove", edit:"Edit",
@@ -337,7 +353,8 @@
     mtPagesSolid:"{n} pages solid across the mushaf",
     mtHelp:"Tap a juz to open it. You can mark a whole juz, a hizb, a page or a few ayat — whichever matches what you actually know. Nothing here says the child recited today; it records what they already have.",
     /* --- taking a mark back --- */
-    undoMark:"Take back", undoMarkTitle:"Take this mark back?",
+    undoMark:"Undo this mark", undoMarkTitle:"Undo this mark?",
+    justMarked:"Just marked",
     undoMarkBody:"The recitation is kept and marked withdrawn. {who} memorization goes back to what it was, and any homework it cleared opens again.",
     undoneOk:"Mark taken back",
     undoTooLate:"This surah has been marked again since. Take the newer mark back first.",
@@ -358,6 +375,14 @@
   var AR = {
     tajweed:"التَّجْوِيد",
     tajweedAsk:"اخْتَرْ دَرَجَةَ التَّجْوِيد",
+    notSaved:"لَمْ يُسَجَّلْ بَعْد",
+    startsGood:"كُلُّ سَطْرٍ يَبْدَأُ جَيِّدًا — غَيِّرْ مَا اخْتَلَفَ فَقَط، ثُمَّ انْقُرْ لِتَأْكِيدِه.",
+    whatNext:"مَا الَّذِي سَيَحْدُث",
+    conGood:"يُثْبَتُ مُتْقَنًا، وَيُغْلَقُ الوَاجِبُ المُتَعَلِّقُ بِه.",
+    conAverage:"يُثْبَتُ مُتْقَنًا وَيُغْلَقُ الوَاجِب، لَكِنَّهُ يَعُودُ أَسْرَعَ مِنْ غَيْرِه.",
+    conRepeat:"يَعُودُ وَاجِبًا يَوْمَ {d}، وَيَبْقَى فِي المُرَاجَعَةِ حَتَّى يُسَجَّلَ جَيِّدًا.",
+    conRepeatNoDay:"يَعُودُ وَاجِبًا فِي الحِصَّةِ القَادِمَة، وَيَبْقَى فِي المُرَاجَعَةِ حَتَّى يُسَجَّلَ جَيِّدًا.",
+    conNotReady:"لَا يُسَجَّلُ شَيْء — لَمْ تَكُنْ هُنَاكَ تِلَاوَةٌ تُسْمَع.",
     adab:"الأَدَب — السُّلُوك",
     adabNotePh:"مَاذَا حَصَل؟ (مَطْلُوبٌ لِـ ١)",
     adabClear:"إِزَالَة",
@@ -493,7 +518,7 @@
     spFromAyah:"مِنْ آيَة", spToAyah:"إِلَى آيَة",
     spFromPage:"مِنْ صَفْحَة", spToPage:"إِلَى صَفْحَة", spPage:"ص.",
     spPageFail:"تَعَذَّرَ تَحْمِيلُ أَرْقَامِ الصَّفَحَات، فَاخْتَرْ بِالآيَةِ بَدَلًا مِنْ ذَلِك.",
-    spPageFailWhy:"لَمْ يُجِبِ الخَادِم — أَبْلِغْ طَارِق.",
+    spPageFailWhy:"لَمْ يُجِبِ الخَادِم — أَبْلِغِ المُنَسِّق.",
     spBad:"هَذَا لَيْسَ مَقْطَعًا دَاخِلَ هَذِهِ السُّورَة (١–{n}).",
     spPickOne:"اِخْتَرْ سُورَةً أَوَّلًا.",
     spFullName:"الاِسْمُ الكَامِل", spNameHint:"الاِسْمُ الأَوَّلُ وَالحَرْفُ الأَوَّلُ مِنَ العَائِلَة، مِثْل: بِلَال ن.",
@@ -517,7 +542,7 @@
     noneHw:"لَمْ يُحَدَّدْ وَاجِبٌ بَعْد.", noneHist:"لَا حِصَصَ مُسَجَّلَةٌ بَعْد.",
     saving:"قَيْدَ الحِفْظ…", savedAll:"حُفِظَ الكُلّ", retryNow:"أَعِدِ المُحَاوَلَةَ الآن",
     failOne:"تَغْيِيرٌ لَمْ يُحْفَظ", failMany:"تَغْيِيرَاتٌ لَمْ تُحْفَظ",
-    failHelp:"لَمْ يَضِعْ شَيْء. أَعِدِ المُحَاوَلَة — وَإِنِ اسْتَمَرَّ الخَلَل، سَجِّلْ عَلَى الوَرَقِ وَأَخْبِرْ طَارِق.",
+    failHelp:"لَمْ يَضِعْ شَيْء. أَعِدِ المُحَاوَلَة — وَإِنِ اسْتَمَرَّ الخَلَل، سَجِّلْ عَلَى الوَرَقِ وَأَخْبِرِ المُنَسِّق.",
     signedAs:"مُسَجَّلٌ بِاسْم", notYou:"لَسْتَ أَنْت؟",
     reasonAsk:"مَا سَبَبُ الغِيَاب؟",
     close:"إِغْلَاق", cancel:"إِلْغَاء", save:"حِفْظ", add:"إِضَافَة", remove:"حَذْف", edit:"تَعْدِيل",
@@ -619,7 +644,8 @@
     mtClearBody:"لَنْ يُحْسَبَ مَحْفُوظًا بَعْدَ الآن. إِنْ كَانَ الطَّالِبُ قَدْ نَسِيَهُ فَاخْتَرْ مُرَاجَعَة، فَذَلِكَ يَحْفَظُ التَّارِيخَ وَيُعِيدُهُ إِلَى دَوْرَةِ المُرَاجَعَة.",
     mtPagesSolid:"{n} صَفْحَةً مُتْقَنَةً فِي المُصْحَفِ كُلِّهِ",
     mtHelp:"اُنْقُرْ عَلَى جُزْءٍ لِفَتْحِه. يُمْكِنُكَ تَعْلِيمُ جُزْءٍ كَامِلٍ أَوْ حِزْبٍ أَوْ صَفْحَةٍ أَوْ بِضْعِ آيَاتٍ، بِحَسَبِ مَا تَعْرِفُهُ فِعْلًا. لَا شَيْءَ هُنَا يَقُولُ إِنَّ الطَّالِبَ تَلَا اليَوْم؛ هَذَا تَسْجِيلٌ لِمَا هُوَ حَافِظُهُ أَصْلًا.",
-    undoMark:"تَرَاجَعْ", undoMarkTitle:"هَلْ تَتَرَاجَعُ عَنْ هَذَا التَّسْجِيل؟",
+    undoMark:"تَرَاجَعْ عَنْ هَذَا التَّسْجِيل", undoMarkTitle:"هَلْ تَتَرَاجَعُ عَنْ هَذَا التَّسْجِيل؟",
+    justMarked:"سُجِّلَ الآن",
     undoMarkBody:"تَبْقَى التِّلَاوَةُ فِي السِّجِلِّ مَعَ عَلَامَةِ السَّحْب. يَعُودُ حِفْظُ {who} إِلَى مَا كَانَ عَلَيْهِ، وَيُفْتَحُ الوَاجِبُ الَّذِي أُغْلِقَ مِنْ جَدِيد.",
     undoneOk:"تَمَّ التَّرَاجُع",
     undoTooLate:"سُجِّلَتْ هَذِهِ السُّورَةُ مَرَّةً أُخْرَى بَعْدَ ذَلِك. تَرَاجَعْ عَنِ التَّسْجِيلِ الأَحْدَثِ أَوَّلًا.",

@@ -1252,6 +1252,12 @@
     if ($("backCls")) $("backCls").hidden = false;
     $("stuName").textContent = s.name;
     $("stuSub").textContent = "—";
+    /* A different child is on screen, so the last mark is not undoable from
+       here any more. Cleared on the way in, which covers every route to this
+       screen — the register, the walk through the class, the position picker
+       — rather than one line per route. */
+    S.justDid = null;
+    if ($("justDid")) { $("justDid").hidden = true; $("justDid").innerHTML = ""; }
     $("stuBody").innerHTML = '<div class="loading"><span class="spin"></span></div>';
     renderNav();
     // The notes come back alongside the rest rather than on a second screen.
@@ -1518,6 +1524,45 @@
         ? T("lastHeard") + " " + i18n.fmtDate(d.rotation[d.rotation.length - 1].last_heard) : null)
     ].filter(Boolean).join(" · ");
 
+    /* The strip. Present only straight after a mark, and cleared by
+       anything that moves off this child — so it is never a stale offer to
+       undo something from ten minutes ago on a different student. */
+    var jd = $("justDid");
+    if (jd) {
+      var j = S.justDid;
+      jd.hidden = !j;
+      jd.innerHTML = !j ? "" :
+        '<span class="jw">' + esc(T("justMarked")) + '</span>' +
+        '<span class="jn">' + esc(j.what) + '</span>' +
+        '<span class="outc ' + (
+          j.outcome === "repeat" ? "t-rev" :
+          j.outcome === "average" ? "t-avg" :
+          j.outcome === "not_prepared" ? "t-np" : "t-ok") + '">' +
+        esc(j.outcome === "repeat" ? T("gAgain") :
+            j.outcome === "average" ? T("gAverage") :
+            j.outcome === "not_prepared" ? T("gNotReady") : T("gGood")) + '</span>' +
+        '<button class="mini" id="justUndo">↶ ' + esc(T("undoMark")) + '</button>';
+      var ju = $("justUndo");
+      if (ju) ju.onclick = function () {
+        var rec = S.justDid && S.justDid.rec;
+        if (!rec) return;
+        /* No confirmation sheet. The one down in the history has one because
+           it reaches back into a past class; this one undoes the tap the
+           teacher made a second ago, and a sheet between the mistake and the
+           fix is the reason they would not bother. */
+        api.write("api_undo_record", { p_record: rec }, S.student.name)
+          .then(function (r) {
+            /* The database refuses rather than guessing when the same surah
+               has been marked again since. That arrives as ok:false, not as
+               an error, so it has to be checked for. */
+            if (r && r.ok === false) { toast(T("undoTooLate")); return; }
+            S.justDid = null;
+            toast(T("undoneOk"));
+            return reloadStudent();
+          }).catch(fail);
+      };
+    }
+
     var html = "";
     if (d.trend && d.trend.dir) {
       html += '<div class="trendbar ' + (TRENDS[d.trend.dir] || TRENDS.away).cls + '">' +
@@ -1527,6 +1572,17 @@
     if (f.kind) {
       html += '<div class="banner ' + f.kind + '"><span class="ic">●</span><div><b>' +
               esc(f.message) + '.</b></div></div>';
+    }
+
+    /* Said once, at the top, rather than on every row. The behaviour is new
+       and a teacher meeting it for the first time needs the rule, not a
+       label on a control. Only when there is actually something suggested:
+       on a child with nothing due it would be a sentence about nothing. */
+    var anyProp = !S.readOnly && !S.self && []
+      .concat(d.due_back || [], d.new_memorisation || [])
+      .some(function (x) { return x.due_today; });
+    if (anyProp) {
+      html += '<div class="startsgood">' + esc(T("startsGood")) + '</div>';
     }
 
     /* The two sections used to be "due back" and "homework for next week",
@@ -1940,6 +1996,21 @@
     }
     var old = (kind !== "rot") && weeksSince(x.set_on) >= 3;
     var stale = (kind === "rot" && (x.weeks == null || x.weeks >= 4)) ? " stale" : "";
+    /* Round 46: the expected grade, offered rather than recorded.
+
+       Most recitations are good, so the row shows good already picked —
+       but OUTLINED, not filled, and the row says "not saved yet" beside
+       it. Nothing is written until the teacher taps. A filled grade means
+       recorded; an outlined one means suggested; and the two never look
+       alike, which is the whole safety of pre-filling it.
+
+       Only on work THIS lesson is for. The rotation is a menu of thirty
+       surahs a teacher might call on, not a list of things to mark — a
+       suggested grade on all of them would be thirty rows claiming to
+       expect something, and the one row that mattered would be lost in
+       them. Homework not yet due is in the same position: it goes home
+       tonight, so there is nothing to grade yet. */
+    var prop = (kind !== "rot" && !S.readOnly && !S.self && x.due_today);
     /* The rotation is no longer plain oldest-first, so a row near the top
        that was heard recently needs to say why it is there. */
     if (kind === "rot" && x.band === 1) meta = T("rotNeeds") + " · " + meta;
@@ -1955,6 +2026,10 @@
       '<span class="tr"><span class="lat">' + esc(x.name_en) + rangeSpan(x) +
       '</span>' + rangeOf(x) + '</span>' +
       '<span class="m' + stale + (old ? " old" : "") + '">' + esc(meta) +
+        /* Said in words, not only in the border. A teacher glancing down a
+           column of outlined ticks needs one unambiguous sentence telling
+           them none of it has been written yet. */
+        (prop ? ' <span class="notyet">' + esc(T("notSaved")) + '</span>' : '') +
         /* Change lives here too, not only in the next-class box.
            Round 24 split the homework in two and left the editor behind in
            one half — so the moment a piece of work was a class old it moved
@@ -2006,7 +2081,9 @@
            a page) and wrong on a review row (good is up to 3, again is 6+).
            A tooltip that contradicts the rule printed above it is worse than
            no tooltip, because a teacher trusts the one under their thumb. */
-        '<button class="gb g lab3 t-ok" data-g="good" aria-label="' + esc(gLabel(x, T("gGood"))) + '" title="' +
+        '<button class="gb g lab3 t-ok' + (prop ? " pp" : "") +
+          '" data-g="good" aria-label="' + esc(gLabel(x, T("gGood"))) +
+          (prop ? " — " + esc(T("notSaved")) : "") + '" title="' +
           esc(T(kind === "new" ? "gGoodTipNew" : "gGoodTipRev")) + '">' +
           '<span class="ic">✓</span><small>' + esc(T("gGood")) + '</small></button>' +
         /* Average sits between good and again because that is what it means,
@@ -2090,11 +2167,35 @@
     return out + '</span>';
   }
 
+  /* What a grade will do, in words, from what api_record actually does.
+     The repeat line names the real next class rather than saying "next
+     week": the school meets twice a week, so "next week" is wrong about
+     half the time, and the date is the thing a teacher and a parent both
+     want. api_student already sends it as next_class. */
+  function consequenceOf(outcome) {
+    if (outcome === "not_prepared") return T("conNotReady");
+    if (outcome === "average") return T("conAverage");
+    if (outcome === "good") return T("conGood");
+    var nx = S.studentData && S.studentData.next_class;
+    return nx
+      ? T("conRepeat").split("{d}").join(i18n.fmtDate(nx, true))
+      : T("conRepeatNoDay");
+  }
+
   function wireStudent() {
     /* One submit, used by both halves. The grade and the tajwid arrive in
        either order: whichever the teacher taps second is the one that sends.
        Tapping a grade is never thrown away for want of a star — the row just
        asks for the missing half and waits. */
+    /* What to call the passage in the strip. The visible Latin name is
+       already in the row, so this reads it back rather than rebuilding it
+       from the data and risking a different spelling than the one the
+       teacher just tapped next to. */
+    function nameOf(row) {
+      var el = row.querySelector(".lab .lat");
+      return (el && el.textContent || "").trim();
+    }
+
     function sendGrade(row, outcome) {
       var tj = row.dataset.tajweed ? +row.dataset.tajweed : null;
       row.classList.remove("needtj");
@@ -2108,7 +2209,14 @@
         p_outcome: outcome,
         p_note: null,
         p_tajweed: outcome === "not_prepared" ? null : tj
-      }, S.student.name).then(function () {
+      }, S.student.name).then(function (r) {
+        /* api_record returns the id of the row it wrote, which is the same id
+           api_undo_record takes. Keeping it here is what lets the strip above
+           the page undo THIS mark rather than the most recent one — they are
+           usually the same and occasionally are not. */
+        S.justDid = (r && r.session_id)
+          ? { rec: r.session_id, what: nameOf(row), outcome: outcome }
+          : null;
         return api.read("api_student", { p_student: S.student.id, p_history: histAsk() });
       }).then(function (d) { S.studentData = d; renderStudent(); }).catch(fail);
     }
@@ -2118,12 +2226,37 @@
         var row = b.closest(".irow");
         var cls = { good: "on-ok", average: "on-avg", repeat: "on-rev", not_prepared: "on-np" }[b.dataset.g];
         row.querySelectorAll(".gb").forEach(function (x) { x.classList.remove("on-ok","on-avg","on-rev","on-np"); });
+        /* The suggestion is over the moment anything is tapped: the row is
+           about to be a real mark, so it must stop looking like an offer.
+           Both the outline and the words go, together — leaving one of them
+           behind is how a recorded row ends up still saying "not saved". */
+        row.querySelectorAll(".gb.pp").forEach(function (x) { x.classList.remove("pp"); });
+        row.querySelectorAll(".notyet").forEach(function (x) { x.remove(); });
+        /* Any panel from a previous choice goes now. Two of them on one row,
+           disagreeing, is worse than none. */
+        row.querySelectorAll(".whatnext").forEach(function (x) { x.remove(); });
         b.classList.add(cls);
         // Nothing was recited, so there is no reading to grade.
         if (b.dataset.g === "not_prepared") return sendGrade(row, "not_prepared");
         if (!row.dataset.tajweed) {           // ask for the other half
           row.dataset.pending = b.dataset.g;
           row.classList.add("needtj");
+          /* The grade is chosen and not yet written, which is the only
+             moment a "what happens next" panel can be honest. The Figma
+             gets this moment from a per-child Confirm button; we do not
+             have one, because a single Confirm would let a teacher record
+             eleven children without hearing one. The wait for a tajwīd
+             grade gives us the same moment for free. */
+          var old = row.querySelector(".whatnext");
+          if (old) old.remove();
+          var tone = { good: "t-ok", average: "t-avg", repeat: "t-rev",
+                       not_prepared: "t-np" }[b.dataset.g] || "t-ok";
+          var box = document.createElement("div");
+          box.className = "whatnext " + tone;
+          box.innerHTML = '<b>' + esc(T("whatNext")) + '</b>' +
+                          esc(consequenceOf(b.dataset.g));
+          var tj = row.querySelector(".tjline");
+          if (tj) row.insertBefore(box, tj); else row.appendChild(box);
           return;
         }
         sendGrade(row, b.dataset.g);

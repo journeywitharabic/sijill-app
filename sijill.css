@@ -453,6 +453,68 @@ tbody tr[aria-selected="true"]{background:var(--lapis-soft)}
 .irow.needtj .tjline{border-top-color:var(--late)}
 .irow.needtj .stars .st svg{stroke:var(--late)}
 
+/* The rule, said once above the rows that use it (round 46). Quiet: it is
+   an explanation, not a warning, and it stops being read after the second
+   week. */
+.startsgood{font-size:var(--fs-small);color:var(--ink-3);line-height:1.5;
+  margin:0 0 10px;padding:9px 12px;border-radius:9px;
+  background:var(--surface-2);border:1px dashed var(--line)}
+
+/* What the chosen grade will do, while it waits for a tajwid grade. Tinted
+   with the grade's own hue, because here the colour IS naming the grade —
+   which is the one thing colour is allowed to do in this app. Full width of
+   the row so it never squeezes the buttons. */
+.whatnext{flex:1 0 100%;margin-top:8px;padding:9px 11px;border-radius:9px;
+  font-size:var(--fs-small);line-height:1.5}
+.whatnext b{display:block;font-size:var(--fs-micro);font-weight:700;
+  letter-spacing:.07em;text-transform:uppercase;margin-bottom:3px}
+.whatnext.t-ok { background:var(--ok-soft);   color:var(--ok) }
+.whatnext.t-avg{ background:var(--avg-soft);  color:var(--avg) }
+.whatnext.t-rev{ background:var(--late-soft); color:var(--late) }
+.whatnext.t-np { background:var(--exc-soft);  color:var(--exc) }
+
+/* The grade offered before anybody has tapped (round 46). Most
+   recitations are good, so good comes up already picked — and must not
+   for one second look like a mark that has been made. Dashed and
+   unfilled, against the solid fill of .on-ok: the same hue, because it
+   is the same button, but a different shape, because it is a different
+   state. Nothing is written until it is tapped. */
+/* The rule itself lives further down, immediately after .gb.t-ok —
+   see the note there for why it cannot stay here. */
+/* ...and said in words, because an outline is only obvious once you
+   already know what it means. Deliberately GREY: in this app a colour
+   is a grade, so a green chip beside the good button would read as one.
+   This has to read as the absence of a mark. */
+.notyet{display:inline-block;margin-inline-start:6px;padding:1px 7px;
+  font-family:var(--sans);font-size:var(--fs-micro);font-weight:700;
+  color:var(--ink-3);border:1px dashed var(--line);border-radius:99px;
+  white-space:nowrap;letter-spacing:.02em}
+
+/* What was just marked, and the way to take it straight back. Above the
+   body rather than in it, so it survives the re-render the grade itself
+   causes, and aligned to .pad's 16px gutter so it reads as part of the
+   page and not as a banner stuck on top of it. */
+.justdid{display:flex;align-items:center;flex-wrap:wrap;gap:8px;
+  margin:10px 16px 0;padding:7px 11px;border-radius:11px;
+  background:var(--surface-2);border:1px solid var(--line)}
+.justdid .jw{font-size:var(--fs-micro);font-weight:700;letter-spacing:.06em;
+  text-transform:uppercase;color:var(--ink-3);flex:none}
+/* Shrinks rather than wraps. Measured at 390px: label 100 + name 78 + grade
+   44 + button 101 + three 8px gaps is 347 against 336 of usable width, so it
+   broke to a second line and left the box 89px tall with a hole in it. The
+   name is the only part that can give, and a surah name is still readable
+   clipped. */
+.justdid .jn{font-family:var(--mono);font-size:var(--fs-small);color:var(--ink-2);
+  flex:0 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.justdid .outc{font-size:var(--fs-micro);font-weight:700;padding:2px 7px;
+  border-radius:99px;white-space:nowrap}
+.justdid .outc.t-ok { background:var(--ok-soft);   color:var(--ok) }
+.justdid .outc.t-rev{ background:var(--late-soft); color:var(--late) }
+.justdid .outc.t-np { background:var(--exc-soft);  color:var(--exc) }
+.justdid .outc.t-avg{ background:var(--avg-soft);  color:var(--avg) }
+/* Pushed to the far end, which mirrors with `dir` on its own. */
+.justdid .mini{margin-inline-start:auto}
+
 /* what the recitation did to the mushaf */
 .basel{font-size:var(--fs-micro);font-weight:700;letter-spacing:.04em;color:var(--ok);
   margin-inline-start:7px;white-space:nowrap}
@@ -834,6 +896,19 @@ html[lang="ar"] .irow.grad.g4 .gb.g small{font-size:var(--fs-micro)}
 .gb.t-np { background:var(--exc-soft);  border-color:color-mix(in srgb,var(--exc) 58%,transparent);  color:var(--exc) }
 .gb.t-avg{ background:var(--avg-soft); border-color:color-mix(in srgb,var(--avg) 40%,transparent); color:var(--avg) }
 /* Pressed stays the strong fill, so "what I just tapped" still reads at a glance. */
+/* The grade offered before anybody has tapped (round 46), and it has to sit
+   AFTER .gb.t-ok: both are two-class selectors, so specificity ties and the
+   later rule wins. Placed above the tone block it lost its border-colour to
+   t-ok's 34% wash, and the ring was too faint to read as picked at arm's
+   length in a classroom.
+
+   Solid ring, dashed edge, soft fill — against .gb.on-ok's strong fill for a
+   grade that has actually been recorded. The difference is carried by SHAPE
+   rather than hue, so it survives a bad screen, a sunlit room and colour
+   blindness, none of which a hue survives. */
+.gb.pp{border-style:dashed;border-width:2px;border-color:var(--ok);
+  color:var(--ok);font-weight:800;
+  box-shadow:inset 0 0 0 2px color-mix(in srgb,var(--ok) 12%,transparent)}
 .gb.on-ok { background:var(--ok);        border-color:var(--ok);        color:var(--ok-ink) }
 .gb.on-rev{ background:var(--late-fill); border-color:var(--late-fill); color:var(--late-ink) }
 .gb.on-np { background:var(--exc);       border-color:var(--exc);       color:var(--exc-ink) }
