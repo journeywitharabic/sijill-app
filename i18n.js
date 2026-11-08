@@ -130,6 +130,7 @@
        A line that vanishes when finished cannot be told apart from one
        that was never going to be asked about. */
     hwPreview:"See what the family will read \u203a",
+    listenRead:"Listen / read on quran.com \u2197",
     gapAttDone:"Attendance \u2014 everyone marked",
     gapMarkDone:"Recitation \u2014 everyone heard",
     gapNextDone:"Homework \u2014 everyone has some",
@@ -467,6 +468,7 @@
     gapNextNone:"{n} بِلَا وَاجِبٍ مُحَدَّد", gapNextNone1:"طَالِبٌ وَاحِدٌ بِلَا وَاجِبٍ مُحَدَّد",
     gapTapHint:"اِضْغَطْ عَلَى السَّطْرِ لِتَرَى مَنْ هُم",
     hwPreview:"اُنْظُرْ مَا تَقْرَؤُهُ الأُسْرَة ›",
+    listenRead:"اِسْتَمِعْ أَوِ اقْرَأْ عَلَى quran.com ↗",
     gapAttDone:"الحُضُور — سُجِّلَ الجَمِيع",
     gapMarkDone:"التِّلَاوَة — سُمِعَ الجَمِيع",
     gapNextDone:"الوَاجِب — لِكُلٍّ وَاجِبُه",

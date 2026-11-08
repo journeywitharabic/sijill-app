@@ -1828,6 +1828,10 @@
                   (h.due_on ? ' \u00b7 ' +
                     esc(T("gDueOn").split("{d}").join(i18n.fmtDate(h.due_on))) : '') +
                   '</div>' +
+                  /* Only on his own page: a teacher marking a register does
+                     not need a link away from it, and the children's
+                     families never get outbound links at all. */
+                  (S.self ? quranLink(h) : '') +
                 '</div><div class="hwside">' + (h.source === "auto"
                   ? '<span class="pill late"><i></i>' + (ar ? "مِنْ ↻ إِعَادَة" : "from ↻ repeat") + '</span>'
                   : '<span class="pill mute"><i></i>' + (ar ? "أَضَافَهُ المُعَلِّم" : "set by teacher") + '</span>') +
@@ -2285,6 +2289,37 @@
     return nx
       ? T("conRepeat").split("{d}").join(i18n.fmtDate(nx, true))
       : T("conRepeatNoDay");
+  }
+
+  /* AC-10 · quran.com. The register's words: "For a man practising alone in
+     the week that is worth more than anything else on this card, and it is
+     two string templates."
+
+     Exactly the two it specifies — quran.com/{surah}/{from}-{to} to hear a
+     passage, quran.com/page/{n} to read one. A whole surah drops the range
+     rather than writing 1-7, because quran.com/108 is the surah and reads
+     better than a range covering all of it.
+
+     Deliberately NOT on the family page. That page has no outbound links at
+     all and the register says so twice: it is the same decision that keeps
+     ClassDojo off it. This is for the man practising on his own. */
+  function quranUrl(h) {
+    var n = +h.surah;
+    if (!n) return "";
+    var whole = !h.ayah_from || !h.ayah_to ||
+                (h.ayah_from === 1 && h.ayat && h.ayah_to >= h.ayat);
+    return "https://quran.com/" + n +
+           (whole ? "" : "/" + h.ayah_from + "-" + h.ayah_to);
+  }
+
+  function quranLink(h) {
+    var u = quranUrl(h);
+    if (!u) return "";
+    /* rel=noopener because target=_blank without it hands the opened page a
+       handle on this one. noreferrer as well: where a man goes to practise
+       is nobody's business but his. */
+    return ' <a class="lnk qlink" href="' + esc(u) + '" target="_blank" ' +
+           'rel="noopener noreferrer">' + esc(T("listenRead")) + '</a>';
   }
 
   function wireStudent() {

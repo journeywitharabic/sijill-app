@@ -1382,6 +1382,15 @@ html[dir="rtl"] .gaps li.gapdone{margin-inline-start:0;margin-inline-end:-26px}
    wrapping, under the sentence rather than beside it. */
 /* The parent preview, at the point the homework is decided (EX-4). */
 .hwpv{display:inline-block;margin:0 0 10px;min-height:44px}
+/* ---------------------------------------------- the family page, round 48
+   The attendance sentence (EX-9), the day's share of the homework (EX-8),
+   and who heard a passage (EX-10). All three are prose a parent reads once,
+   so they are quiet and none of them uses a grade colour: in this app a
+   colour names a grade, and none of these is one. */
+.attline{margin:0 0 10px;font-size:var(--fs-md);line-height:1.55;color:var(--ink-2)}
+.hwitem .line.split{font-size:var(--fs-small);color:var(--ink-2);margin-top:3px;
+  padding-inline-start:9px;border-inline-start:2px solid var(--line-2)}
+.heard{font-size:var(--fs-micro);color:var(--ink-3);white-space:nowrap}
 .finwho{display:block;margin-top:3px;font-size:var(--fs-small);
   color:var(--ink-3);font-weight:400;line-height:1.45}
 .whochip{min-height:44px;padding:5px 11px;border-radius:999px;

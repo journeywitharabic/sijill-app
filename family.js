@@ -84,6 +84,20 @@
       contactSelf:"Any question about your homework — speak to your teacher at the halaqa.",
       tajweed:"Tajwīd", adab:"Adab", tr_up:"moving forward", tr_flat:"standing still", tr_down:"needs attention", tr_away:"not enough to say", trHelp:"over the last few classes", wholeSurah:"whole surah", ayat:"ayat", notMarked:"not marked",
       noneRecorded:"Attended · no recitation recorded that day",
+      /* EX-10: how a recitation went, in words. A judgement of the
+         PASSAGE, never of the child — "learned well", not "he did well". */
+      outGood:"learned well", outAverage:"nearly there",
+      outRepeat:"to go over again", outNotReady:"wasn’t ready that day",
+      heardBy:"heard by {t}",
+      /* EX-9: attendance as a sentence before the numbers. */
+      attWas:"Been at {n} of {t} classes.",
+      attLate1:"Late once.", attLate:"Late {n} times.",
+      attNoReason1:"One absence with no reason given.",
+      attNoReason:"{n} absences with no reason given.",
+      attExcused1:"One excused absence.", attExcused:"{n} excused absences.",
+      /* EX-8: how to spread it over the week. */
+      splitDaily:"About {n} ayat a day over {d} days.",
+      splitAll:"Go through all of it together before the next class.",
       guideLink:"A short guide to this page",
       notAssessed:"We haven't done this year's review with your child yet. Once their teacher has been through it — usually in the first few weeks — their progress appears here.",
       notAssessedSelf:"Your memorization has not been written down yet. Once you have been through it with your teacher it appears here." 
@@ -120,6 +134,16 @@
       notAssessedSelf:"لَمْ يُسَجَّلْ حِفْظُكَ بَعْد. وَإِذَا رَاجَعْتَهُ مَعَ مُعَلِّمِكَ ظَهَرَ هُنَا.",
       tajweed:"التَّجْوِيد", adab:"الأَدَب", tr_up:"يَتَقَدَّم", tr_flat:"ثَابِت", tr_down:"يَحْتَاجُ انْتِبَاهًا", tr_away:"لَا يُمْكِنُ الحُكْمُ بَعْد", trHelp:"خِلَالَ الحِصَصِ الأَخِيرَة", wholeSurah:"السُّورَةُ كَامِلَة", ayat:"آيَة", notMarked:"لَمْ يُسَجَّل",
       noneRecorded:"حَضَرَ · وَلَمْ تُسَجَّلْ تِلَاوَةٌ فِي ذَلِكَ اليَوْم",
+      outGood:"أَتْقَنَهَا", outAverage:"قَارَبَ الإِتْقَان",
+      outRepeat:"يُعِيدُهَا", outNotReady:"لَمْ يَكُنْ مُسْتَعِدًّا ذَلِكَ اليَوْم",
+      heardBy:"سَمِعَهَا {t}",
+      attWas:"حَضَرَ {n} مِنْ {t} حِصَّة.",
+      attLate1:"تَأَخَّرَ مَرَّةً وَاحِدَة.", attLate:"تَأَخَّرَ {n} مَرَّات.",
+      attNoReason1:"غِيَابٌ وَاحِدٌ بِلَا عُذْر.",
+      attNoReason:"{n} غِيَابَاتٍ بِلَا عُذْر.",
+      attExcused1:"غِيَابٌ وَاحِدٌ بِعُذْر.", attExcused:"{n} غِيَابَاتٍ بِعُذْر.",
+      splitDaily:"نَحْوَ {n} آيَةٍ فِي اليَوْمِ عَلَى {d} أَيَّام.",
+      splitAll:"اِقْرَأْهَا كَامِلَةً مَرَّةً وَاحِدَةً قَبْلَ الحِصَّةِ القَادِمَة.",
       guideLink:"دَلِيلٌ مُخْتَصَرٌ لِهَذِهِ الصَّفْحَة",
       notAssessed:"لَمْ نُجْرِ جَرْدَ هَذَا العَامِ مَعَ اِبْنِكُمْ بَعْد. وَحَالَمَا يُنْجِزُهُ مُعَلِّمُهُ — عَادَةً فِي الأَسَابِيعِ الأُولَى — سَيَظْهَرُ تَقَدُّمُهُ هُنَا." 
     }
@@ -262,6 +286,14 @@
        surah and its own provenance, and sat on the text. A rule separates
        entries, not the halves of one entry; owning it at the entry is the
        only way to say that without a previous-sibling selector. */
+    /* How many ayat a piece of homework actually covers. A range when it
+       carries one, the whole surah when it does not — `ayat` is the surah's
+       length and is already on the wire for exactly this. */
+    function ayatOf(x) {
+      if (x.ayah_from && x.ayah_to) return (x.ayah_to - x.ayah_from) + 1;
+      return x.ayat || 0;
+    }
+
     function hwLines(list) {
       return list.map(function (x) {
         return '<div class="hwitem"><div class="line"><span class="k">' +
@@ -275,6 +307,27 @@
               (x.due_on ? ' \u00b7 ' +
                 esc(t("dueOn", { d: i18n.fmtDate(x.due_on, true) })) : '') +
               '</div>' : '') +
+          /* EX-8: how to actually do it this week. A parent who wants to
+             help and does not know how is the one this card is for, and
+             "Al-Mulk 1-20 by Friday" tells them nothing about tonight.
+
+             Only where it helps: a passage with no ayah count, nothing due,
+             or a due date already gone gets no suggestion rather than a
+             made-up one. On the last day it says to go through all of it
+             together, because splitting one day is not a split. */
+          (function () {
+            var n = ayatOf(x);
+            if (!n || !x.due_on || !c.class_day) return '';
+            var days = Math.round(
+              (new Date(x.due_on + "T00:00:00") - new Date(c.class_day + "T00:00:00"))
+              / 86400000);
+            if (days <= 0) return '';
+            if (days === 1 || n <= days) {
+              return '<div class="line split">' + esc(t("splitAll")) + '</div>';
+            }
+            return '<div class="line split">' +
+              esc(t("splitDaily", { n: Math.ceil(n / days), d: days })) + '</div>';
+          })() +
           '</div>';
       }).join("");
     }
@@ -311,7 +364,29 @@
 
     // attendance
     var a = c.attendance_summary || {};
-    h += '<div class="pcard"><h2>' + esc(t("attendance")) + '</h2><div class="dots">' +
+    /* EX-9: the sentence comes first, then the detail. "92%" and
+       "8 · 1 · 2 · 0" are four numbers over a legend a parent has to
+       decode before they mean anything, and the thing most parents want is
+       one line telling them whether their child is turning up.
+
+       Built from the parts rather than from a template per combination:
+       four counts give sixteen sentences, and fifteen of them would be
+       written once and never read again. */
+    var att = (function () {
+      var seen = (a.present || 0) + (a.late || 0);
+      var tot = seen + (a.excused || 0) + (a.no_reason || 0);
+      if (!tot) return "";
+      var bits = [t("attWas", { n: seen, t: tot })];
+      if (a.late)      bits.push(a.late === 1 ? t("attLate1") : t("attLate", { n: a.late }));
+      if (a.no_reason) bits.push(a.no_reason === 1 ? t("attNoReason1")
+                                                   : t("attNoReason", { n: a.no_reason }));
+      if (a.excused)   bits.push(a.excused === 1 ? t("attExcused1")
+                                                 : t("attExcused", { n: a.excused }));
+      return bits.join(" ");
+    })();
+    h += '<div class="pcard"><h2>' + esc(t("attendance")) + '</h2>' +
+      (att ? '<p class="attline">' + esc(att) + '</p>' : '') +
+      '<div class="dots">' +
       (c.recent_attendance || []).map(function (d) {
         return '<span class="dot"><i class="' + (DOT[d.state] || "c") + '"></i><span>' +
                esc(i18n.fmtDate(d.held_on).replace(/ \d{4}$/, "")) + '</span></span>';
@@ -395,7 +470,27 @@
     h += '<div class="pcard"><h2>' + esc(t("recent")) + '</h2><div class="sess">' +
       ((c.recent_classes || []).length ? c.recent_classes.map(function (x) {
         var recited = (x.recited || []).map(function (r) {
+          /* EX-10: how it went, in words. The outcome has been on the wire
+             since the page was written and was never printed, so a parent
+             saw "Al-Mulk 1-10" with four stars beside it and no way to tell
+             whether that was a good morning or a bad one. The stars are
+             tajwid, which is a different question.
+
+             Said as a judgement of the RECITATION, never of the child:
+             "learned well", not "he did well". */
+          var word = r.outcome === "good" ? t("outGood")
+                   : r.outcome === "average" ? t("outAverage")
+                   : r.outcome === "repeat" ? t("outRepeat")
+                   : r.outcome === "not_prepared" ? t("outNotReady") : "";
+          var tone = r.outcome === "repeat" ? "late"
+                   : r.outcome === "not_prepared" ? "exc"
+                   : r.outcome === "average" ? "avg" : "ok";
           return esc(r.name_en) + (r.ayah_from ? " " + r.ayah_from + "–" + r.ayah_to : "") +
+            (word ? ' <span class="pill ' + tone + '"><i></i>' + esc(word) + '</span>' : "") +
+            /* ...and who heard it. A parent asking "who said this?" is
+               asking a reasonable question, and the teacher is already
+               carried on each passage. */
+            (r.by ? ' <span class="heard">' + esc(t("heardBy", { t: r.by })) + '</span>' : "") +
                  (r.tajweed ? ' <span class="stars ro" aria-label="' + esc(t("tajweed")) + ' ' + r.tajweed + '/5">' +
                    [1,2,3,4,5].map(function (i) {
                      return '<span class="st' + (i <= r.tajweed ? " on" : "") + '">' +

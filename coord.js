@@ -595,13 +595,35 @@
             '<td style="text-align:right;white-space:nowrap">' +
             '<button class="mini stu-go" data-id="' + esc(s.id) + '">Open</button> ' +
             '<button class="mini stu-ren" data-id="' + esc(s.id) + '" data-name="' + esc(s.name) + '">Rename</button> ' +
-            '<button class="mini stu-link" data-id="' + esc(s.id) + '" data-name="' + esc(s.name) + '">Own link</button> ' +
+            '<button class="mini stu-link" data-id="' + esc(s.id) + '" data-name="' + esc(s.name) +
+              '" data-adult="' + (s.is_adult ? "1" : "0") + '">Own link</button> ' +
+            /* AC-6, adults only — and that is enforced by a CHECK in the
+               database, not by hiding the button. No child's number goes
+               near this table. */
+            (s.is_adult
+              ? '<button class="mini stu-phone" data-id="' + esc(s.id) +
+                '" data-name="' + esc(s.name) + '" data-phone="' + esc(s.phone || "") + '">' +
+                esc(s.phone ? (ar ? "الرَّقَم \u2713" : "Number \u2713")
+                            : (ar ? "أَضِفْ رَقَمًا" : "Add number")) + '</button> ' +
+                (s.phone
+                  ? '<button class="mini stu-wa" data-id="' + esc(s.id) +
+                    '" data-name="' + esc(s.name) + '" data-phone="' + esc(s.phone || "") + '">' +
+                    esc(ar ? "دَعْوَةٌ عَبْرَ وَاتْسَاب" : "WhatsApp invite") + '</button> '
+                  : '')
+              : '') +
             '<button class="mini stu-unlink" data-id="' + esc(s.id) + '" data-name="' + esc(s.name) + '">' +
               esc(ar ? "سَحْبُ الرَّابِط" : "Revoke link") + '</button> ' +
-            '<button class="mini stu-adult" data-id="' + esc(s.id) + '" data-name="' + esc(s.name) +
-              '" data-to="' + (STUCLASS ? "0" : "1") + '">' +
-              esc(STUCLASS ? (ar ? "لَيْسَ كَبِيرًا" : "Not an adult")
-                           : (ar ? "اِجْعَلْهُ كَبِيرًا" : "Mark adult")) + '</button> ' +
+            /* From the student's own flag (migration 61 put it on the row),
+               not from whether a class filter happens to be selected. The
+               old form read `STUCLASS ? "0" : "1"`, which was right in the
+               usual flow and told you nothing about the man in front of
+               you — and on a children's class offered "Not an adult" for
+               children who already were not. */
+            '<button class="mini stu-adult' + (s.is_adult ? " on" : "") +
+              '" data-id="' + esc(s.id) + '" data-name="' + esc(s.name) +
+              '" data-to="' + (s.is_adult ? "0" : "1") + '">' +
+              esc(s.is_adult ? (ar ? "كَبِيرٌ \u2713" : "Adult \u2713")
+                             : (ar ? "اِجْعَلْهُ كَبِيرًا" : "Mark adult")) + '</button> ' +
             '<button class="mini stu-move" data-id="' + esc(s.id) + '" data-name="' + esc(s.name) + '">Move</button> ' +
             '<button class="mini stu-rm" data-id="' + esc(s.id) + '" data-name="' + esc(s.name) + '">Remove</button></td></tr>';
         }).join("") + '</tbody></table></div>' +
@@ -611,7 +633,17 @@
       var sel = $("stuClass");
       if (sel) sel.onchange = function () { STUCLASS = sel.value || null; renderManage(); };
       body.querySelectorAll(".stu-link").forEach(function (b) {
-        b.onclick = function () { issueStudentLink(b.dataset.id, b.dataset.name); };
+        b.onclick = function () {
+          issueStudentLink(b.dataset.id, b.dataset.name, b.dataset.adult === "1");
+        };
+      });
+      body.querySelectorAll(".stu-phone").forEach(function (b) {
+        b.onclick = function () { phoneSheet(b.dataset.id, b.dataset.name, b.dataset.phone); };
+      });
+      body.querySelectorAll(".stu-wa").forEach(function (b) {
+        b.onclick = function () {
+          waInvite(b.dataset.id, b.dataset.name, b.dataset.phone);
+        };
       });
       body.querySelectorAll(".stu-unlink").forEach(function (b) {
         b.onclick = function () {
@@ -722,10 +754,83 @@
       });
   }
 
-  function issueStudentLink(id, name) {
+  /* AC-6 · the number, and the invite.
+     The number lives on the man's own record, so revoking his link or
+     removing him takes it with him and there is no second place to clean.
+     Adults only — and that is a CHECK in the database, not a hidden
+     button: no child's number can be stored even by a direct call. */
+  function phoneSheet(id, name, current) {
+    window.SijillSheet("WhatsApp number for " + name,
+      '<div class="note" style="margin-bottom:10px">Used only to send him his own link. ' +
+      'It is stored on his record and goes when he does. Adults only \u2014 the database ' +
+      'refuses a number on a child\'s record.</div>' +
+      '<input id="phIn" type="tel" inputmode="tel" autocomplete="off" ' +
+      'placeholder="+1 613 555 0123" value="' + esc(current || "") + '" ' +
+      'style="width:100%;min-height:48px;padding:10px;border:1px solid var(--line);' +
+      'border-radius:10px;background:var(--surface-2);color:var(--ink);font-family:var(--mono)">' +
+      '<div class="note" style="margin-top:8px">Leave it empty to remove the number.</div>',
+      "Save", function () {
+        var v = (document.getElementById("phIn") || {}).value || "";
+        api.write("api_student_set_phone", { p_student: id, p_phone: v.trim() || null }, name)
+          .then(function () { renderManage(); }).catch(err);
+        return false;
+      });
+  }
+
+  /* Sijill never posts. It opens WhatsApp with the message already written
+     and the coordinator presses send — the same rule AC-7 states for a
+     moved class, and the same one every other outbound thing here follows. */
+  function waInvite(id, name, phone) {
+    api.write("api_issue_student_link", { p_student: id }, name).then(function (r) {
+      // wa.me takes digits only — no +, spaces, brackets or dashes.
+      var num = String(phone || "").replace(/[^0-9]/g, "");
+      var wanted = (api.config.SITE_HOST || "").replace(/^https?:\/\//, "").replace(/\/$/, "");
+      var origin = wanted ? "https://" + wanted : location.origin;
+      var url = origin + location.pathname.replace(/[^/]*$/, "") +
+                "family.html#c=" + encodeURIComponent(r.token);
+      var msg = "السَّلَامُ عَلَيْكُم " + name + "\n\n" +
+                "This is your own page for the halaqa \u2014 your homework, what you have " +
+                "memorised, and what was heard each week.\n\n" + url + "\n\n" +
+                "Keep it to yourself: anyone with this link can open your record.";
+      /* Shown as well as opened. WhatsApp may not open at all on a desktop
+         without it installed, and a coordinator who tapped the button and
+         saw nothing happen would reasonably issue a second link \u2014 which
+         would silently kill the one they just sent. */
+      window.SijillSheet("Invite for " + name,
+        '<div class="note" style="margin-bottom:10px">WhatsApp should open with this ' +
+        'ready to send. If it does not, copy it below. <b>Issuing another link stops ' +
+        'this one working.</b></div>' +
+        '<textarea id="waMsg" readonly style="width:100%;min-height:150px;' +
+        'font-family:var(--mono);font-size:12px;padding:10px;border:1px solid var(--line);' +
+        'border-radius:10px;background:var(--surface-2);color:var(--ink)">' + esc(msg) + '</textarea>',
+        "Done", function () { return true; });
+      var w = document.getElementById("waMsg");
+      if (w) w.onclick = function () { w.select(); };
+      if (num) {
+        window.open("https://wa.me/" + num + "?text=" + encodeURIComponent(msg),
+                    "_blank", "noopener,noreferrer");
+      }
+    }).catch(err);
+  }
+
+  function issueStudentLink(id, name, isAdult) {
+    /* The same link behaves in two completely different ways and the sheet
+       used to describe only one of them. For a CHILD it opens the family
+       page, read-only. For an ADULT, family.js sees a single-student link
+       belonging to an adult and sends him to the app, where he sets his own
+       homework and marks his own memorisation — api_self_sign_in checks
+       `is_adult` itself, so a child's link can never be traded for a
+       session that writes. A coordinator inviting a man to the halaqa was
+       reading copy written about somebody else's child. */
     window.SijillSheet("Own link for " + name,
-      '<div class="note">This is for an older child who wants their own link. It shows only them, ' +
-      'no siblings, and never the attendance warning — that is a message for adults.</div>',
+      '<div class="note">' + (isAdult
+        ? 'He is marked as an adult, so this link signs him <b>into the app</b>: ' +
+          'his own homework, his own memorisation, and the Teaching switch if he ' +
+          'also teaches. Issuing a new one stops the old link working.'
+        : 'This is for an older child who wants their own link. It shows only them, ' +
+          'no siblings, and never the attendance warning — that is a message for adults. ' +
+          'It is <b>read-only</b>: a child\'s link can never sign anyone in.') +
+      '</div>',
       "Issue link", function () {
         api.write("api_issue_student_link", { p_student: id }, name).then(function (r) {
           /* No guardian id, deliberately. An older child's own link lives on
