@@ -1390,6 +1390,24 @@ html[dir="rtl"] .gaps li.gapdone{margin-inline-start:0;margin-inline-end:-26px}
 .attline{margin:0 0 10px;font-size:var(--fs-md);line-height:1.55;color:var(--ink-2)}
 .hwitem .line.split{font-size:var(--fs-small);color:var(--ink-2);margin-top:3px;
   padding-inline-start:9px;border-inline-start:2px solid var(--line-2)}
+/* ...and inside the hero, which is a DARK GREEN card in both themes. The
+   rule above sets a page-ink colour, so the one actionable line on the card
+   came out dark grey on dark green and was the hardest thing there to read
+   — in light mode as well as dark, because the card does not change.
+   Everything else in the hero tints the hero's own ink with opacity, so
+   this does too, and at a higher opacity than .sub: it is the instruction,
+   not the metadata. */
+.hero .hwitem .line.split{color:inherit;opacity:.88;
+  border-inline-start-color:rgba(255,255,255,.4)}
+
+/* One recitation per line on the family page's past classes. Round 48 put
+   a grade word and sometimes a teacher on each passage, and four of them
+   run together with middots wrapped mid-item. */
+.rline{display:flex;flex-wrap:wrap;align-items:center;gap:6px;
+  padding:4px 0;line-height:1.5}
+.rline + .rline{border-top:1px dashed var(--line)}
+.rsurah{font-weight:600}
+
 .heard{font-size:var(--fs-micro);color:var(--ink-3);white-space:nowrap}
 .finwho{display:block;margin-top:3px;font-size:var(--fs-small);
   color:var(--ink-3);font-weight:400;line-height:1.45}

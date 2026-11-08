@@ -485,18 +485,32 @@
           var tone = r.outcome === "repeat" ? "late"
                    : r.outcome === "not_prepared" ? "exc"
                    : r.outcome === "average" ? "avg" : "ok";
-          return esc(r.name_en) + (r.ayah_from ? " " + r.ayah_from + "–" + r.ayah_to : "") +
+          return '<div class="rline">' +
+            '<span class="rsurah">' + esc(r.name_en) +
+              (r.ayah_from ? " " + r.ayah_from + "–" + r.ayah_to : "") + '</span>' +
             (word ? ' <span class="pill ' + tone + '"><i></i>' + esc(word) + '</span>' : "") +
             /* ...and who heard it. A parent asking "who said this?" is
                asking a reasonable question, and the teacher is already
                carried on each passage. */
-            (r.by ? ' <span class="heard">' + esc(t("heardBy", { t: r.by })) + '</span>' : "") +
+            /* Only when it was somebody OTHER than whoever took the class.
+               The day line above already names the teacher, and four
+               passages each repeating it is noise; a passage heard by a
+               different teacher is the case worth saying out loud, and it
+               is the one the day line gets wrong. */
+            (r.by && r.by !== x.teacher
+               ? ' <span class="heard">' + esc(t("heardBy", { t: r.by })) + '</span>' : "") +
                  (r.tajweed ? ' <span class="stars ro" aria-label="' + esc(t("tajweed")) + ' ' + r.tajweed + '/5">' +
                    [1,2,3,4,5].map(function (i) {
                      return '<span class="st' + (i <= r.tajweed ? " on" : "") + '">' +
                        '<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 1.6l1.9 3.9 4.3.6-3.1 3 .7 4.3L8 11.4l-3.8 2-.7-4.3-3.1-3 4.3-.6z"/></svg></span>';
-                   }).join("") + '</span>' : "");
-        }).join(" · ");
+                   }).join("") + '</span>' : "") +
+            '</div>';
+        /* One per line. Round 48 added a grade word and sometimes a teacher
+           to each passage, and four of them joined by middots came out as a
+           wall of text that wrapped mid-item — the worst of both, because
+           you could no longer see where one recitation ended and the next
+           began. The separator was doing the work a line break should. */
+        }).join("");
         // The notes used to be printed here, under the class day they were
         // attached to. They now have a card of their own at the top, with
         // their date — printing them in both places would show every
