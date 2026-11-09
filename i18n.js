@@ -131,6 +131,7 @@
        that was never going to be asked about. */
     hwPreview:"See what the family will read \u203a",
     listenRead:"Listen / read on quran.com \u2197",
+    coordDroppedHat:"You are the coordinator now \u2014 your own record is put down. Open your personal link again to pick it back up.",
     gapAttDone:"Attendance \u2014 everyone marked",
     gapMarkDone:"Recitation \u2014 everyone heard",
     gapNextDone:"Homework \u2014 everyone has some",
@@ -469,6 +470,7 @@
     gapTapHint:"اِضْغَطْ عَلَى السَّطْرِ لِتَرَى مَنْ هُم",
     hwPreview:"اُنْظُرْ مَا تَقْرَؤُهُ الأُسْرَة ›",
     listenRead:"اِسْتَمِعْ أَوِ اقْرَأْ عَلَى quran.com ↗",
+    coordDroppedHat:"أَنْتَ الآنَ مُنَسِّق — وَقَدْ وُضِعَ سِجِلُّكَ الخَاصُّ جَانِبًا. اِفْتَحْ رَابِطَكَ الشَّخْصِيَّ مَرَّةً أُخْرَى لِتَعُودَ إِلَيْه.",
     gapAttDone:"الحُضُور — سُجِّلَ الجَمِيع",
     gapMarkDone:"التِّلَاوَة — سُمِعَ الجَمِيع",
     gapNextDone:"الوَاجِب — لِكُلٍّ وَاجِبُه",

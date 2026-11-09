@@ -62,6 +62,13 @@
           }
           window.SijillApp.S.me = r;
           window.SijillCloseSheet();
+          /* A man who both teaches and learns reaches this door wearing his
+             teaching hat, and a session cannot be somebody's own record and
+             a coordinator's at once. Becoming the coordinator puts the hat
+             down (migration 63) rather than failing with a constraint, so
+             say so — otherwise his own record simply vanishes from the app
+             and the only clue is a missing button. */
+          if (r.dropped_own_record) window.SijillToast(T("coordDroppedHat"));
           openCoord();
         }).catch(function (e) { $("coErr").textContent = e.message; $("coErr").hidden = false; });
         return false;

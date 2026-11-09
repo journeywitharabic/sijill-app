@@ -366,6 +366,7 @@
   function goToDay(on) {
     if (!on || on === S.day) return;
     S.day = on; S.gapFilter = null;
+    S.stuck = {};   // a new day, so nothing is held on screen from the last one
     refreshDay();
   }
 
@@ -430,11 +431,25 @@
       b.onclick = function () { goToDay(b.dataset.on); };
     });
     /* With the newest at the far end, the day being looked at can start off
-       scrolled out of sight. Bring it into view without scrolling the page
-       itself — `block: "nearest"` keeps the register where it is. */
+       scrolled out of sight. Bring it into view by moving the STRIP, never
+       the page.
+
+       This used to call scrollIntoView with `block: "nearest"` and a
+       comment claiming that kept the register where it was. It does not:
+       `nearest` still scrolls the nearest scrollable ancestor when the
+       element is out of view, and this strip sits at the top of the page.
+       So once a teacher was a few children down the register, every single
+       attendance mark re-rendered the strip and threw them back to the top.
+       Reported by teachers on the first Saturday, and the most-felt bug in
+       the app: it happened on every tap. */
     var here = strip.querySelector('.daychip[aria-current="date"]');
-    if (here && here.scrollIntoView) {
-      try { here.scrollIntoView({ block: "nearest", inline: "center" }); } catch (e) {}
+    if (here) {
+      var l = here.offsetLeft, w = here.offsetWidth, sw = strip.clientWidth;
+      // Only when it is actually out of the strip's own view, so a strip
+      // already showing the right day does not twitch on every render.
+      if (l < strip.scrollLeft || l + w > strip.scrollLeft + sw) {
+        strip.scrollLeft = Math.max(0, l - (sw - w) / 2);
+      }
     }
 
     var more = $("dayMore");
@@ -442,15 +457,11 @@
       S.dayBack = (S.dayBack || 8) + 8;
       refreshDay();
     };
-    /* "nearest", not "start". Scrolling the current day flush to the leading
-       edge pushed the two forward days off screen with nothing to say they
-       were there — and setting homework in advance is the second reason this
-       strip exists. Nearest leaves them in view when they already are, and
-       still reveals the chip after a jump to an older day. */
-    var cur = strip.querySelector('[aria-current="date"]');
-    if (cur && cur.scrollIntoView) {
-      cur.scrollIntoView({ block: "nearest", inline: "nearest" });
-    }
+    /* The second scrollIntoView that used to be here did the same job as
+       the block above and had the same fault, so it is gone rather than
+       fixed twice. Centring the chip keeps the forward days in view, which
+       is what its comment wanted: setting homework in advance is the second
+       reason this strip exists. */
   }
 
   /* The standing line for a day chosen out of the past. Not a dialog and not
@@ -544,11 +555,24 @@
     var anyLeft = (d.students || []).some(function (s) {
       return inGap(s, "att") || inGap(s, "mark") || inGap(s, "next");
     });
+    /* A child who is on screen STAYS on screen until the day changes or the
+       whole class is asked for.
+
+       Round 47 filtered on every render, so marking a child absent cleared
+       their last gap and the next render dropped them — taking the reason
+       chips with them. A teacher had to switch the filter off, find the
+       child again, and set the reason there. The filter decides what the
+       register OPENS on; it has no business removing somebody mid-tap, and
+       a list that reflows under a thumb is how the wrong child gets
+       marked. */
+    S.stuck = S.stuck || {};
     var shown = (d.students || []).map(function (s, i) { return { s: s, i: i }; })
       .filter(function (x) {
         if (S.gapFilter) return inGap(x.s, S.gapFilter);
         if (S.todoOnly && anyLeft && !ahead && !S.readOnly) {
-          return inGap(x.s, "att") || inGap(x.s, "mark") || inGap(x.s, "next");
+          var has = inGap(x.s, "att") || inGap(x.s, "mark") || inGap(x.s, "next");
+          if (has) { S.stuck[x.s.id] = true; return true; }
+          return !!S.stuck[x.s.id];
         }
         return true;
       });
@@ -865,7 +889,9 @@
       };
     });
     if ($("todoChip")) $("todoChip").onclick = function () {
-      S.todoOnly = !S.todoOnly; renderDay();
+      // Asking for the list again is the one moment it is right to drop the
+      // children who are finished: the teacher has asked for a fresh view.
+      S.todoOnly = !S.todoOnly; S.stuck = {}; renderDay();
     };
     if ($("gapAll")) $("gapAll").onclick = function () { S.gapFilter = null; renderDay(); };
   }
@@ -2576,6 +2602,7 @@
       b.onclick = function () {
         var on = b.dataset.day, cls = b.dataset.cls;
         S.day = on; S.gapFilter = null;
+        S.stuck = {};   // a new day, so nothing is held on screen from the last one
         if (cls && cls !== S.clsId) {
           S.clsId = cls;
           var sel = $("classPick");
