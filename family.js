@@ -89,6 +89,7 @@
       outGood:"learned well", outAverage:"nearly there",
       outRepeat:"to go over again", outNotReady:"wasn’t ready that day",
       heardBy:"heard by {t}",
+      starKey:"\u2605 Stars are tajw\u012bd \u2014 how clearly it was recited, not how well it was learned.",
       /* EX-9: attendance as a sentence before the numbers. */
       attWas:"Been at {n} of {t} classes.",
       attLate1:"Late once.", attLate:"Late {n} times.",
@@ -137,6 +138,7 @@
       outGood:"أَتْقَنَهَا", outAverage:"قَارَبَ الإِتْقَان",
       outRepeat:"يُعِيدُهَا", outNotReady:"لَمْ يَكُنْ مُسْتَعِدًّا ذَلِكَ اليَوْم",
       heardBy:"سَمِعَهَا {t}",
+      starKey:"★ النُّجُومُ لِلتَّجْوِيد — جَوْدَةُ النُّطْقِ لَا دَرَجَةُ الحِفْظ.",
       attWas:"حَضَرَ {n} مِنْ {t} حِصَّة.",
       attLate1:"تَأَخَّرَ مَرَّةً وَاحِدَة.", attLate:"تَأَخَّرَ {n} مَرَّات.",
       attNoReason1:"غِيَابٌ وَاحِدٌ بِلَا عُذْر.",
@@ -467,7 +469,24 @@
     // date, so the two can be joined here rather than in a new SQL migration.
     var ATT = {};
     (c.recent_attendance || []).forEach(function (d) { ATT[d.held_on] = d.state; });
-    h += '<div class="pcard"><h2>' + esc(t("recent")) + '</h2><div class="sess">' +
+    /* "At-Tin 1-8 · learned well · ★★☆☆☆" reads as a contradiction unless
+       you already know the stars are a DIFFERENT question from the grade.
+       They carry an accessible name ("Tajwid 2/5") and have since they were
+       drawn, so a screen reader was always told; a parent looking at the
+       page was not.
+
+       Said once at the top of the card rather than on every row: the rows
+       were crowded enough to need fixing a round ago, and a word repeated
+       beside fifteen sets of stars is how that happens again.
+
+       Only when there are stars on the card to explain. A legend for
+       something not on screen is furniture. */
+    var anyStars = (c.recent_classes || []).some(function (x) {
+      return (x.recited || []).some(function (r) { return r.tajweed; });
+    });
+    h += '<div class="pcard"><h2>' + esc(t("recent")) + '</h2>' +
+      (anyStars ? '<p class="starkey">' + esc(t("starKey")) + '</p>' : '') +
+      '<div class="sess">' +
       ((c.recent_classes || []).length ? c.recent_classes.map(function (x) {
         var recited = (x.recited || []).map(function (r) {
           /* EX-10: how it went, in words. The outcome has been on the wire

@@ -1407,6 +1407,10 @@ html[dir="rtl"] .gaps li.gapdone{margin-inline-start:0;margin-inline-end:-26px}
   padding:4px 0;line-height:1.5}
 .rline + .rline{border-top:1px dashed var(--line)}
 .rsurah{font-weight:600}
+/* The one line saying what the stars are. Quiet — it is read once and then
+   never again — but above the rows, not below them, so it is read before
+   the thing it explains. */
+.starkey{margin:-4px 0 10px;font-size:var(--fs-small);line-height:1.5;color:var(--ink-3)}
 
 .heard{font-size:var(--fs-micro);color:var(--ink-3);white-space:nowrap}
 .finwho{display:block;margin-top:3px;font-size:var(--fs-small);
