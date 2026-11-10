@@ -1424,6 +1424,105 @@
      forties is the kind of detail that tells them the thing was not built
      for them. Falls back to the plain key, so a missing Adult variant shows
      the children's wording rather than "undefined". */
+  /* Round 54 · the halaqa's own screens.
+
+     `go_back_over` and `focus_letter` are columns on a recitation that
+     migration 61 created and nothing could write until 65. They do not
+     ride on api_student — patching that function by text is what migration
+     64 spent three attempts proving is unsafe here — so they come back in
+     their own read, keyed by the recitation id api_student already gives
+     us, and only for an adult. S.gboFor is the student that read was for,
+     which is what stops the render loop refetching forever. */
+  function gboLoad() {
+    if (!onAdult() || !S.student) { S.gbo = null; S.gboLatest = null; return; }
+    if (S.gboFor === S.student.id) return;
+    S.gboFor = S.student.id;
+    var who = S.student.id;
+    api.read("api_go_back_over", { p_student: who }).then(function (r) {
+      if (!S.student || S.student.id !== who) return;   // he moved on
+      var m = {};
+      (r && r.rows || []).forEach(function (x) { m[x.session_id] = x; });
+      S.gbo = m; S.gboLatest = (r && r.latest) || null;
+      renderStudent();
+    }).catch(function () { /* the page is worth having without it */ });
+  }
+
+  /* AC-4 · the spot check. api_spot_check does the thinking: what he has
+     solid, longest unheard first, plus a weighted pick that is NOT simply
+     the oldest — a deterministic "surprise" stops being a spot check the
+     second time it is used. The screen only has to say it in words. */
+  function spotAge(x) {
+    if (x.weeks == null) return T("spNever");
+    if (x.weeks <= 1) return T("spWeeks1");
+    return T("spWeeks").split("{n}").join(x.weeks);
+  }
+  function spotLine(x, lead) {
+    return '<div class="irow sprow"><div class="lab">' +
+      '<span class="ar" dir="rtl">' + esc(x.name_ar) + '</span>' +
+      '<span class="tr">' + esc(x.name_en) + '</span>' +
+      /* AC-3, where it is cheapest and most useful: the state in words, on
+         the line, next to how long it has been. A man reading this at ten
+         at night should not have to work out what a colour meant. */
+      '<span class="m">' + esc(T("spSolid")) + ' \u00b7 ' + esc(spotAge(x)) + '</span>' +
+      '</div>' + (lead ? '<span class="pill ok"><i></i>' + esc(T("spPicked")) + '</span>' : '') +
+      '</div>';
+  }
+  function spotSheet() {
+    if (!S.student) return;
+    api.read("api_spot_check", { p_student: S.student.id }).then(function (r) {
+      var list = (r && r.surahs) || [], pick = (r && r.pick) || null;
+      function body(lead) {
+        if (!list.length) return '<div class="note">' + esc(T("spNone")) + '</div>';
+        return '<div class="note" style="margin-bottom:10px">' + esc(T("spSub")) + '</div>' +
+          (lead ? '<div class="card" style="margin-bottom:12px">' + spotLine(lead, true) + '</div>' : '') +
+          '<div class="card splist">' + list.map(function (x) {
+            return spotLine(x, false);
+          }).join("") + '</div>';
+      }
+      sheet(T("spTitle"), body(pick), list.length ? T("spSurprise") : null,
+        function () {
+          /* Another weighted pick, from the server, not a shuffle of the
+             list we already have: the weighting is the feature. */
+          api.read("api_spot_check", { p_student: S.student.id }).then(function (r2) {
+            var el = document.getElementById("shBody");
+            if (el) el.innerHTML = body((r2 && r2.pick) || null);
+          }).catch(fail);
+          return false;        // the sheet stays open
+        });
+    }).catch(fail);
+  }
+
+  var GBO = ["none", "page", "part", "all"];
+  var GBL = ["\u0639", "\u062d", "\u0642", "\u0636", "\u0635", "\u0638"];
+  function gboWord(v) {
+    return v === "page" ? T("gbPage") : v === "part" ? T("gbPart")
+         : v === "all" ? T("gbAll") : T("gbNone");
+  }
+  /* The control, on the recitation it is about. Four words and six letters,
+     never a grade: colour is reserved for grades in this app and spending a
+     hue here would make the row read as a fifth outcome. */
+  function gboBox(r, editable) {
+    var cur = (S.gbo && S.gbo[r.id]) || {};
+    if (!editable) {
+      if (!cur.go_back_over || cur.go_back_over === "none") return "";
+      return '<span class="gbo read">' + esc(T("gbTitle")) + ': <b>' +
+        esc(gboWord(cur.go_back_over)) + '</b>' +
+        (cur.focus_letter ? ' \u00b7 ' + esc(T("gbLetter")) + ' <b dir="rtl">' +
+          esc(cur.focus_letter) + '</b>' : '') + '</span>';
+    }
+    return '<span class="gbo" data-rec="' + esc(r.id) + '">' +
+      '<span class="gbh">' + esc(T("gbTitle")) + '</span>' +
+      GBO.map(function (v) {
+        return '<button class="gbopt' + (cur.go_back_over === v ? " on" : "") +
+               '" data-gb="' + v + '">' + esc(gboWord(v)) + '</button>';
+      }).join("") +
+      '<span class="gbh l">' + esc(T("gbLetter")) + '</span>' +
+      GBL.map(function (l) {
+        return '<button class="gblet' + (cur.focus_letter === l ? " on" : "") +
+               '" data-let="' + l + '" dir="rtl">' + l + '</button>';
+      }).join("") + '</span>';
+  }
+
   function onAdult() {
     return !!(S.studentData && S.studentData.student && S.studentData.student.is_adult);
   }
@@ -1631,6 +1730,8 @@
 
   function renderStudent() {
     var d = S.studentData, ar = i18n.isAr();
+    // Fetched once per adult, and it re-renders itself when it lands.
+    gboLoad();
     /* The family's own page, opened in preview mode with the teacher's
        session. Not shown on the coordinator's read-only route, where the
        point is the records rather than the family's view of them. */
@@ -1829,7 +1930,34 @@
               '<button class="btn ghost addhw-b rev" id="addReview">' +
                 '<span class="ic">\u25a4</span><span class="t"><b>' + esc(T("addReview")) +
                 '</b><small>' + esc(T("addReviewSub")) + '</small></span></button></div>' +
+              /* Only on a grown man's record. The spot check asks what he
+                 has solid and has not been heard on for longest, which is a
+                 halaqa idea: a child's old memorisation is the rotation's
+                 job and already has a screen of its own. */
+              (onAdult() ? '<button class="btn ghost" id="spotGo" ' +
+                 'style="width:100%;margin-bottom:12px">' + esc(T("spTitle")) +
+                 '</button>' : '') +
               '<div class="note" style="margin-bottom:16px">' + TS("markKey") + '</div>');
+
+    /* AC-13 · what the teacher asked, turned into his own plan item.
+       Overruled on the original story's main point: BOTH can still set
+       homework, so this does not assign anything silently — it offers,
+       and the man taps. Only on his own page: a teacher looking at the
+       record made the suggestion and does not need it read back. */
+    if (S.self && S.gboLatest) {
+      var L = S.gboLatest;
+      html += '<div class="sincebar ft" style="margin-bottom:14px">' +
+        '<div class="ct">' + esc(T("ftTitle")) + '</div>' +
+        '<p>' + esc(T(L.go_back_over === "page" ? "ftGoPage"
+                      : L.go_back_over === "part" ? "ftGoPart" : "ftGoAll")
+                      .split("{s}").join(L.name_en)) +
+        (L.focus_letter ? ' ' + esc(T("ftLetter").split("{l}").join(L.focus_letter)) : '') +
+        '</p>' +
+        '<div class="ftby">' + esc(T("ftBy").split("{t}").join(L.by || "")
+                                            .split("{d}").join(i18n.fmtDate(L.held_on))) + '</div>' +
+        '<div class="actionrow" style="margin-top:8px">' +
+        '<button class="btn sm" id="ftAdd">' + esc(T("ftAdd")) + '</button></div></div>';
+    }
 
     // what goes home tonight
     var hw = later;
@@ -1971,7 +2099,7 @@
     var rotN = S.rotAll ? rot.length : 3;
     html += '<div class="grp"><div class="grph"><h2>' + esc(T("recentCls")) + '</h2>' +
             '<span class="n">' + Math.min((d.history || []).length, histN()) + '</span></div><div class="card">' +
-            ((d.history || []).length ? d.history.slice(0, histN()).map(function (h) {
+            ((d.history || []).length ? d.history.slice(0, histN()).map(function (h, hi) {
               /* Each recitation is now its own line with a way back.
                  Marking something good clears the homework and the item
                  leaves the list, so a mis-tap used to be unrecoverable
@@ -2005,6 +2133,13 @@
                   (S.readOnly || S.self || !r.id ? "" :
                     '<button class="undoRec" data-rec="' + esc(r.id) + '" data-what="' +
                     esc(r.name_en) + '">↶ ' + esc(T("undoMark")) + '</button>') +
+                  /* AC-2. Editable only on the newest class day and only for
+                     a teacher: last month's recitation is history, and a man
+                     reading his own page is told what was asked, not invited
+                     to answer for himself. */
+                  (onAdult() && r.id
+                     ? gboBox(r, hi === 0 && !S.readOnly && !S.self)
+                     : "") +
                 '</span>';
               }).join("");
               var notes = (h.notes || []).map(function (n) {
@@ -2400,6 +2535,12 @@
         S.justDid = (r && r.session_id)
           ? { rec: r.session_id, what: nameOf(row), outcome: outcome }
           : null;
+        /* The recitation that was just written has no entry in the extras
+           yet, and for an adult the row it lands on is the one carrying the
+           go-back-over control. Clearing this is what makes the next render
+           ask the server again rather than draw the control with nothing
+           behind it. */
+        S.gboFor = null;
         return api.read("api_student", { p_student: S.student.id, p_history: histAsk() });
       }).then(function (d) { S.studentData = d; renderStudent(); }).catch(fail);
     }
@@ -2652,6 +2793,69 @@
             return false;
           });
       };
+    });
+
+    var sg = $("spotGo");
+    if (sg) sg.onclick = spotSheet;
+
+    /* AC-13. The man sets it on himself, through the same call and the same
+       duplicate guard a teacher's assignment goes through — nothing here is
+       a privileged path. The range is the one the teacher heard, so what he
+       practises is what he was asked to go back over, not the whole surah. */
+    var fa = $("ftAdd");
+    if (fa) fa.onclick = function () {
+      var L = S.gboLatest; if (!L) return;
+      fa.disabled = true;
+      assignHomework({
+        p_students: [S.student.id],
+        p_kind: "review",
+        p_surahs: [L.surah],
+        p_from: L.ayah_from == null ? null : L.ayah_from,
+        p_to:   L.ayah_to   == null ? null : L.ayah_to,
+        p_due_on: (S.studentData && S.studentData.next_class) || null
+      }, S.student.name, function () {
+        toast(T("ftAdded"));
+        return reloadStudent();
+      });
+    };
+
+    /* AC-2 · the two extras save on the tap, one call each way, and the
+       row keeps what the SERVER came back with rather than what was
+       tapped — a refused value must not sit on screen looking saved. */
+    function gboSend(box, gb, letter) {
+      var rec = box.dataset.rec;
+      return api.write("api_session_extras", {
+        p_session: rec, p_go_back_over: gb, p_focus_letter: letter
+      }, S.student.name).then(function (r) {
+        if (!S.gbo) S.gbo = {};
+        S.gbo[rec] = S.gbo[rec] || { session_id: rec };
+        S.gbo[rec].go_back_over = r && r.go_back_over;
+        S.gbo[rec].focus_letter = r && r.focus_letter;
+        box.querySelectorAll(".gbopt").forEach(function (x) {
+          x.classList.toggle("on", x.dataset.gb === (r && r.go_back_over));
+        });
+        box.querySelectorAll(".gblet").forEach(function (x) {
+          x.classList.toggle("on", x.dataset.let === (r && r.focus_letter));
+        });
+        toast(T("gbSaved"));
+      }).catch(fail);
+    }
+    $("stuBody").querySelectorAll(".gbo[data-rec]").forEach(function (box) {
+      var cur = function () { return (S.gbo && S.gbo[box.dataset.rec]) || {}; };
+      box.querySelectorAll(".gbopt").forEach(function (b) {
+        b.onclick = function () {
+          // Tapping the one already chosen clears it, which is the only way
+          // back from a mis-tap that does not need a fifth button.
+          var v = b.classList.contains("on") ? null : b.dataset.gb;
+          gboSend(box, v, cur().focus_letter || null);
+        };
+      });
+      box.querySelectorAll(".gblet").forEach(function (b) {
+        b.onclick = function () {
+          var v = b.classList.contains("on") ? null : b.dataset.let;
+          gboSend(box, cur().go_back_over || null, v);
+        };
+      });
     });
 
     /* Notes: read, change, remove. */

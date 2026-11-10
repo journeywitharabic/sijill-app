@@ -1482,9 +1482,85 @@
                 ? ' <button class="mini cal-exc" data-day="' + esc(d.held_on) + '" ' +
                   'data-cls="' + esc(c.class_id) + '" data-name="' + esc(c.class_name) + '">' +
                   esc(T("excSome")) + '</button>'
-                : '')) +
+                : '') +
+              /* AC-7 · move THIS class day, not the whole week. Offered on
+                 a day still to come as well as one already past: a class
+                 moved after the fact is how the register ends up on the
+                 day it was actually held. */
+              ' <button class="mini cal-move" data-day="' + esc(d.held_on) + '" ' +
+              'data-cls="' + esc(c.class_id) + '" data-name="' + esc(c.class_name) + '">' +
+              esc(T("mvTitle")) + '</button>') +
         '</div>';
       }).join("") + '</div>';
+  }
+
+  /* AC-7 · moving one class day.
+     The calendar does not carry the class_session id, so this reads the day
+     the same way the excuse sheet does and takes the id from there. One
+     round trip, on a control nobody taps twice a term.
+
+     SIJILL NEVER SENDS ANYTHING. The message is written for the coordinator
+     to copy and paste where the families already are; a tracker that posts
+     to WhatsApp on its own is a different and much larger promise. */
+  function moveSheet(on, cls, clsName) {
+    api.read("api_class_day", { p_class: cls, p_on: on }).then(function (d) {
+      var sid = d && d.session && d.session.id;
+      if (!sid) { window.SijillToast(T("loadFailed")); return; }
+      window.SijillSheet(T("mvTitle") + " \u2014 " + clsName,
+        '<div class="fieldrow"><label for="mvTo">' + esc(T("mvTo")) + '</label>' +
+        '<input id="mvTo" type="date" value="' + esc(on) + '"></div>' +
+        '<div class="fieldrow"><label for="mvWhy">' + esc(T("mvWhy")) + '</label>' +
+        '<input id="mvWhy" type="text" placeholder="' + esc(T("mvWhyHint")) + '"></div>' +
+        '<div class="note">' + esc(T("mvNever")) + '</div>',
+        T("mvGo"), function () {
+          var to = ($("mvTo") || {}).value || "";
+          var why = (($("mvWhy") || {}).value || "").trim();
+          if (!to || !why) return false;        // the server demands both too
+          api.write("api_class_move", {
+            p_session: sid, p_to: to, p_reason: why
+          }, clsName).then(function (r) {
+            /* A clash comes back as ok:false, not as an error — the database
+               refuses to merge two registers rather than guessing which to
+               keep, and the coordinator is the one who can decide. */
+            if (r && r.ok === false && r.reason === "clash") {
+              window.SijillToast(T("mvClash").split("{d}").join(i18n.fmtDate(to, true)));
+              return;
+            }
+            window.SijillCloseSheet();
+            moveDone(clsName, on, to, why);
+            renderManage();
+          }).catch(function () { window.SijillToast(T("loadFailed")); });
+          return false;
+        });
+    }).catch(function () { window.SijillToast(T("loadFailed")); });
+  }
+
+  /* The copy-ready message, after the move has actually happened. Shown as
+     text in a field the coordinator can read before sending: a message
+     built from the dates the SERVER accepted, never from what was typed. */
+  function moveDone(clsName, from, to, why) {
+    var msg = T("mvMsg").split("{c}").join(clsName)
+                .split("{a}").join(i18n.fmtDate(from, true))
+                .split("{b}").join(i18n.fmtDate(to, true))
+                .split("{w}").join(why);
+    window.SijillSheet(T("mvDone").split("{d}").join(i18n.fmtDate(to, true)),
+      '<div class="note" style="margin-bottom:10px">' + esc(T("mvNever")) + '</div>' +
+      '<textarea id="mvMsgBox" rows="4" style="width:100%;font:inherit;' +
+        'font-size:var(--fs-base);padding:10px;border:1px solid var(--line);' +
+        'border-radius:10px;background:var(--surface);color:var(--ink)">' +
+        esc(msg) + '</textarea>',
+      T("mvCopy"), function () {
+        var box = $("mvMsgBox");
+        if (box) {
+          box.select();
+          try { document.execCommand("copy"); } catch (e) {}
+          if (navigator.clipboard) {
+            navigator.clipboard.writeText(box.value).catch(function () {});
+          }
+        }
+        window.SijillToast(T("mvCopied"));
+        return false;
+      });
   }
 
   /* Excusing a named few on one day.
@@ -1733,6 +1809,11 @@
         body.querySelectorAll(".cal-exc").forEach(function (b) {
           b.onclick = function () {
             excuseSheet(b.dataset.day, b.dataset.cls, b.dataset.name);
+          };
+        });
+        body.querySelectorAll(".cal-move").forEach(function (b) {
+          b.onclick = function () {
+            moveSheet(b.dataset.day, b.dataset.cls, b.dataset.name);
           };
         });
         var lg = $("calLog");

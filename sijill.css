@@ -1203,6 +1203,31 @@ html[lang="ar"] .narrowh{letter-spacing:0;text-transform:none;font-size:var(--fs
 .tree .trow.on{background:var(--lapis-soft);border-color:var(--lapis)}
 .rec .who{margin-inline-start:6px}
 
+/* ---- round 54 · the halaqa's own screens -------------------------------
+   NO NEW HUE. Colour in this app means a grade, and "go back over" is not
+   one — it is what a man should redo. So the chosen option is marked the
+   way the rest of the chrome marks a selection: a darker neutral surface
+   and a stronger border, which carries in both themes and is readable to a
+   colour-blind teacher. The letters are the same control in a smaller size,
+   because six of them have to fit on a 320px row beside four words. */
+.gbo{display:flex;align-items:center;gap:5px;flex-wrap:wrap;width:100%;
+     margin-top:6px;padding-top:7px;border-top:1px dashed var(--line)}
+.gbo .gbh{font-size:var(--fs-micro);color:var(--ink-3);font-weight:700}
+.gbo .gbh.l{margin-inline-start:6px}
+.gbopt,.gblet{appearance:none;background:var(--surface);border:1px solid var(--line);
+     color:var(--ink-2);border-radius:9px;font:inherit;font-size:var(--fs-micro);
+     min-height:44px;padding:0 11px;cursor:pointer}
+.gblet{min-width:44px;padding:0 8px;font-family:var(--serif);font-size:var(--fs-base)}
+.gbopt.on,.gblet.on{background:var(--surface-3);border-color:var(--line-2);
+     color:var(--ink);font-weight:700}
+.gbo.read{display:inline-flex;border-top:0;margin-top:0;padding-top:0;width:auto;
+     font-size:var(--fs-micro);color:var(--ink-2)}
+.sprow .m{font-family:var(--mono);font-size:var(--fs-micro);color:var(--ink-3)}
+.rlist .r .stw{font-family:var(--mono);font-size:var(--fs-micro);color:var(--ink-3);
+     margin-inline-start:auto}
+.sincebar.ft .ftby{font-family:var(--mono);font-size:var(--fs-micro);
+     color:var(--ink-3);margin-top:3px}
+
 /* ---------------------------------------------------------------- class note
    What the class did together, written by a teacher and read by every family
    in that class. Given its own block rather than folded into .note, because

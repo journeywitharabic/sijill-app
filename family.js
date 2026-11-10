@@ -87,6 +87,11 @@
       /* Round 53. A parent opening this page while the family is travelling
          must not read a quiet page as a child falling behind. The homework
          below is deliberately left where it was, so this says so. */
+      /* AC-3 · the state in words, on the line. A parent reads these
+         lists under a heading that already says what they are; a man reading
+         his own page at ten at night is looking at one surah at a time, and
+         "Al-Mulk — to revise" saves him working out which list he is in. */
+      stRevise:"to revise", stLearning:"being learned",
       awayFam:"Away from the school at the moment — nothing is counted as missed, and nothing new is being set.",
       awayFamBack:"Expected back on {d}.",
       awayFamKeep:"The work below is still here for when they are back.",
@@ -141,6 +146,7 @@
       notAssessedSelf:"لَمْ يُسَجَّلْ حِفْظُكَ بَعْد. وَإِذَا رَاجَعْتَهُ مَعَ مُعَلِّمِكَ ظَهَرَ هُنَا.",
       tajweed:"التَّجْوِيد", adab:"الأَدَب", tr_up:"يَتَقَدَّم", tr_flat:"ثَابِت", tr_down:"يَحْتَاجُ انْتِبَاهًا", tr_away:"لَا يُمْكِنُ الحُكْمُ بَعْد", trHelp:"خِلَالَ الحِصَصِ الأَخِيرَة", wholeSurah:"السُّورَةُ كَامِلَة", ayat:"آيَة", notMarked:"لَمْ يُسَجَّل",
       noneRecorded:"حَضَرَ · وَلَمْ تُسَجَّلْ تِلَاوَةٌ فِي ذَلِكَ اليَوْم",
+      stRevise:"لِلْمُرَاجَعَة", stLearning:"قَيْدُ الحِفْظ",
       awayFam:"مُسَافِرٌ عَنِ المَدْرَسَةِ حَالِيًّا — لَا يُحْسَبُ عَلَيْهِ غِيَابٌ، وَلَا يُكَلَّفُ بِجَدِيد.",
       awayFamBack:"يُتَوَقَّعُ عَوْدَتُهُ فِي {d}.",
       awayFamKeep:"وَالوَاجِبُ أَدْنَاهُ بَاقٍ لِحِينِ عَوْدَتِه.",
@@ -470,7 +476,9 @@
       h += '<div class="pcard"><h2>' + esc(t("helpHome")) + '</h2><div class="rlist">' +
         c.needs_review.map(function (r) {
           return '<div class="r"><span class="ar" dir="rtl">' + esc(r.name_ar) +
-                 '</span><span class="tr">' + esc(r.name_en) + '</span></div>';
+                 '</span><span class="tr">' + esc(r.name_en) + '</span>' +
+                 (adult(c) ? '<span class="stw">' + esc(t("stRevise")) + '</span>' : '') +
+                 '</div>';
         }).join("") + '</div></div>';
     }
 
@@ -480,7 +488,9 @@
       h += '<div class="pcard"><h2>' + esc(t("learningHome")) + '</h2><div class="rlist">' +
         c.learning.map(function (r) {
           return '<div class="r"><span class="ar" dir="rtl">' + esc(r.name_ar) +
-                 '</span><span class="tr">' + esc(r.name_en) + '</span></div>';
+                 '</span><span class="tr">' + esc(r.name_en) + '</span>' +
+                 (adult(c) ? '<span class="stw">' + esc(t("stLearning")) + '</span>' : '') +
+                 '</div>';
         }).join("") +
         '</div><div class="note" style="margin-top:9px">' + esc(t("learningNote")) + '</div></div>';
     }
