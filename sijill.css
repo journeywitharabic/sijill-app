@@ -183,6 +183,9 @@ button#theme{display:inline-flex;align-items:center;justify-content:center}
 .banner .ic{font-size:var(--fs-body);flex:none;font-weight:700}
 .banner.exc{background:var(--exc-soft);border:1px solid color-mix(in srgb,var(--exc) 34%,transparent)}
 .banner.crit{background:var(--crit-soft);border:1px solid color-mix(in srgb,var(--crit) 36%,transparent)}
+/* Round 53. The second line of the away banner: quieter than the sentence
+   above it, but not grey-on-soft — it is measured in the suite. */
+.banner.awayfam .sub{font-size:var(--fs-base);opacity:.82;margin-top:4px}
 
 .actionrow{display:flex;gap:9px;flex-wrap:wrap;margin-bottom:13px}
 .btn{display:inline-flex;align-items:center;justify-content:center;gap:7px;min-height:44px;
@@ -1410,6 +1413,13 @@ html[dir="rtl"] .gaps li.gapdone{margin-inline-start:0;margin-inline-end:-26px}
 /* The one line saying what the stars are. Quiet — it is read once and then
    never again — but above the rows, not below them, so it is read before
    the thing it explains. */
+/* A child away by arrangement (migration 64). Dimmed, not hidden: one who
+   simply vanished would look deleted, and the first thing a teacher would
+   do is ask where they went. The attendance controls stay tappable — a
+   coordinator may have the hold dates slightly wrong and a teacher who has
+   the child in front of them must be able to say so. */
+.srow.away{opacity:.62}
+.srow.away .nmtext{font-style:italic}
 .starkey{margin:-4px 0 10px;font-size:var(--fs-small);line-height:1.5;color:var(--ink-3)}
 
 .heard{font-size:var(--fs-micro);color:var(--ink-3);white-space:nowrap}

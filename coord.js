@@ -631,6 +631,15 @@
               '" data-to="' + (s.is_adult ? "0" : "1") + '">' +
               esc(s.is_adult ? (ar ? "كَبِيرٌ \u2713" : "Adult \u2713")
                              : (ar ? "اِجْعَلْهُ كَبِيرًا" : "Mark adult")) + '</button> ' +
+            /* Away for a while (migration 64). Not "remove": removing ends
+               the enrolment and takes the child's history with it, which is
+               the wrong answer for a family that is coming back. */
+            '<button class="mini stu-hold' + (s.on_hold_from ? " on" : "") +
+              '" data-id="' + esc(s.id) + '" data-name="' + esc(s.name) +
+              '" data-from="' + esc(s.on_hold_from || "") +
+              '" data-until="' + esc(s.on_hold_until || "") + '">' +
+              esc(s.on_hold_from ? (ar ? "مُسَافِر \u2713" : "Away \u2713")
+                                 : (ar ? "سَفَر" : "Away")) + '</button> ' +
             '<button class="mini stu-move" data-id="' + esc(s.id) + '" data-name="' + esc(s.name) + '">Move</button> ' +
             '<button class="mini stu-rm" data-id="' + esc(s.id) + '" data-name="' + esc(s.name) + '">Remove</button></td></tr>';
         }).join("") + '</tbody></table></div>' +
@@ -642,6 +651,11 @@
       body.querySelectorAll(".stu-link").forEach(function (b) {
         b.onclick = function () {
           issueStudentLink(b.dataset.id, b.dataset.name, b.dataset.adult === "1");
+        };
+      });
+      body.querySelectorAll(".stu-hold").forEach(function (b) {
+        b.onclick = function () {
+          holdSheet(b.dataset.id, b.dataset.name, b.dataset.from, b.dataset.until);
         };
       });
       body.querySelectorAll(".stu-phone").forEach(function (b) {
@@ -766,6 +780,40 @@
      removing him takes it with him and there is no second place to clean.
      Adults only — and that is a CHECK in the database, not a hidden
      button: no child's number can be stored even by a direct call. */
+  /* A hold with no end date is the case Tarek asked for: a family that
+     does not yet know when they are back. The server takes a null `until`
+     and `_on_hold` treats it as open-ended, so the empty field is the
+     feature rather than a missing value. */
+  function holdSheet(id, name, from, until) {
+    var fld = function (lbl, idd, v) {
+      return '<label style="display:block;margin-bottom:10px">' +
+        '<span style="display:block;font-size:13px;color:var(--ink-2);margin-bottom:4px">' +
+        esc(lbl) + '</span>' +
+        '<input id="' + idd + '" type="date" value="' + esc(v || "") + '" ' +
+        'style="width:100%;min-height:48px;padding:10px;border:1px solid var(--line);' +
+        'border-radius:10px;background:var(--surface-2);color:var(--ink);font-family:var(--mono)">' +
+        '</label>';
+    };
+    window.SijillSheet(T("holdTitle") + " \u2014 " + name,
+      '<div class="note" style="margin-bottom:12px">' + esc(T("holdSet")) + '</div>' +
+      fld(T("holdFrom"), "hdFrom", from) +
+      fld(T("holdUntil"), "hdUntil", until) +
+      '<button class="btn ghost sm" id="hdClear">' + esc(T("holdClear")) + '</button>',
+      T("save"), function () {
+        var f = (document.getElementById("hdFrom") || {}).value || null;
+        var u = (document.getElementById("hdUntil") || {}).value || null;
+        api.write("api_student_set_hold",
+          { p_student: id, p_from: f, p_until: u }, name)
+          .then(function () { renderManage(); }).catch(err);
+        return false;
+      });
+    var c = document.getElementById("hdClear");
+    if (c) c.onclick = function () {
+      api.write("api_student_set_hold", { p_student: id, p_from: null, p_until: null }, name)
+        .then(function () { window.SijillCloseSheet(); renderManage(); }).catch(err);
+    };
+  }
+
   function phoneSheet(id, name, current) {
     window.SijillSheet("WhatsApp number for " + name,
       '<div class="note" style="margin-bottom:10px">Used only to send him his own link. ' +

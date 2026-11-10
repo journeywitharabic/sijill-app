@@ -581,6 +581,14 @@
       var reasonIdx = Math.max(0, REASONS.findIndex(function (r) { return r[0] === s.state; }));
       var flag = s.flags && s.flags.kind
         ? '<span class="pill ' + s.flags.kind + '"><i></i>' + esc(s.flags.message) + '</span>' : "";
+      /* Shown, not hidden. A child away for four months who simply vanished
+         from the register would look like one somebody had deleted, and the
+         first thing a teacher would do is ask where they went. */
+      if (s.on_hold) {
+        flag = '<span class="pill mute"><i></i>' +
+          esc(s.back_on ? T("awayUntil").split("{d}").join(i18n.fmtDate(s.back_on))
+                        : T("awayNoEnd")) + '</span>';
+      }
       var tr = trendHtml(s.trend, false);
       /* Seven of the men in the halaqa also teach the children, so a teacher
          can be looking at his own name in his own register. Say so, and
@@ -612,7 +620,8 @@
         ? '<span class="openmark">' + esc(T("hwOpenMark").split("{n}").join(s.due_back)) + '</span>'
         : "";
       return '' +
-      '<div class="srow ' + (isAbsent(s.state) ? "absent" : "") + '" data-i="' + i + '">' +
+      '<div class="srow ' + (isAbsent(s.state) ? "absent" : "") +
+        (s.on_hold ? " away" : "") + '" data-i="' + i + '">' +
         // The name gets its own element. With the trend arrow and the chevron
         // living in the same box, "the text of .nm" stopped being the child's
         // name — which broke the tests and would have broken anything else
@@ -783,6 +792,7 @@
   function gapCounts(d) {
     var att = 0, mark = 0, next = 0;
     (d.students || []).forEach(function (s) {
+      if (s.on_hold) return;      // away by arrangement — see inGap
       if (!s.state) att++;
       // Marked absent? They cannot be heard, so this is not a gap for them.
       else if ((s.state === "present" || s.state === "late") &&
@@ -960,6 +970,13 @@
      filter can never disagree — two copies of this rule is how you get a
      line that says five and a list that shows four. */
   function inGap(s, key) {
+    /* A child away by arrangement is in no gap at all (migration 64). They
+       are not missing from the register — the school is not expecting them
+       — so counting them keeps "4 still to do" above zero for four months
+       and puts them in every chase list. The server refuses to mark them
+       too, so this is the screen agreeing with the database rather than
+       the only thing holding the line. */
+    if (s.on_hold) return false;
     if (key === "att")  return !s.state;
     if (key === "mark") return (s.state === "present" || s.state === "late") &&
                                s.due_back > 0 && !s.recited;

@@ -84,6 +84,12 @@
       contactSelf:"Any question about your homework — speak to your teacher at the halaqa.",
       tajweed:"Tajwīd", adab:"Adab", tr_up:"moving forward", tr_flat:"standing still", tr_down:"needs attention", tr_away:"not enough to say", trHelp:"over the last few classes", wholeSurah:"whole surah", ayat:"ayat", notMarked:"not marked",
       noneRecorded:"Attended · no recitation recorded that day",
+      /* Round 53. A parent opening this page while the family is travelling
+         must not read a quiet page as a child falling behind. The homework
+         below is deliberately left where it was, so this says so. */
+      awayFam:"Away from the school at the moment — nothing is counted as missed, and nothing new is being set.",
+      awayFamBack:"Expected back on {d}.",
+      awayFamKeep:"The work below is still here for when they are back.",
       /* EX-10: how a recitation went, in words. A judgement of the
          PASSAGE, never of the child — "learned well", not "he did well". */
       outGood:"learned well", outAverage:"nearly there",
@@ -135,6 +141,9 @@
       notAssessedSelf:"لَمْ يُسَجَّلْ حِفْظُكَ بَعْد. وَإِذَا رَاجَعْتَهُ مَعَ مُعَلِّمِكَ ظَهَرَ هُنَا.",
       tajweed:"التَّجْوِيد", adab:"الأَدَب", tr_up:"يَتَقَدَّم", tr_flat:"ثَابِت", tr_down:"يَحْتَاجُ انْتِبَاهًا", tr_away:"لَا يُمْكِنُ الحُكْمُ بَعْد", trHelp:"خِلَالَ الحِصَصِ الأَخِيرَة", wholeSurah:"السُّورَةُ كَامِلَة", ayat:"آيَة", notMarked:"لَمْ يُسَجَّل",
       noneRecorded:"حَضَرَ · وَلَمْ تُسَجَّلْ تِلَاوَةٌ فِي ذَلِكَ اليَوْم",
+      awayFam:"مُسَافِرٌ عَنِ المَدْرَسَةِ حَالِيًّا — لَا يُحْسَبُ عَلَيْهِ غِيَابٌ، وَلَا يُكَلَّفُ بِجَدِيد.",
+      awayFamBack:"يُتَوَقَّعُ عَوْدَتُهُ فِي {d}.",
+      awayFamKeep:"وَالوَاجِبُ أَدْنَاهُ بَاقٍ لِحِينِ عَوْدَتِه.",
       outGood:"أَتْقَنَهَا", outAverage:"قَارَبَ الإِتْقَان",
       outRepeat:"يُعِيدُهَا", outNotReady:"لَمْ يَكُنْ مُسْتَعِدًّا ذَلِكَ اليَوْم",
       heardBy:"سَمِعَهَا {t}",
@@ -259,6 +268,17 @@
             '<div class="nby">' + esc(t("noteBy", {
               t: n.by || "", d: n["on"] ? i18n.fmtDate(n["on"]) : "" })) + '</div></div>';
         }).join("") + '</div>';
+    }
+
+    /* Away for a while (round 53). Above the trend bar on purpose: the
+       trend will say "not enough to say" for four months, and this is the
+       reason. `on_hold` is decided by the server — one function, `_on_hold`
+       — so this page and the register can never disagree about it. */
+    if (c.on_hold) {
+      h += '<div class="banner exc awayfam"><span class="ic">✈</span><div><b>' +
+           esc(t("awayFam")) + '</b>' +
+           (c.back_on ? ' ' + esc(t("awayFamBack", { d: i18n.fmtDate(c.back_on) })) : '') +
+           '<div class="sub">' + esc(t("awayFamKeep")) + '</div></div></div>';
     }
 
     h += trendBar(c.trend);
