@@ -756,6 +756,14 @@ html[lang="ar"] .heard small{font-size:var(--fs-micro)}
   display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;line-height:1}
 .gb.lab3 .ic{font-size:var(--fs-body);font-weight:700}
 .gb.lab3 small{font-size:var(--fs-micro);font-weight:600;white-space:nowrap;opacity:.9}
+/* EX-7 (round 57) · which one is already set. The same three fills the
+   register uses for a recorded grade, because these ARE the same states:
+   green is solid, amber is to-review, purple is nothing recorded. A row
+   that is part one and part the other marks none of them. */
+.sv.t-ok.on { background:var(--ok);        border-color:var(--ok);        color:var(--ok-ink) }
+.sv.t-rev.on{ background:var(--late-fill); border-color:var(--late-fill); color:var(--late-ink) }
+.sv.t-np.on { background:var(--exc);       border-color:var(--exc);       color:var(--exc-ink) }
+.sv.on small{ opacity:1 }
 html[lang="ar"] .gb.lab3{min-width:52px}
 html[lang="ar"] .gb.lab3 small{font-size:var(--fs-micro)}
 /* A review row carries four grades now, not three, and with the note button
@@ -1235,6 +1243,13 @@ html[lang="ar"] .narrowh{letter-spacing:0;text-transform:none;font-size:var(--fs
      padding:0 9px;border:1px solid var(--line);border-radius:9px;
      background:var(--surface);color:var(--ink)}
 .irow.grad.spot{background:var(--hw-rev-soft)}
+/* Round 56 · why a piece of work is still open, on the family's page.
+   Quieter than the surah line above it, and never red: it is an
+   explanation, not a warning. */
+.hwitem .line.why{font-size:var(--fs-base);opacity:.85;padding:0;margin-top:4px}
+/* ...and the register's carried-over line, which is shown and never
+   counted: no tick, no filter, no weight. */
+.gaps .gapnote{padding:7px 2px;font-size:var(--fs-small);color:var(--ink-3)}
 .rlist .r .stw{font-family:var(--mono);font-size:var(--fs-micro);color:var(--ink-3);
      margin-inline-start:auto}
 

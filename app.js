@@ -790,18 +790,18 @@
      has not happened), on a cancelled day, or in the coordinator's read-only
      view, where none of it can be acted on anyway. */
   function gapCounts(d) {
-    var att = 0, mark = 0, next = 0;
+    var att = 0, mark = 0, next = 0, carried = 0;
     (d.students || []).forEach(function (s) {
       if (s.on_hold) return;      // away by arrangement — see inGap
       if (!s.state) att++;
       // Marked absent? They cannot be heard, so this is not a gap for them.
       else if ((s.state === "present" || s.state === "late") &&
                s.due_back > 0 && !s.recited) mark++;
-      // The next-week box, blank however it came to be blank — a repeat
-      // fills it by itself, and that counts.
-      if (!s.for_next) next++;
+      // Nothing new AND nothing carried over. See inGap for why both.
+      if (!s.for_next && !s.due_back) next++;
+      else if (!s.for_next && s.due_back > 0) carried++;
     });
-    return { att: att, mark: mark, next: next };
+    return { att: att, mark: mark, next: next, carried: carried };
   }
 
   function renderGaps(ahead) {
@@ -856,6 +856,27 @@
     line("mark", g.mark, "gapMark1", "gapMark", "gapMarkDone");
     if (d.next_class) line("next", g.next, "gapNext1", "gapNext", "gapNextDone", nextLabel);
     else              line("next", g.next, "gapNextNone1", "gapNextNone", "gapNextDone");
+
+    /* Carried over: SHOWN, NEVER COUNTED. It is not something to finish, so
+       it has no done-tick and never keeps the card from reading as clear —
+       it just answers, in one line, the question the old wording raised.
+
+       AFTER the if/else above, not between its halves. The first version of
+       this went in on the `if` line, whose anchor was perfectly unique, and
+       the dangling `else` then bound to THIS condition instead: on a day
+       with a next class and nobody carrying anything, the register drew the
+       homework line twice. Round 47's suite caught it in the same run. */
+    if (d.next_class && g.carried) {
+      var cwho = (d.students || []).map(function (s, i) { return { s: s, i: i }; })
+        .filter(function (x) { return inGap(x.s, "carried"); })
+        .map(function (x) {
+          return '<button type="button" class="whochip" data-who="' + x.i + '">' +
+                 esc(x.s.name) + '</button>';
+        }).join("");
+      lines.push('<li class="gapnote" data-cat="carried"><span>' +
+        esc(g.carried === 1 ? T("gapCarried1") : T("gapCarried").split("{n}").join(g.carried)) +
+        '</span><div class="who">' + cwho + '</div></li>');
+    }
 
     var left = g.att + g.mark + g.next;
     /* The card takes the done count over from #doneBar rather than sitting
@@ -980,7 +1001,24 @@
     if (key === "att")  return !s.state;
     if (key === "mark") return (s.state === "present" || s.state === "late") &&
                                s.due_back > 0 && !s.recited;
-    if (key === "next") return !s.for_next;
+    /* Round 56. "Nothing for next class" used to mean `!for_next` — no
+       homework was SET for a day after this one. A child marked `again`
+       keeps the piece he already had, with its original date, so nothing
+       new is set and the line said he had nothing while he was carrying
+       work. A teacher read that as the repeat not having registered.
+
+       What a teacher is actually asking is "will he walk out of here with
+       something to do", and the answer is yes if he has new work OR
+       something carried over. Checked against the database rather than
+       guessed: api_record on a repeat either leaves the open homework
+       exactly as it was, or inserts one with no due_on at all — and
+       for_next counts only `coalesce(due_on, set_on) > the class day`, so
+       both land in due_back and neither can ever reach for_next. */
+    if (key === "next") return !s.for_next && !s.due_back;
+    // Carrying something, but nothing new: said separately and quietly,
+    // because it is not a gap — it is the answer to "why is his next-class
+    // box empty".
+    if (key === "carried") return !s.for_next && s.due_back > 0;
     return true;
   }
 
@@ -1369,7 +1407,7 @@
   function openStudent(s) {
     // A new child starts with nothing pulled forward from the last one, and
     // with the rotation collapsed again.
-    S.pulled = {}; S.rotAll = false;
+    S.pulled = {}; S.rotAll = false; S.held = {};
     // ...and with the history back to four days. A teacher who opened one
     // child's whole year does not want the next child's whole year, and the
     // read is paid for on every tap through the register.
@@ -2250,6 +2288,43 @@
                         .split("{n}").join(who).replace(/\s+/g, " ").trim();
   }
 
+  /* A row's identity across a re-render: the passage it is about. The
+     element is thrown away and rebuilt, so anything kept on it is lost. */
+  function rowKey(row) {
+    return [row.dataset.kind, row.dataset.surah,
+            row.dataset.from, row.dataset.to].join("/");
+  }
+  /* Put back a grade or a star that was tapped but not yet saved. Called
+     after every student render; does nothing when there is nothing held,
+     which is almost always. */
+  function restoreHeld() {
+    if (!S.held) { S.held = {}; return; }
+    var body = $("stuBody"); if (!body) return;
+    body.querySelectorAll(".irow.grad").forEach(function (row) {
+      var h = S.held[rowKey(row)];
+      if (!h) return;
+      if (h.tj != null) {
+        row.dataset.tajweed = h.tj;
+        row.querySelectorAll(".stars .st").forEach(function (x) {
+          x.classList.toggle("on", +x.dataset.star <= h.tj);
+        });
+      }
+      if (h.g) {
+        row.dataset.pending = h.g;
+        row.classList.add("needtj");
+        var cls = { good: "on-ok", average: "on-avg", repeat: "on-rev",
+                    not_prepared: "on-np" }[h.g];
+        row.querySelectorAll(".gb").forEach(function (x) {
+          x.classList.remove("on-ok", "on-avg", "on-rev", "on-np", "pp");
+        });
+        row.querySelectorAll(".notyet").forEach(function (x) { x.remove(); });
+        var b2 = Array.prototype.slice.call(row.querySelectorAll(".gb.g"))
+                   .filter(function (x) { return x.dataset.g === h.g; })[0];
+        if (b2) b2.classList.add(cls);
+      }
+    });
+  }
+
   function itemRow(x, kind) {
     var meta = "";
     // A spot-check passage reads like a rotation one — when it was last
@@ -2550,6 +2625,14 @@
         if (b.dataset.g === "not_prepared") return sendGrade(row, "not_prepared");
         if (!row.dataset.tajweed) {           // ask for the other half
           row.dataset.pending = b.dataset.g;
+          /* ...and remember it somewhere the page cannot take with it.
+             Switching language rebuilds this screen, and the choice lived
+             only on the row, so a teacher who tapped "good", realised the
+             app was in the wrong language, switched, and came back found
+             the grade gone with no sign it had ever been tapped. Keyed by
+             the passage, because the row itself is a new element after the
+             rebuild. */
+          S.held[rowKey(row)] = { g: b.dataset.g, tj: null };
           row.classList.add("needtj");
           /* The grade is chosen and not yet written, which is the only
              moment a "what happens next" panel can be honest. The Figma
@@ -2578,11 +2661,13 @@
         var row = b.closest(".irow");
         var v = +b.dataset.star;
         row.dataset.tajweed = v;
+        S.held[rowKey(row)] = { g: row.dataset.pending || null, tj: v };
         row.querySelectorAll(".stars .st").forEach(function (x) {
           x.classList.toggle("on", +x.dataset.star <= v);
         });
         if (row.dataset.pending) {
           var out = row.dataset.pending; delete row.dataset.pending;
+          delete S.held[rowKey(row)];        // it is about to be written
           sendGrade(row, out);
         }
       };
@@ -2780,6 +2865,9 @@
           });
       };
     });
+
+    // A grade tapped but not yet saved survives a re-render (round 57).
+    restoreHeld();
 
     var sg = $("spotGo");
     if (sg) sg.onclick = function () {
@@ -3645,7 +3733,7 @@
     S.readOnly = false;
     S.classes = [];
     S.student = { id: me.student_id, name: me.name };
-    S.pulled = {}; S.rotAll = false; S.histStep = 0;
+    S.pulled = {}; S.rotAll = false; S.histStep = 0; S.held = {};
     show("v-student");
     window.scrollTo(0, 0);
     $("stuName").textContent = me.name || "";

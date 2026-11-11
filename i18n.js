@@ -123,7 +123,14 @@
     dueSoonKeep:"Set it for {d} anyway", dueSoonUse:"Use {d} instead",
     /* The register's three counts. The third one named a child's whole
        workload; it only ever meant the next class. */
-    gapNext:"{n} have nothing for {d}", gapNext1:"1 has nothing for {d}",
+    /* Round 56. "{n} have nothing for Friday" counted children with no NEW
+       homework, and a child carrying a repeat has none — so the line said
+       four children had nothing while all four were carrying work. It now
+       means what a teacher is asking: nothing new and nothing carried. */
+    gapNext:"{n} have nothing new and nothing carried over for {d}",
+    gapNext1:"1 has nothing new and nothing carried over for {d}",
+    gapCarried:"{n} are carrying work over \u2014 nothing new was set for them",
+    gapCarried1:"1 is carrying work over \u2014 nothing new was set",
     gapNextNone:"{n} have nothing set", gapNextNone1:"1 has nothing set",
     gapTapHint:"Tap a line to see who",
     /* EX-2: the three categories are now always shown, ticked when done.
@@ -160,7 +167,7 @@
     mvNever:"Sijill does not send anything. Copy this and paste it where the families are.",
     gapAttDone:"Attendance \u2014 everyone marked",
     gapMarkDone:"Recitation \u2014 everyone heard",
-    gapNextDone:"Homework \u2014 everyone has some",
+    gapNextDone:"Homework \u2014 everyone has something to do",
     progDoneN:"{n} of {t} done",
     progLeft:"{n} still to do", progDone:"Nothing left to do",
     todoOnly:"Showing what is left", todoAll:"Showing everyone",
@@ -491,7 +498,10 @@
     dueSoonTitle:"هَذَا {n} أَيَّامٍ فَقَط",
     dueSoonBody:"حِفْظٌ جَدِيدٌ مَوْعِدُهُ {d} يُعْطِي الطِّفْلَ {n} أَيَّام. وَأَكْثَرُهُمْ يَحْتَاجُ الأُسْبُوع — فَمَا بَيْنَ الجُمُعَةِ وَالأَحَدِ نَحْوُ سِتٍّ وَثَلَاثِينَ سَاعَة. وَلَكَ أَنْ تُثَبِّتَهُ عَلَى كُلِّ حَال.",
     dueSoonKeep:"ثَبِّتْهُ عَلَى {d} رَغْمَ ذَلِك", dueSoonUse:"اِسْتَعْمِلْ {d} بَدَلًا مِنْه",
-    gapNext:"{n} بِلَا وَاجِبٍ لِـ{d}", gapNext1:"طَالِبٌ وَاحِدٌ بِلَا وَاجِبٍ لِـ{d}",
+    gapNext:"{n} بِلَا جَدِيدٍ وَبِلَا مُؤَجَّلٍ لِـ{d}",
+    gapNext1:"طَالِبٌ وَاحِدٌ بِلَا جَدِيدٍ وَبِلَا مُؤَجَّلٍ لِـ{d}",
+    gapCarried:"{n} يَحْمِلُونَ وَاجِبًا مُؤَجَّلًا — وَلَمْ يُحَدَّدْ لَهُمْ جَدِيد",
+    gapCarried1:"طَالِبٌ وَاحِدٌ يَحْمِلُ وَاجِبًا مُؤَجَّلًا — وَلَمْ يُحَدَّدْ لَهُ جَدِيد",
     gapNextNone:"{n} بِلَا وَاجِبٍ مُحَدَّد", gapNextNone1:"طَالِبٌ وَاحِدٌ بِلَا وَاجِبٍ مُحَدَّد",
     gapTapHint:"اِضْغَطْ عَلَى السَّطْرِ لِتَرَى مَنْ هُم",
     hwPreview:"اُنْظُرْ مَا تَقْرَؤُهُ الأُسْرَة ›",
@@ -520,7 +530,7 @@
     mvNever:"سِجِلٌّ لَا يُرْسِلُ شَيْئًا. اِنْسَخْ هَذَا وَأَلْصِقْهُ حَيْثُ يُوجَدُ الأَهْل.",
     gapAttDone:"الحُضُور — سُجِّلَ الجَمِيع",
     gapMarkDone:"التِّلَاوَة — سُمِعَ الجَمِيع",
-    gapNextDone:"الوَاجِب — لِكُلٍّ وَاجِبُه",
+    gapNextDone:"الوَاجِب — لِكُلٍّ مَا يَعْمَلُه",
     progDoneN:"{n} مِنْ {t} اكْتَمَلُوا",
     progLeft:"بَقِيَ {n}", progDone:"لَمْ يَبْقَ شَيْء",
     todoOnly:"عَرْضُ مَا بَقِيَ", todoAll:"عَرْضُ الجَمِيع",

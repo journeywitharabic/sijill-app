@@ -118,16 +118,39 @@
     return how + (when ? " · " + when : "");
   }
 
-  /* The three marks, at whatever level the row represents. */
-  function setters(scope, number, extra) {
+  /* EX-7, round 57: WHICH ONE IS IT ALREADY?
+     The three buttons have always been three ways to set a state and no way
+     to read one. A teacher opening a page to check what a child has could
+     see the bar and the words beside it, but the controls themselves said
+     nothing, so the obvious move was to tap one to find out — which writes.
+
+     Derived from the counts the row already carries, not from a new field:
+     every ayah solid means solid, every ayah to-review means review, none of
+     either means nothing is recorded. A row that is part one and part the
+     other is genuinely mixed and marks nothing, which is the honest answer. */
+  function stateOf(st) {
+    if (!st) return null;
+    var t = +st.ayat || 0, so = +st.solid || 0, re = +st.review || 0;
+    if (!t) return null;
+    if (so === t) return 1;
+    if (re === t) return 2;
+    if (!so && !re) return 0;
+    return null;                       // part one, part the other
+  }
+  function setters(scope, number, extra, st) {
+    var now = stateOf(st);
+    function b(grade, tone, ic, lab, tip) {
+      return '<button class="gb lab3 sv ' + tone + (now === grade ? ' on' : '') +
+        '" data-grade="' + grade + '"' +
+        (now === grade ? ' aria-pressed="true"' : '') +
+        ' title="' + esc(T(tip)) + '">' +
+        '<span class="ic">' + ic + '</span><small>' + esc(T(lab)) + '</small></button>';
+    }
     return '<span class="setg" data-scope="' + scope + '" data-n="' + number + '"' +
       (extra || "") + '>' +
-      '<button class="gb lab3 sv t-ok" data-grade="1" title="' + esc(T("mtSolidTip")) + '">' +
-        '<span class="ic">✓</span><small>' + esc(T("mtSolid")) + '</small></button>' +
-      '<button class="gb lab3 sv t-rev" data-grade="2" title="' + esc(T("mtReviewTip")) + '">' +
-        '<span class="ic">↻</span><small>' + esc(T("mtReview")) + '</small></button>' +
-      '<button class="gb lab3 sv t-np" data-grade="0" title="' + esc(T("mtClearTip")) + '">' +
-        '<span class="ic">–</span><small>' + esc(T("mtClear")) + '</small></button>' +
+      b(1, 't-ok',  '✓', 'mtSolid',  'mtSolidTip') +
+      b(2, 't-rev', '↻', 'mtReview', 'mtReviewTip') +
+      b(0, 't-np',  '–', 'mtClear',  'mtClearTip') +
     '</span>';
   }
 
@@ -202,7 +225,7 @@
                 // No from/to: this marks the WHOLE surah, including any part
                 // of it that sits in the neighbouring juz. The line above
                 // says so when that is the case.
-                setters("surah", g.surah) +
+                setters("surah", g.surah, null, g) +
               '</div>';
             }).join("") + '</div>' +
             '<div class="note" style="margin-bottom:14px">' + esc(ar
@@ -215,7 +238,7 @@
       return '<div class="lvl hizb">' +
           '<div class="lvlh"><b>' + esc((ar ? "حِزْب " : "Hizb ") + h.hizb) + '</b>' +
           bar(hS, hR, hT) + '<span class="w">' + esc(words(hS, hR, hT)) + '</span></div>' +
-          setters("hizb", h.hizb) +
+          setters("hizb", h.hizb, null, { solid: hS, review: hR, ayat: hT }) +
         '</div>' +
         h.pages.map(function (p) {
           var key = "p" + p.page, isOpen = !!M.open[key];
@@ -231,7 +254,7 @@
                is 20-odd pages; three buttons on every one of them turned the
                screen into six feet of scrolling for something a teacher uses
                on one page at a time. */
-            (isOpen ? setters("page", p.page) : "") +
+            (isOpen ? setters("page", p.page, null, p) : "") +
             (isOpen ? '<div class="segs">' + p.segments.map(function (g) {
               return '<div class="seg">' +
                 '<span class="snum">' + g.surah + '</span>' +
@@ -239,7 +262,7 @@
                 '<span class="tr">' + esc(g.name_en) + " " + g.from + "–" + g.to + '</span>' +
                 '<span class="m">' + esc(words(+g.solid, +g.review, +g.ayat)) + '</span></span>' +
                 setters("surah", g.surah,
-                  ' data-from="' + g.from + '" data-to="' + g.to + '"') +
+                  ' data-from="' + g.from + '" data-to="' + g.to + '"', g) +
               '</div>';
             }).join("") + '</div>' : "") +
           '</div>';

@@ -35,6 +35,21 @@
   function who(c) { return adult(c) ? c.name : String(c.name || "").split(" ")[0]; }
   function tc(c, key) { return adult(c) ? t(key + "Self") : t(key); }
 
+  /* EX-12 · <bdi>, which appeared nowhere in this codebase until round 57.
+     A teacher's name is Latin and the sentence around it is Arabic; without
+     isolation the browser reorders the run and a full stop or a bracket
+     ends up on the wrong side of the name. The TEMPLATE is escaped first
+     and the values are escaped separately, so the tag is the only markup
+     that reaches the page. */
+  function fillBidi(key, parts) {
+    var out = esc(t(key));
+    Object.keys(parts).forEach(function (k) {
+      out = out.split("{" + k + "}")
+               .join('<bdi>' + esc(parts[k] == null ? "" : parts[k]) + '</bdi>');
+    });
+    return out;
+  }
+
   function oops(title, body) {
     $("oopsTitle").textContent = title;
     $("oopsBody").textContent = body;
@@ -54,6 +69,15 @@
          so it is headed by what it is, not by the word "note". */
       classNotes:"In class", cnBy:"with {t}",
       stillToHear:"Still to be heard", forNextClass:"To practise for",
+      /* Round 56. "Still to be heard" with a date three weeks old reads as
+         work nobody got round to hearing. Usually it is the opposite: the
+         child was heard and was not ready, twice, and the piece stayed
+         open. The page says which it is now \u2014 from the recitations
+         already on this page, so a parent can check it against the list of
+         recent classes underneath. */
+      whyNotReady:"Not ready on {d} \u2014 to be heard again.",
+      whyRepeat:"Marked to go over again on {d}.",
+      whyAnd:" and ",
       noNextClass:"the next class",
       setOnBy:"set {d} by {t}",
       memorize:"Memorize", review:"Review", setBy:"Set {d} by {t}",
@@ -82,7 +106,7 @@
       markedLate:"attendance filled in on {d}",
       contact:"Any question about homework or attendance — message the school on ClassDojo.",
       contactSelf:"Any question about your homework — speak to your teacher at the halaqa.",
-      tajweed:"Tajwīd", adab:"Adab", tr_up:"moving forward", tr_flat:"standing still", tr_down:"needs attention", tr_away:"not enough to say", trHelp:"over the last few classes", wholeSurah:"whole surah", ayat:"ayat", notMarked:"not marked",
+      tajweed:"Tajwīd", adab:"Adab", tr_up:"moving forward", tr_flat:"standing still", tr_down:"needs attention", tr_away:"not enough to say", trHelp:"over the last few classes", wholeSurah:"whole surah", ayat:"ayat", notMarked:"not recorded — tell the school if they were there",
       noneRecorded:"Attended · no recitation recorded that day",
       /* Round 53. A parent opening this page while the family is travelling
          must not read a quiet page as a child falling behind. The homework
@@ -117,6 +141,9 @@
     ar: {
       classNotes:"فِي الحَلْقَة", cnBy:"مَعَ {t}",
       stillToHear:"لَمْ يُسْمَعْ بَعْد", forNextClass:"لِلتَّحْضِيرِ لِـ",
+      whyNotReady:"لَمْ يَكُنْ مُسْتَعِدًّا فِي {d} — وَسَيُسْمَعُ مِنْ جَدِيد.",
+      whyRepeat:"طُلِبَ مِنْهُ أَنْ يُعِيدَهَا فِي {d}.",
+      whyAnd:" وَ",
       noNextClass:"الحِصَّةِ القَادِمَة",
       setOnBy:"حُدِّدَ {d} بِوَاسِطَةِ {t}",
       memorize:"لِلْحِفْظ", review:"لِلْمُرَاجَعَة",
@@ -144,7 +171,7 @@
       contactSelf:"لِأَيِّ سُؤَالٍ حَوْلَ وَاجِبِك، كَلِّمْ مُعَلِّمَكَ فِي الحَلْقَة.",
       noticeTeacherSelf:"مِنْ مُعَلِّمِك",
       notAssessedSelf:"لَمْ يُسَجَّلْ حِفْظُكَ بَعْد. وَإِذَا رَاجَعْتَهُ مَعَ مُعَلِّمِكَ ظَهَرَ هُنَا.",
-      tajweed:"التَّجْوِيد", adab:"الأَدَب", tr_up:"يَتَقَدَّم", tr_flat:"ثَابِت", tr_down:"يَحْتَاجُ انْتِبَاهًا", tr_away:"لَا يُمْكِنُ الحُكْمُ بَعْد", trHelp:"خِلَالَ الحِصَصِ الأَخِيرَة", wholeSurah:"السُّورَةُ كَامِلَة", ayat:"آيَة", notMarked:"لَمْ يُسَجَّل",
+      tajweed:"التَّجْوِيد", adab:"الأَدَب", tr_up:"يَتَقَدَّم", tr_flat:"ثَابِت", tr_down:"يَحْتَاجُ انْتِبَاهًا", tr_away:"لَا يُمْكِنُ الحُكْمُ بَعْد", trHelp:"خِلَالَ الحِصَصِ الأَخِيرَة", wholeSurah:"السُّورَةُ كَامِلَة", ayat:"آيَة", notMarked:"لَمْ يُسَجَّل — أَخْبِرُوا المَدْرَسَةَ إِنْ كَانَ حَاضِرًا",
       noneRecorded:"حَضَرَ · وَلَمْ تُسَجَّلْ تِلَاوَةٌ فِي ذَلِكَ اليَوْم",
       stRevise:"لِلْمُرَاجَعَة", stLearning:"قَيْدُ الحِفْظ",
       awayFam:"مُسَافِرٌ عَنِ المَدْرَسَةِ حَالِيًّا — لَا يُحْسَبُ عَلَيْهِ غِيَابٌ، وَلَا يُكَلَّفُ بِجَدِيد.",
@@ -271,8 +298,8 @@
       h += '<div class="pcard notice"><h2>' + esc(tc(c, "noticeTeacher")) + '</h2>' +
         tn.map(function (n) {
           return '<div class="line"><span>' + esc(n.body) + '</span>' +
-            '<div class="nby">' + esc(t("noteBy", {
-              t: n.by || "", d: n["on"] ? i18n.fmtDate(n["on"]) : "" })) + '</div></div>';
+            '<div class="nby">' + fillBidi("noteBy", {
+              t: n.by || "", d: n["on"] ? i18n.fmtDate(n["on"]) : "" }) + '</div></div>';
         }).join("") + '</div>';
     }
 
@@ -322,6 +349,33 @@
       return x.ayat || 0;
     }
 
+    /* Why a piece of work is still open, in the child's own recitations.
+       Matched on the surah and an OVERLAPPING range rather than an exact
+       one: a teacher who heard ayat 1-10 of a piece set as 1-20 has still
+       heard that piece, and an exact match would quietly find nothing and
+       say nothing. Newest first, at most two dates \u2014 a parent needs to
+       know it happened and roughly when, not a ledger. */
+    function whyOpen(x) {
+      var hits = [];
+      (c.recent_classes || []).forEach(function (day) {
+        (day.recited || []).forEach(function (r) {
+          if (r.surah !== x.surah) return;
+          if (r.outcome !== "repeat" && r.outcome !== "not_prepared") return;
+          var af = x.ayah_from || 1, at = x.ayah_to || x.ayat || 9999;
+          var rf = r.ayah_from || 1, rt = r.ayah_to || r.ayat || 9999;
+          if (rt < af || rf > at) return;          // different passage
+          hits.push({ on: day.held_on, outcome: r.outcome });
+        });
+      });
+      if (!hits.length) return "";
+      hits.sort(function (a2, b2) { return a2.on < b2.on ? 1 : -1; });
+      var dates = hits.slice(0, 2).map(function (h) { return i18n.fmtDate(h.on); });
+      // The most recent outcome is the one that names the line.
+      var key = hits[0].outcome === "not_prepared" ? "whyNotReady" : "whyRepeat";
+      return '<div class="line why">' +
+        esc(t(key).split("{d}").join(dates.join(t("whyAnd")))) + '</div>';
+    }
+
     function hwLines(list) {
       return list.map(function (x) {
         return '<div class="hwitem"><div class="line"><span class="k">' +
@@ -329,9 +383,10 @@
           '<span class="ar" dir="rtl">' + esc(x.name_ar) + '</span>' +
           '<span>' + esc(x.name_en) + (x.whole_surah ? "" :
              (x.ayah_from ? " " + x.ayah_from + "–" + x.ayah_to : "")) + '</span></div>' +
+          (x.overdue ? whyOpen(x) : "") +
           ((x.set_on || x.set_by)
-            ? '<div class="line sub">' + esc(t("setOnBy", {
-                d: i18n.fmtDate(x.set_on), t: x.set_by || "—" })) +
+            ? '<div class="line sub">' + fillBidi("setOnBy", {
+                d: i18n.fmtDate(x.set_on), t: x.set_by || "—" }) +
               (x.due_on ? ' \u00b7 ' +
                 esc(t("dueOn", { d: i18n.fmtDate(x.due_on, true) })) : '') +
               '</div>' : '') +
