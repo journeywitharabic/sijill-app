@@ -1424,103 +1424,104 @@
      forties is the kind of detail that tells them the thing was not built
      for them. Falls back to the plain key, so a missing Adult variant shows
      the children's wording rather than "undefined". */
-  /* Round 54 · the halaqa's own screens.
+  /* ---- the spot check (AC-4), round 55 -------------------------------
+     Round 54 put this in a sheet. Tarek's note after a week: a pop-up is
+     not convivial, it cannot be scrolled, and for a long surah "Al-Baqarah"
+     is not a passage anybody can actually test. So it is a PANEL ON THE
+     PAGE now, scrolling with everything else, and a surah opens into a
+     range: the whole thing, one page of the mushaf, or ayat from-to.
 
-     `go_back_over` and `focus_letter` are columns on a recitation that
-     migration 61 created and nothing could write until 65. They do not
-     ride on api_student — patching that function by text is what migration
-     64 spent three attempts proving is unsafe here — so they come back in
-     their own read, keyed by the recitation id api_student already gives
-     us, and only for an adult. S.gboFor is the student that read was for,
-     which is what stops the render loop refetching forever. */
-  function gboLoad() {
-    if (!onAdult() || !S.student) { S.gbo = null; S.gboLatest = null; return; }
-    if (S.gboFor === S.student.id) return;
-    S.gboFor = S.student.id;
-    var who = S.student.id;
-    api.read("api_go_back_over", { p_student: who }).then(function (r) {
-      if (!S.student || S.student.id !== who) return;   // he moved on
-      var m = {};
-      (r && r.rows || []).forEach(function (x) { m[x.session_id] = x; });
-      S.gbo = m; S.gboLatest = (r && r.latest) || null;
-      renderStudent();
-    }).catch(function () { /* the page is worth having without it */ });
-  }
-
-  /* AC-4 · the spot check. api_spot_check does the thinking: what he has
-     solid, longest unheard first, plus a weighted pick that is NOT simply
-     the oldest — a deterministic "surprise" stops being a spot check the
-     second time it is used. The screen only has to say it in words. */
+     api_spot_check does the choosing — what he has solid, longest unheard
+     first, and a weighted pick. api_surah_pages has returned each surah's
+     pages with their ayah ranges since long before this round, so nothing
+     new is needed on the server for the ranges either. */
   function spotAge(x) {
     if (x.weeks == null) return T("spNever");
     if (x.weeks <= 1) return T("spWeeks1");
     return T("spWeeks").split("{n}").join(x.weeks);
   }
-  function spotLine(x, lead) {
-    return '<div class="irow sprow"><div class="lab">' +
-      '<span class="ar" dir="rtl">' + esc(x.name_ar) + '</span>' +
-      '<span class="tr">' + esc(x.name_en) + '</span>' +
-      /* AC-3, where it is cheapest and most useful: the state in words, on
-         the line, next to how long it has been. A man reading this at ten
-         at night should not have to work out what a colour meant. */
-      '<span class="m">' + esc(T("spSolid")) + ' \u00b7 ' + esc(spotAge(x)) + '</span>' +
-      '</div>' + (lead ? '<span class="pill ok"><i></i>' + esc(T("spPicked")) + '</span>' : '') +
-      '</div>';
+  function spotLoad(force) {
+    if (!S.student || !onAdult()) return;
+    if (!force && S.spotFor === S.student.id) return;
+    S.spotFor = S.student.id;
+    var who = S.student.id;
+    api.read("api_spot_check", { p_student: who }).then(function (r) {
+      if (!S.student || S.student.id !== who) return;
+      S.spotList = (r && r.surahs) || [];
+      S.spotPick = (r && r.pick) || null;
+      renderStudent();
+    }).catch(function () { S.spotList = []; renderStudent(); });
   }
-  function spotSheet() {
-    if (!S.student) return;
-    api.read("api_spot_check", { p_student: S.student.id }).then(function (r) {
-      var list = (r && r.surahs) || [], pick = (r && r.pick) || null;
-      function body(lead) {
-        if (!list.length) return '<div class="note">' + esc(T("spNone")) + '</div>';
-        return '<div class="note" style="margin-bottom:10px">' + esc(T("spSub")) + '</div>' +
-          (lead ? '<div class="card" style="margin-bottom:12px">' + spotLine(lead, true) + '</div>' : '') +
-          '<div class="card splist">' + list.map(function (x) {
-            return spotLine(x, false);
-          }).join("") + '</div>';
-      }
-      sheet(T("spTitle"), body(pick), list.length ? T("spSurprise") : null,
-        function () {
-          /* Another weighted pick, from the server, not a shuffle of the
-             list we already have: the weighting is the feature. */
-          api.read("api_spot_check", { p_student: S.student.id }).then(function (r2) {
-            var el = document.getElementById("shBody");
-            if (el) el.innerHTML = body((r2 && r2.pick) || null);
-          }).catch(fail);
-          return false;        // the sheet stays open
-        });
-    }).catch(fail);
+  /* The pages of one surah, fetched the first time it is opened and kept
+     for as long as this man is on screen. Thirty surahs would be thirty
+     round trips if this asked every time a row opened. */
+  function spotPages(surah, then) {
+    if (!S.spotPg) S.spotPg = {};
+    if (S.spotPg[surah]) { then(); return; }
+    api.read("api_surah_pages", { p_surah: surah }).then(function (r) {
+      S.spotPg[surah] = (r && r.pages) || [];
+      then();
+    }).catch(function () { S.spotPg[surah] = []; then(); });
   }
-
-  var GBO = ["none", "page", "part", "all"];
-  var GBL = ["\u0639", "\u062d", "\u0642", "\u0636", "\u0635", "\u0638"];
-  function gboWord(v) {
-    return v === "page" ? T("gbPage") : v === "part" ? T("gbPart")
-         : v === "all" ? T("gbAll") : T("gbNone");
-  }
-  /* The control, on the recitation it is about. Four words and six letters,
-     never a grade: colour is reserved for grades in this app and spending a
-     hue here would make the row read as a fifth outcome. */
-  function gboBox(r, editable) {
-    var cur = (S.gbo && S.gbo[r.id]) || {};
-    if (!editable) {
-      if (!cur.go_back_over || cur.go_back_over === "none") return "";
-      return '<span class="gbo read">' + esc(T("gbTitle")) + ': <b>' +
-        esc(gboWord(cur.go_back_over)) + '</b>' +
-        (cur.focus_letter ? ' \u00b7 ' + esc(T("gbLetter")) + ' <b dir="rtl">' +
-          esc(cur.focus_letter) + '</b>' : '') + '</span>';
+  function spotPanel() {
+    if (!S.spotOpen) return "";
+    var list = S.spotList || [];
+    if (!list.length) {
+      return '<div class="spotpanel"><div class="note">' + esc(T("spNone")) + '</div></div>';
     }
-    return '<span class="gbo" data-rec="' + esc(r.id) + '">' +
-      '<span class="gbh">' + esc(T("gbTitle")) + '</span>' +
-      GBO.map(function (v) {
-        return '<button class="gbopt' + (cur.go_back_over === v ? " on" : "") +
-               '" data-gb="' + v + '">' + esc(gboWord(v)) + '</button>';
-      }).join("") +
-      '<span class="gbh l">' + esc(T("gbLetter")) + '</span>' +
-      GBL.map(function (l) {
-        return '<button class="gblet' + (cur.focus_letter === l ? " on" : "") +
-               '" data-let="' + l + '" dir="rtl">' + l + '</button>';
-      }).join("") + '</span>';
+    var open = S.spotOpenSurah;
+    return '<div class="spotpanel">' +
+      '<div class="spothead"><span>' + esc(T("spSub")) + '</span>' +
+      '<button class="btn ghost sm" id="spotSurprise">' + esc(T("spSurprise")) + '</button></div>' +
+      '<div class="spotlist splist">' + list.map(function (x) {
+        var lead = S.spotPick && S.spotPick.surah === x.surah;
+        var pages = (S.spotPg && S.spotPg[x.surah]) || null;
+        return '<div class="sprow' + (lead ? " lead" : "") + (open === x.surah ? " open" : "") +
+          '" data-surah="' + x.surah + '">' +
+          '<button class="spname" data-surah="' + x.surah + '">' +
+            '<span class="ar" dir="rtl">' + esc(x.name_ar) + '</span>' +
+            '<span class="tr">' + esc(x.name_en) + '</span>' +
+            /* AC-3 where it is most useful: the state and the age in words,
+               on the line, rather than a colour to decode. */
+            '<span class="m">' + esc(T("spSolid")) + ' \u00b7 ' + esc(spotAge(x)) +
+            ' \u00b7 ' + esc(T("spAyat").split("{n}").join(x.ayat)) + '</span>' +
+            (lead ? '<span class="pill ok"><i></i>' + esc(T("spPicked")) + '</span>' : '') +
+          '</button>' +
+          (open === x.surah ? spotRange(x, pages) : '') +
+        '</div>';
+      }).join("") + '</div></div>';
+  }
+  /* The range. Three ways in, all ending as an ayah range, which is what
+     every other part of Sijill already stores: the whole surah, one page of
+     the mushaf, or two numbers. The page buttons carry their own ayat, so
+     picking one fills the numbers rather than asking him to know them. */
+  function spotRange(x, pages) {
+    var f = S.spotFrom == null ? 1 : S.spotFrom;
+    var t = S.spotTo == null ? x.ayat : S.spotTo;
+    return '<div class="sprange">' +
+      (pages === null
+        ? '<div class="note">' + esc(T("spLoading")) + '</div>'
+        : '<div class="sppages">' +
+            '<button class="sppage' + (f === 1 && t === x.ayat ? " on" : "") +
+              '" data-f="1" data-t="' + x.ayat + '">' + esc(T("spWhole")) + '</button>' +
+            pages.map(function (p2) {
+              return '<button class="sppage' +
+                (f === p2.ayah_from && t === p2.ayah_to ? " on" : "") +
+                '" data-f="' + p2.ayah_from + '" data-t="' + p2.ayah_to + '">' +
+                /* spPageN, not spPage: the picker's own "p." has owned
+                   that key since round 23, and a second definition of it
+                   in the same object silently wins or loses depending on
+                   which comes last in the file. */
+                esc(T("spPageN").split("{n}").join(p2.page)) + '</button>';
+            }).join("") + '</div>') +
+      '<div class="spnums">' +
+        '<label for="spFrom">' + esc(T("spFrom")) + '</label>' +
+        '<input id="spFrom" type="number" min="1" max="' + x.ayat + '" value="' + f + '">' +
+        '<label for="spTo">' + esc(T("spTo")) + '</label>' +
+        '<input id="spTo" type="number" min="1" max="' + x.ayat + '" value="' + t + '">' +
+      '</div>' +
+      '<button class="btn sm" id="spotHear">' + esc(T("spHear")) + '</button>' +
+      '</div>';
   }
 
   function onAdult() {
@@ -1730,8 +1731,6 @@
 
   function renderStudent() {
     var d = S.studentData, ar = i18n.isAr();
-    // Fetched once per adult, and it re-renders itself when it lands.
-    gboLoad();
     /* The family's own page, opened in preview mode with the teacher's
        session. Not shown on the coordinator's read-only route, where the
        point is the records rather than the family's view of them. */
@@ -1886,6 +1885,19 @@
                 '<div class="card">' + todayNew.map(function (x) { return itemRow(x, "new"); }).join("") + '</div></div>';
       }
     }
+    /* A passage pulled in from the spot check. It is not homework and
+       never becomes any: it is something the teacher decided to hear right
+       now, so it lives on the client until he leaves this man, and the only
+       trace it leaves is the recitation itself — which is the whole point,
+       because that is what moves `last_heard` and takes the surah off the
+       top of the next spot check. */
+    if ((S.spot || []).length) {
+      html += '<div class="kindbox rev"><div class="kindlab">' +
+                esc(T("spHeading")) + '</div>' +
+              '<div class="card">' +
+              S.spot.map(function (x) { return itemRow(x, "spot"); }).join("") +
+              '</div></div>';
+    }
     html += '</div>';
 
     /* A man who has just opened his link for the first time sees an almost
@@ -1935,29 +1947,10 @@
                  halaqa idea: a child's old memorisation is the rotation's
                  job and already has a screen of its own. */
               (onAdult() ? '<button class="btn ghost" id="spotGo" ' +
-                 'style="width:100%;margin-bottom:12px">' + esc(T("spTitle")) +
-                 '</button>' : '') +
+                 'style="width:100%;margin-bottom:12px" aria-expanded="' +
+                 (S.spotOpen ? 'true' : 'false') + '">' + esc(T("spTitle")) +
+                 '</button>' + spotPanel() : '') +
               '<div class="note" style="margin-bottom:16px">' + TS("markKey") + '</div>');
-
-    /* AC-13 · what the teacher asked, turned into his own plan item.
-       Overruled on the original story's main point: BOTH can still set
-       homework, so this does not assign anything silently — it offers,
-       and the man taps. Only on his own page: a teacher looking at the
-       record made the suggestion and does not need it read back. */
-    if (S.self && S.gboLatest) {
-      var L = S.gboLatest;
-      html += '<div class="sincebar ft" style="margin-bottom:14px">' +
-        '<div class="ct">' + esc(T("ftTitle")) + '</div>' +
-        '<p>' + esc(T(L.go_back_over === "page" ? "ftGoPage"
-                      : L.go_back_over === "part" ? "ftGoPart" : "ftGoAll")
-                      .split("{s}").join(L.name_en)) +
-        (L.focus_letter ? ' ' + esc(T("ftLetter").split("{l}").join(L.focus_letter)) : '') +
-        '</p>' +
-        '<div class="ftby">' + esc(T("ftBy").split("{t}").join(L.by || "")
-                                            .split("{d}").join(i18n.fmtDate(L.held_on))) + '</div>' +
-        '<div class="actionrow" style="margin-top:8px">' +
-        '<button class="btn sm" id="ftAdd">' + esc(T("ftAdd")) + '</button></div></div>';
-    }
 
     // what goes home tonight
     var hw = later;
@@ -2133,13 +2126,6 @@
                   (S.readOnly || S.self || !r.id ? "" :
                     '<button class="undoRec" data-rec="' + esc(r.id) + '" data-what="' +
                     esc(r.name_en) + '">↶ ' + esc(T("undoMark")) + '</button>') +
-                  /* AC-2. Editable only on the newest class day and only for
-                     a teacher: last month's recitation is history, and a man
-                     reading his own page is told what was asked, not invited
-                     to answer for himself. */
-                  (onAdult() && r.id
-                     ? gboBox(r, hi === 0 && !S.readOnly && !S.self)
-                     : "") +
                 '</span>';
               }).join("");
               var notes = (h.notes || []).map(function (n) {
@@ -2266,7 +2252,10 @@
 
   function itemRow(x, kind) {
     var meta = "";
-    if (kind === "rot") {
+    // A spot-check passage reads like a rotation one — when it was last
+    // heard — not like homework, which would look for a set_on it has not
+    // got and print an empty date.
+    if (kind === "rot" || kind === "spot") {
       meta = x.last_heard
         ? T("heard") + " " + i18n.fmtDate(x.last_heard) +
           (x.weeks != null ? " · " + x.weeks + " " + T(x.weeks === 1 ? "week1" : "weeks") : "")
@@ -2281,8 +2270,9 @@
       if (wk >= 1) meta += " · " + (wk === 1 ? T("hwSetLast")
                                              : T("hwSetWeeks").split("{n}").join(wk));
     }
-    var old = (kind !== "rot") && weeksSince(x.set_on) >= 3;
-    var stale = (kind === "rot" && (x.weeks == null || x.weeks >= 4)) ? " stale" : "";
+    var old = (kind !== "rot" && kind !== "spot") && weeksSince(x.set_on) >= 3;
+    var stale = ((kind === "rot" || kind === "spot") &&
+                 (x.weeks == null || x.weeks >= 4)) ? " stale" : "";
     /* Round 46: the expected grade, offered rather than recorded.
 
        Most recitations are good, so the row shows good already picked —
@@ -2297,7 +2287,8 @@
        expect something, and the one row that mattered would be lost in
        them. Homework not yet due is in the same position: it goes home
        tonight, so there is nothing to grade yet. */
-    var prop = (kind !== "rot" && !S.readOnly && !S.self && x.due_today);
+    var prop = (kind !== "rot" && kind !== "spot" &&
+                !S.readOnly && !S.self && x.due_today);
     /* The rotation is no longer plain oldest-first, so a row near the top
        that was heard recently needs to say why it is there. */
     if (kind === "rot" && x.band === 1) meta = T("rotNeeds") + " · " + meta;
@@ -2305,7 +2296,8 @@
     // 'grad' marks a row that can be graded. The history rows below reuse
     // .irow for looks but carry no buttons, and without a separate class a
     // tap (or a test) can aim at the wrong one.
-    return '<div class="irow grad' + (kind === "new" ? "" : " g4") + '" data-surah="' + x.surah + '"' +
+    return '<div class="irow grad' + (kind === "new" ? "" : " g4") +
+      (kind === "spot" ? " spot" : "") + '" data-surah="' + x.surah + '"' +
       ' data-from="' + (x.ayah_from == null ? "" : x.ayah_from) + '"' +
       ' data-to="' + (x.ayah_to == null ? "" : x.ayah_to) + '"' +
       ' data-kind="' + (kind === "new" ? "new" : "review") + '">' +
@@ -2535,12 +2527,6 @@
         S.justDid = (r && r.session_id)
           ? { rec: r.session_id, what: nameOf(row), outcome: outcome }
           : null;
-        /* The recitation that was just written has no entry in the extras
-           yet, and for an adult the row it lands on is the one carrying the
-           go-back-over control. Clearing this is what makes the next render
-           ask the server again rather than draw the control with nothing
-           behind it. */
-        S.gboFor = null;
         return api.read("api_student", { p_student: S.student.id, p_history: histAsk() });
       }).then(function (d) { S.studentData = d; renderStudent(); }).catch(fail);
     }
@@ -2796,67 +2782,74 @@
     });
 
     var sg = $("spotGo");
-    if (sg) sg.onclick = spotSheet;
-
-    /* AC-13. The man sets it on himself, through the same call and the same
-       duplicate guard a teacher's assignment goes through — nothing here is
-       a privileged path. The range is the one the teacher heard, so what he
-       practises is what he was asked to go back over, not the whole surah. */
-    var fa = $("ftAdd");
-    if (fa) fa.onclick = function () {
-      var L = S.gboLatest; if (!L) return;
-      fa.disabled = true;
-      assignHomework({
-        p_students: [S.student.id],
-        p_kind: "review",
-        p_surahs: [L.surah],
-        p_from: L.ayah_from == null ? null : L.ayah_from,
-        p_to:   L.ayah_to   == null ? null : L.ayah_to,
-        p_due_on: (S.studentData && S.studentData.next_class) || null
-      }, S.student.name, function () {
-        toast(T("ftAdded"));
-        return reloadStudent();
-      });
+    if (sg) sg.onclick = function () {
+      S.spotOpen = !S.spotOpen;
+      if (S.spotOpen) spotLoad(false);
+      renderStudent();
     };
+    var ss = $("spotSurprise");
+    /* Another weighted pick FROM THE SERVER, not a shuffle of the list
+       already in hand: the weighting by how long it has been is the whole
+       feature, and a client-side shuffle would quietly throw it away. */
+    if (ss) ss.onclick = function () { spotLoad(true); };
 
-    /* AC-2 · the two extras save on the tap, one call each way, and the
-       row keeps what the SERVER came back with rather than what was
-       tapped — a refused value must not sit on screen looking saved. */
-    function gboSend(box, gb, letter) {
-      var rec = box.dataset.rec;
-      return api.write("api_session_extras", {
-        p_session: rec, p_go_back_over: gb, p_focus_letter: letter
-      }, S.student.name).then(function (r) {
-        if (!S.gbo) S.gbo = {};
-        S.gbo[rec] = S.gbo[rec] || { session_id: rec };
-        S.gbo[rec].go_back_over = r && r.go_back_over;
-        S.gbo[rec].focus_letter = r && r.focus_letter;
-        box.querySelectorAll(".gbopt").forEach(function (x) {
-          x.classList.toggle("on", x.dataset.gb === (r && r.go_back_over));
-        });
-        box.querySelectorAll(".gblet").forEach(function (x) {
-          x.classList.toggle("on", x.dataset.let === (r && r.focus_letter));
-        });
-        toast(T("gbSaved"));
-      }).catch(fail);
-    }
-    $("stuBody").querySelectorAll(".gbo[data-rec]").forEach(function (box) {
-      var cur = function () { return (S.gbo && S.gbo[box.dataset.rec]) || {}; };
-      box.querySelectorAll(".gbopt").forEach(function (b) {
-        b.onclick = function () {
-          // Tapping the one already chosen clears it, which is the only way
-          // back from a mis-tap that does not need a fifth button.
-          var v = b.classList.contains("on") ? null : b.dataset.gb;
-          gboSend(box, v, cur().focus_letter || null);
-        };
-      });
-      box.querySelectorAll(".gblet").forEach(function (b) {
-        b.onclick = function () {
-          var v = b.classList.contains("on") ? null : b.dataset.let;
-          gboSend(box, cur().go_back_over || null, v);
-        };
-      });
+    $("stuBody").querySelectorAll(".spname").forEach(function (b) {
+      b.onclick = function () {
+        var sNum = +b.dataset.surah;
+        var same = S.spotOpenSurah === sNum;
+        S.spotOpenSurah = same ? null : sNum;
+        // A new surah starts at the whole of it; the numbers are only
+        // carried over inside one surah, where they still mean something.
+        S.spotFrom = null; S.spotTo = null;
+        if (same) { renderStudent(); return; }
+        spotPages(sNum, renderStudent);
+        renderStudent();
+      };
     });
+    $("stuBody").querySelectorAll(".sppage").forEach(function (b) {
+      b.onclick = function () {
+        S.spotFrom = +b.dataset.f; S.spotTo = +b.dataset.t;
+        renderStudent();
+      };
+    });
+    ["spFrom", "spTo"].forEach(function (id) {
+      var el = $(id);
+      if (!el) return;
+      el.onchange = function () {
+        S.spotFrom = +($("spFrom") || {}).value || null;
+        S.spotTo   = +($("spTo")   || {}).value || null;
+        renderStudent();
+      };
+    });
+    var sh = $("spotHear");
+    if (sh) sh.onclick = function () {
+      var x = (S.spotList || []).filter(function (y) {
+        return y.surah === S.spotOpenSurah;
+      })[0];
+      if (!x) return;
+      var f = S.spotFrom == null ? 1 : S.spotFrom;
+      var t = S.spotTo == null ? x.ayat : S.spotTo;
+      if (f > t) { var sw = f; f = t; t = sw; }   // two numbers, either order
+      f = Math.max(1, Math.min(f, x.ayat));
+      t = Math.max(1, Math.min(t, x.ayat));
+      if (!S.spot) S.spot = [];
+      // The same passage twice would be two rows claiming the same thing.
+      var dup = S.spot.filter(function (y) {
+        return y.surah === x.surah && y.ayah_from === f && y.ayah_to === t;
+      }).length;
+      if (!dup) {
+        S.spot.push({ surah: x.surah, name_ar: x.name_ar, name_en: x.name_en,
+                      ayat: x.ayat, last_heard: x.last_heard, weeks: x.weeks,
+                      ayah_from: f, ayah_to: t,
+                      // a whole surah is stored as a whole surah, the way
+                      // every other part of Sijill stores one
+                      whole_surah: (f === 1 && t === x.ayat) });
+      }
+      S.spotOpen = false; S.spotOpenSurah = null;
+      S.spotFrom = null; S.spotTo = null;
+      renderStudent();
+      toast(T("spAdded").split("{s}").join(x.name_en));
+    };
 
     /* Notes: read, change, remove. */
     var na = $("noteAdd");

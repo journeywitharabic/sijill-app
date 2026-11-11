@@ -137,31 +137,18 @@
     holdFrom:"Away from", holdUntil:"Back on (leave empty if you do not know)",
     holdClear:"Not away", holdTitle:"Away for a while",
 
-    /* Round 54 · the halaqa's own screens. "Go back over" is not a grade
-       and must not read like one: it is what a man should redo before the
-       next halaqa, in the four words the teachers already use. */
-    gbTitle:"Go back over", gbNone:"nothing", gbPage:"a page",
-    gbPart:"part of it", gbAll:"all of it",
-    gbLetter:"Focus letter", gbLetterHint:"one sound to watch while he reads",
-    gbSaved:"saved", gbWhose:"{s} \u2014 go back over",
-    /* His own page. The teacher asked for something; this turns it into a
-       plan item without him retyping it, and without the teacher silently
-       assigning it. */
-    ftTitle:"From your teacher", ftAdd:"+ Add to my plan",
-    /* One sentence per option rather than one with the option dropped into
-       a slot. "part of it" and "all of it" are complete phrases, so a
-       template produces "Go back over all of it of Al-Mulk".
-       (And no word-colon-quote in this comment: the parity check reads
-       keys out of the file with a regex, and a comment can mint one.) */
-    ftGoPage:"Go back over a page of {s}.", ftGoPart:"Go back over part of {s}.",
-    ftGoAll:"Go back over all of {s}.", ftLetter:"Focus on {l}.",
-    ftBy:"{t} \u00b7 {d}", ftAdded:"Added to your plan.",
-    /* AC-4 · the spot check. */
+    /* Round 55 · the spot check, as a panel rather than a pop-up.
+       Go back over and the focus letter were taken out in the same round:
+       a teacher's note already says what a man should redo, in his own
+       words, and homework already carries the passage and its range. */
     spTitle:"Spot check", spSub:"Anything solid, longest unheard first.",
     spSurprise:"Surprise me", spNever:"never heard since", spSolid:"solid",
     spWeeks1:"heard a week ago", spWeeks:"heard {n} weeks ago",
     spNone:"Nothing is marked solid yet, so there is nothing to spot check.",
-    spPicked:"Try this one",
+    spPicked:"Try this one", spAyat:"{n} ayat", spLoading:"finding the pages\u2026",
+    spWhole:"the whole surah", spPageN:"page {n}",
+    spFrom:"from ayah", spTo:"to", spHear:"Hear this now",
+    spHeading:"Spot check", spAdded:"{s} added below \u2014 hear it and grade it.",
     /* AC-7 · moving one class day. Sijill never sends the message. */
     mvTitle:"Move this class", mvTo:"Move it to",
     mvWhy:"Why it moved", mvWhyHint:"the families will read this",
@@ -515,19 +502,14 @@
     holdFrom:"مُسَافِرٌ مِنْ", holdUntil:"يَعُودُ فِي (اُتْرُكْهُ فَارِغًا إِنْ لَمْ تَعْرِف)",
     holdClear:"لَيْسَ مُسَافِرًا", holdTitle:"سَفَرٌ لِمُدَّة",
 
-    gbTitle:"يُعِيدُ عَلَيْهَا", gbNone:"لَا شَيْء", gbPage:"صَفْحَة",
-    gbPart:"جُزْءًا مِنْهَا", gbAll:"كُلَّهَا",
-    gbLetter:"حَرْفُ التَّرْكِيز", gbLetterHint:"حَرْفٌ وَاحِدٌ يُرَاعِيهِ فِي قِرَاءَتِه",
-    gbSaved:"حُفِظَ", gbWhose:"{s} \u2014 يُعِيدُ عَلَيْهَا",
-    ftTitle:"مِنْ مُعَلِّمِك", ftAdd:"+ أَضِفْهَا إِلَى خُطَّتِي",
-    ftGoPage:"أَعِدْ صَفْحَةً مِنْ {s}.", ftGoPart:"أَعِدْ جُزْءًا مِنْ {s}.",
-    ftGoAll:"أَعِدْ {s} كُلَّهَا.", ftLetter:"رَاعِ حَرْفَ {l}.",
-    ftBy:"{t} \u00b7 {d}", ftAdded:"أُضِيفَتْ إِلَى خُطَّتِك.",
     spTitle:"اِخْتِبَارٌ مُفَاجِئ", spSub:"مِمَّا أَتْقَنَهُ، وَأَطْوَلُهَا عَهْدًا أَوَّلًا.",
     spSurprise:"اِخْتَرْ لِي", spNever:"لَمْ تُسْمَعْ مُنْذُ التَّسْجِيل", spSolid:"مُتْقَنَة",
     spWeeks1:"سُمِعَتْ قَبْلَ أُسْبُوع", spWeeks:"سُمِعَتْ قَبْلَ {n} أَسَابِيع",
     spNone:"لَا تُوجَدُ سُورَةٌ مُتْقَنَةٌ بَعْد، فَلَا شَيْءَ لِاخْتِبَارِه.",
-    spPicked:"جَرِّبْ هَذِهِ",
+    spPicked:"جَرِّبْ هَذِهِ", spAyat:"{n} آيَة", spLoading:"جَارٍ تَحْدِيدُ الصَّفَحَات\u2026",
+    spWhole:"السُّورَةُ كَامِلَة", spPageN:"صَفْحَة {n}",
+    spFrom:"مِنَ الآيَة", spTo:"إِلَى", spHear:"اِسْمَعْهَا الآن",
+    spHeading:"اِخْتِبَارٌ مُفَاجِئ", spAdded:"أُضِيفَتْ {s} أَدْنَاه — اِسْمَعْهَا وَقَيِّمْهَا.",
     mvTitle:"نَقْلُ هَذِهِ الحِصَّة", mvTo:"اِنْقُلْهَا إِلَى",
     mvWhy:"سَبَبُ النَّقْل", mvWhyHint:"سَيَقْرَؤُهُ الأَهْل",
     mvGo:"اِنْقُلِ الحِصَّة",
