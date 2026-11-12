@@ -896,11 +896,29 @@
       /* The to-do switch. On by default, so the register opens on the work
          rather than on the roll — but never hidden, because a teacher who
          wants the whole class has to be one tap from it and has to be able
-         to SEE that something is being left out. */
+         to SEE that something is being left out.
+
+         ROUND 60: it was one pill that named the view it was already in —
+         "Showing everyone" — sitting alone in the top right corner, and the
+         teachers did not read it as a control at all. A label tells you
+         where you are; it does not tell you that somewhere else exists or
+         how to get there.
+
+         Two options side by side now, the one you are in filled, exactly
+         the shape of the present/late/absent control they use all lesson.
+         The other choice is on the screen, so there is nothing to infer —
+         and it sits on the same line as "3 still to do", which is the
+         sentence it is about, rather than in a corner of its own. */
       (left
-        ? '<button type="button" class="todochip' + (S.todoOnly ? " on" : "") +
-          '" id="todoChip" aria-pressed="' + (!!S.todoOnly) + '">' +
-          esc(S.todoOnly ? T("todoOnly") : T("todoAll")) + '</button>'
+        ? '<span class="todoswitch" role="group" aria-label="' +
+            esc(T("todoWhich")) + '" id="todoChip">' +
+          '<button type="button" class="tsopt' + (!S.todoOnly ? " on" : "") +
+            '" data-todo="all" aria-pressed="' + (!S.todoOnly) + '">' +
+            esc(T("todoAll")) + '</button>' +
+          '<button type="button" class="tsopt' + (S.todoOnly ? " on" : "") +
+            '" data-todo="left" aria-pressed="' + (!!S.todoOnly) + '">' +
+            esc(T("todoOnly")) + '</button>' +
+          '</span>'
         : '') +
       '</div><ul class="gaps">' + lines.join("") + '</ul>' +
       (S.gapFilter
@@ -919,11 +937,16 @@
         if (x) openStudent(x, +b.dataset.who);
       };
     });
-    if ($("todoChip")) $("todoChip").onclick = function () {
-      // Asking for the list again is the one moment it is right to drop the
-      // children who are finished: the teacher has asked for a fresh view.
-      S.todoOnly = !S.todoOnly; S.stuck = {}; renderDay();
-    };
+    bar.querySelectorAll(".tsopt").forEach(function (b) {
+      b.onclick = function () {
+        var want = b.dataset.todo === "left";
+        if (want === !!S.todoOnly) return;     // already there; do nothing
+        // Asking for the list again is the one moment it is right to drop
+        // the children who are finished: the teacher has asked for a fresh
+        // view.
+        S.todoOnly = want; S.stuck = {}; renderDay();
+      };
+    });
     if ($("gapAll")) $("gapAll").onclick = function () { S.gapFilter = null; renderDay(); };
   }
 

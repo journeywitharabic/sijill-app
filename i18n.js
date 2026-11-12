@@ -192,7 +192,12 @@
     gapNextDone:"Homework \u2014 everyone has something to do",
     progDoneN:"{n} of {t} done",
     progLeft:"{n} still to do", progDone:"Nothing left to do",
-    todoOnly:"Showing what is left", todoAll:"Showing everyone",
+    /* Round 60. These used to name the view you were ALREADY in — "Showing
+       everyone" — on one pill in the corner, and teachers did not read it
+       as something they could tap. Both options are on screen now, so each
+       names a view rather than a state, and the filled one is where you
+       are. */
+    todoOnly:"Still to do", todoAll:"Everyone", todoWhich:"Who to show",
     gapAll:"Show everyone",
     gapNoneLeft:"Nobody left in that list \u2014 it is done.",
     gapOnly:"Showing {n} of {t}",
@@ -571,7 +576,7 @@
     gapNextDone:"الوَاجِب — لِكُلٍّ مَا يَعْمَلُه",
     progDoneN:"{n} مِنْ {t} اكْتَمَلُوا",
     progLeft:"بَقِيَ {n}", progDone:"لَمْ يَبْقَ شَيْء",
-    todoOnly:"عَرْضُ مَا بَقِيَ", todoAll:"عَرْضُ الجَمِيع",
+    todoOnly:"مَا بَقِي", todoAll:"الجَمِيع", todoWhich:"مَنْ يُعْرَض",
     gapAll:"اِعْرِضِ الجَمِيع",
     gapNoneLeft:"لَمْ يَبْقَ أَحَدٌ فِي تِلْكَ القَائِمَة — تَمَّ الأَمْر.",
     gapOnly:"عَرْضُ {n} مِنْ {t}",

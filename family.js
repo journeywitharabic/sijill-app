@@ -68,6 +68,11 @@
       /* The class note. A family reads it as "here is what the lesson was",
          so it is headed by what it is, not by the word "note". */
       classNotes:"In class", cnBy:"with {t}",
+      /* AC-12 · the page a link shows once it has gone quiet. It asks for
+         nothing, names nobody, and says exactly what to do. */
+      dormantTitle:"This link has expired",
+      dormantBody:"Links stop working after four months without being opened, so an old message cannot keep showing your child\u2019s record. Ask the school for a new one \u2014 nothing has been lost.",
+      dormantSince:"It was last opened on {d}.",
       stillToHear:"Still to be heard", forNextClass:"To practise for",
       /* Round 56. "Still to be heard" with a date three weeks old reads as
          work nobody got round to hearing. Usually it is the opposite: the
@@ -140,6 +145,9 @@
     },
     ar: {
       classNotes:"فِي الحَلْقَة", cnBy:"مَعَ {t}",
+      dormantTitle:"اِنْتَهَتْ صَلَاحِيَةُ هَذَا الرَّابِط",
+      dormantBody:"تَتَوَقَّفُ الرَّوَابِطُ بَعْدَ أَرْبَعَةِ أَشْهُرٍ دُونَ فَتْحٍ، لِئَلَّا تَبْقَى رِسَالَةٌ قَدِيمَةٌ تَعْرِضُ سِجِلَّ اِبْنِكُم. اُطْلُبُوا مِنَ المَدْرَسَةِ رَابِطًا جَدِيدًا — وَلَمْ يَضِعْ شَيْء.",
+      dormantSince:"آخِرُ فَتْحٍ لَهُ كَانَ فِي {d}.",
       stillToHear:"لَمْ يُسْمَعْ بَعْد", forNextClass:"لِلتَّحْضِيرِ لِـ",
       whyNotReady:"لَمْ يَكُنْ مُسْتَعِدًّا فِي {d} — وَسَيُسْمَعُ مِنْ جَدِيد.",
       whyRepeat:"طُلِبَ مِنْهُ أَنْ يُعِيدَهَا فِي {d}.",
@@ -741,6 +749,16 @@
     show("v-loading");
     api.rpc("api_family", { p_link: code }).then(function (d) {
       if (!d || d.ok === false) {
+        /* AC-12. A link nobody has opened for four months stops answering,
+           because it is the only secret there is and it lives for ever in
+           a WhatsApp history. The page says so in plain words and asks for
+           NOTHING: a box to fill in is how this becomes a login screen with
+           no passwords behind it. */
+        if (d && d.error === "dormant") {
+          return oops(t("dormantTitle"),
+            t("dormantBody") +
+            (d.since ? " " + t("dormantSince").split("{d}").join(i18n.fmtDate(d.since)) : ""));
+        }
         return oops("This link doesn't work",
           (d && d.error) || "Ask the school to send you a new one.");
       }

@@ -1445,10 +1445,30 @@ html[lang="ar"] .addhw-b .t small{font-size:var(--fs-base)}
 .proghead b{font-weight:700}
 .progleft{color:var(--ink-3);font-size:var(--fs-small)}
 .progleft::before{content:"\00b7";margin:0 6px;color:var(--line-2)}
-.todochip{margin-inline-start:auto;min-height:44px;padding:6px 11px;
-  border-radius:999px;border:1px solid var(--line-2);background:var(--surface);
-  color:var(--ink-2);font-size:var(--fs-small);font-weight:600}
-.todochip.on{background:var(--surface-2);border-color:var(--ink-3);color:var(--ink)}
+/* Round 60 · the to-do switch. One pill naming the view you were already
+   in read as a label, and the teachers did not tap it. Two options in one
+   frame instead — the same shape as the present/late/absent control on
+   every row of the register, which they use all lesson and have never had
+   to be told about. The filled one is where you are; the other one is a
+   place to go, and it is on the screen either way.
+
+   NO NEW HUE: colour means a grade. The selection is the darker neutral
+   surface the rest of the chrome uses. */
+.todoswitch{margin-inline-start:auto;display:inline-flex;align-items:stretch;
+  border:1px solid var(--line-2);border-radius:999px;background:var(--surface);
+  overflow:hidden;flex:none}
+.todoswitch .tsopt{appearance:none;background:none;border:0;cursor:pointer;
+  min-height:44px;padding:0 13px;font:inherit;font-size:var(--fs-small);
+  font-weight:600;color:var(--ink-3);white-space:nowrap}
+.todoswitch .tsopt + .tsopt{border-inline-start:1px solid var(--line-2)}
+.todoswitch .tsopt.on{background:var(--surface-3);color:var(--ink)}
+/* At 320px the two options and the two counts cannot share a line; the
+   switch drops to its own, full width, rather than squeezing the words. */
+@media (max-width:359px){
+  .proghead{flex-wrap:wrap}
+  .todoswitch{margin-inline-start:0;width:100%;margin-top:8px}
+  .todoswitch .tsopt{flex:1}
+}
 /* A finished category: no longer a bullet in the "what is missing" list, so
    it drops the disc and the warning hue and simply states the fact. */
 .gaps li.gapdone{list-style:none;margin-inline-start:-26px;color:var(--ink-3);

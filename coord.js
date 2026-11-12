@@ -987,6 +987,13 @@
      needed waiting. */
   function linkStatus(g) {
     var ar = i18n.isAr();
+    /* AC-12 · first, because it is the only state on this screen where the
+       link has stopped working. Everything else here describes how a family
+       is using theirs; this one says they cannot. */
+    if (g.dormant) {
+      return '<span class="pill crit"><i></i>' +
+        esc(ar ? "اِنْتَهَتْ صَلَاحِيَتُه" : "expired \u2014 replace it") + '</span>';
+    }
     if (!g.sent_on) {
       return '<span class="pill mute"><i></i>' +
         esc(ar ? "لَمْ يُرْسَلْ بَعْد" : "not sent yet") + '</span>';
@@ -1280,17 +1287,24 @@
         all: links.length,
         tosend: links.filter(function (g) { return !g.sent_on; }).length,
         chase: links.filter(function (g) {
-          return g.sent_on && !g.opens_all_time && daysSince(g.sent_on) >= 7; }).length
+          return g.sent_on && !g.opens_all_time && daysSince(g.sent_on) >= 7; }).length,
+        /* AC-12. `dormant` is the SERVER's answer, not a date subtraction
+           done here: the screen and the link itself must agree about which
+           ones have stopped working, and there is only one way to be sure
+           of that. */
+        expired: links.filter(function (g) { return !!g.dormant; }).length
       };
       var shown = links.filter(function (g) {
         if (LINKFILTER === "tosend") return !g.sent_on;
         if (LINKFILTER === "chase")  return g.sent_on && !g.opens_all_time && daysSince(g.sent_on) >= 7;
+        if (LINKFILTER === "expired") return !!g.dormant;
         return true;
       });
 
       body.innerHTML =
         '<div class="filters">' +
-        [["all","All"],["tosend","To send"],["chase","Chase"]].map(function (f) {
+        [["all","All"],["tosend","To send"],["chase","Chase"],
+         ["expired","Expired"]].map(function (f) {
           return '<button class="mini lk-f' + (LINKFILTER === f[0] ? " on" : "") +
             '" data-f="' + f[0] + '">' + f[1] + ' <b class="n">' + counts[f[0] === "all" ? "all" : f[0]] + '</b></button>';
         }).join("") +
@@ -1322,7 +1336,14 @@
         'children it covers, and whose it is. You find the actual person by looking the child up in ' +
         'ClassDojo, which already has all of that.</div>' +
         '<div class="note" style="margin-top:8px">Replacing a link clears its Sent mark, because the ' +
-        'family has not been given the new one.</div>';
+        'family has not been given the new one.</div>' +
+        /* The rule, written where the person who has to explain it to a
+           parent will read it. */
+        '<div class="note" style="margin-top:8px"><b>A link nobody opens for 120 days stops ' +
+        'working.</b> It is the only secret there is \u2014 no password sits behind it \u2014 and a ' +
+        'WhatsApp message lives for ever. The family sees a page telling them to ask you for a ' +
+        'new one; nothing is lost, and Replace gives them one. Opening a link keeps it alive for ' +
+        'another 120 days, so a family who reads their page is never asked for anything.</div>';
 
       body.querySelectorAll(".lk-f").forEach(function (b) {
         b.onclick = function () { LINKFILTER = b.dataset.f; renderManage(); };
