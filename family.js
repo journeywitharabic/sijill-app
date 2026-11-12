@@ -369,6 +369,18 @@
       });
       if (!hits.length) return "";
       hits.sort(function (a2, b2) { return a2.on < b2.on ? 1 : -1; });
+      /* ONE DATE PER DAY. A teacher who taps the same mark twice in one
+         lesson — which is what happens when the screen looks as though the
+         first tap did nothing — produced "Not ready on 8 Nov 2026 and 8
+         Nov 2026" on his family's page. Migration 67 stops the second mark
+         standing at all, but the rows already written stay written, so the
+         page collapses them here too rather than relying on the database
+         having been cleaned. */
+      var seenOn = {};
+      hits = hits.filter(function (h) {
+        if (seenOn[h.on]) return false;
+        seenOn[h.on] = 1; return true;
+      });
       var dates = hits.slice(0, 2).map(function (h) { return i18n.fmtDate(h.on); });
       // The most recent outcome is the one that names the line.
       var key = hits[0].outcome === "not_prepared" ? "whyNotReady" : "whyRepeat";

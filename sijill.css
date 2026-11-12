@@ -1243,6 +1243,33 @@ html[lang="ar"] .narrowh{letter-spacing:0;text-transform:none;font-size:var(--fs
      padding:0 9px;border:1px solid var(--line);border-radius:9px;
      background:var(--surface);color:var(--ink)}
 .irow.grad.spot{background:var(--hw-rev-soft)}
+/* ---- EX-4 · one homework list (round 59) ----------------------------
+   The two kinds keep their frames; inside each, what goes home is separated
+   from what is to be heard by a labelled rule rather than by a second
+   heading somewhere else on the page. */
+.goeshome{display:flex;align-items:center;gap:8px;margin:10px 0 6px}
+.goeshome:before,.goeshome:after{content:"";flex:1;height:1px;background:var(--line)}
+.goeshome .gh{font-family:var(--mono);font-size:var(--fs-micro);color:var(--ink-3);
+     white-space:nowrap}
+/* Work already heard today, folded away: during a lesson the screen should
+   be what is left to do. Not a kindbox — it is finished, and a third
+   coloured frame would say it is a third kind of work. */
+.heardbox{border:1px solid var(--line);border-radius:12px;margin-top:12px;
+     background:var(--surface)}
+.heardhead{display:flex;align-items:center;gap:8px;width:100%;min-height:48px;
+     padding:0 12px;background:none;border:0;font:inherit;
+     font-size:var(--fs-small);color:var(--ink-2);cursor:pointer}
+.heardhead .tick{color:var(--ok);font-weight:700}
+.heardhead .chev{margin-inline-start:auto;color:var(--ink-3)}
+.heardbox .card{margin:0 8px 8px}
+.heardrow{opacity:.86}
+.heardrow .outc{font-size:var(--fs-micro);font-weight:700;padding:2px 7px;
+     border-radius:99px;white-space:nowrap}
+.heardrow .outc.t-ok { background:var(--ok-soft);   color:var(--ok) }
+.heardrow .outc.t-rev{ background:var(--late-soft); color:var(--late) }
+.heardrow .outc.t-np { background:var(--exc-soft);  color:var(--exc) }
+.heardrow .outc.t-avg{ background:var(--avg-soft);  color:var(--avg) }
+
 /* Round 56 · why a piece of work is still open, on the family's page.
    Quieter than the surah line above it, and never red: it is an
    explanation, not a warning. */

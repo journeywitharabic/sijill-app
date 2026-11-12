@@ -1356,11 +1356,49 @@
       '<path d="' + k.d + '"/>' + (k.head ? '<path d="' + k.head + '"/>' : "") +
     '</svg>';
   }
+  /* EX-12 · the trend bar in the reader's own language.
+     `_trend` used to hand over a finished English sentence, so the Arabic
+     app printed English on the one line about a child's progress and no
+     string change could reach it. Migration 68 returns a CODE and the
+     numbers behind it; the words are composed here.
+
+     `detail` is still sent, and is still the fallback: a phone running
+     this zip against a database that has not had 68 yet shows exactly what
+     it showed before rather than an empty line. */
+  function trendWhy(t) {
+    if (!t) return "";
+    var code = t.code || "";
+    if (!code) return t.detail || "";            // older server
+    var vs = /_vs$/.test(code);
+    if (vs) code = code.replace(/_vs$/, "");
+    var s = T("trW_" + code);
+    if (!s || s === "trW_" + code) return t.detail || "";
+    s = s.split("{n}").join(trendN(t, code))
+         .split("{r}").join(code === "still_repeats" ? t.repeats : t.review_ayat)
+         .split("{p}").join(t.prev_ayat);
+    if (vs) s += T("trW_vs").split("{p}").join(t.prev_ayat);
+    return s;
+  }
+  /* The number each sentence is about. Kept beside the sentences rather
+     than inside them so that adding a code is one string and one line. */
+  function trendN(t, code) {
+    return code === "none" || code === "still" || code === "still_repeats"
+             ? t.classes
+         : code === "excused"            ? t.excused
+         : code === "missing"            ? t.unexcused
+         : code === "behind_unprepared"  ? t.unprepared
+         : code === "behind_repeats"     ? t.repeats
+         : code === "slowing"            ? t.done_ayat
+         : code === "forward_review"     ? t.review_ayat
+         : t.new_ayat;
+  }
+
   function trendHtml(t, withWords) {
     if (!t || !t.dir) return "";
     var k = TRENDS[t.dir] || TRENDS.away;
     var label = T("tr_" + t.dir);
-    return '<span class="trend ' + k.cls + '" title="' + esc(label + (t.detail ? " — " + t.detail : "")) + '">' +
+    var why = trendWhy(t);
+    return '<span class="trend ' + k.cls + '" title="' + esc(label + (why ? " — " + why : "")) + '">' +
       arrowSvg(t.dir) +
       (withWords ? '<span class="t">' + esc(label) + '</span>' : "") +
     '</span>';
@@ -1836,7 +1874,7 @@
     if (d.trend && d.trend.dir) {
       html += '<div class="trendbar ' + (TRENDS[d.trend.dir] || TRENDS.away).cls + '">' +
         trendHtml(d.trend, true) +
-        '<span class="why">' + esc(d.trend.detail || "") + '</span></div>';
+        '<span class="why">' + esc(trendWhy(d.trend)) + '</span></div>';
     }
     if (f.kind) {
       html += '<div class="banner ' + f.kind + '"><span class="ic">●</span><div><b>' +
@@ -1888,11 +1926,84 @@
        nobody got to hear the child — sometimes for weeks. Naming a class day
        would be wrong in exactly the case that matters most. Each row carries
        its own date and goes amber once it is three weeks old. */
-    html += '<div class="grp sect"><div class="grph"><h2>' + esc(TS("gDueGrade")) + '</h2>' +
-            (todayRev.length + todayNew.length
-              ? '<span class="n">' + (todayRev.length + todayNew.length) + '</span>' : '') +
+    /* EX-4 · ONE LIST (round 59).
+       Homework used to live in two sections with two headings and two
+       counts: "to hear today", and "what goes home", which held only work
+       due AFTER today. A piece carried over from a repeat sat in the first
+       and never appeared in the second — the same half-truth round 56 found
+       on the register — so a teacher wanting to know what a child actually
+       had was adding up two lists and missing one of them.
+
+       It is one section now, with one count, grouped BY KIND rather than by
+       when it is due: teal is new ground and terracotta is revisiting, and
+       those frames stay because teachers were grading review work against
+       the new-memorisation rule before they existed. Inside each frame the
+       rows are in the order the lesson uses them — what to hear now first,
+       then what goes home — and every row says which it is.
+
+       Work already heard today collapses to one line at the bottom. During
+       a lesson the screen should be what is left to do; the record of what
+       was done is one tap away, and the undo strip at the top of the page
+       still offers the last mark back without expanding anything. */
+    var laterRev = later.filter(function (h) { return h.kind !== "memorise"; });
+    var laterNew = later.filter(function (h) { return h.kind === "memorise"; });
+    var heard = [];
+    (d.history || []).forEach(function (day) {
+      if (classDay && day.held_on === classDay) heard = (day.recited || []).slice();
+    });
+    var openN = todayRev.length + todayNew.length + later.length;
+
+    function laterRow(h) {
+              /* The control used to be a bare ✎, 38x26, with its only
+                 explanation in a title= tooltip — which does not exist on a
+                 phone, and a phone is the only thing this is used on. Nobody
+                 knew homework could be corrected at all. It says a word now,
+                 and it is a real tap target.
+
+                 The age line is here because this box lists every piece of
+                 OPEN homework, not just this week's: a review set five weeks
+                 ago that the child has never been heard on sits in it looking
+                 exactly like something set yesterday. */
+              return '<div class="hwrow"><div class="hwmain">' +
+                '<b class="k ' + (h.kind === "memorise" ? "new" : "rev") + '">' +
+                  (h.kind === "memorise" ? esc(ar ? "لِلْحِفْظ" : "Memorize") : esc(ar ? "لِلْمُرَاجَعَة" : "Review")) +
+                '</b> <span class="ar" style="font-family:var(--serif);font-size:18px;font-weight:700">' +
+                esc(h.name_ar) + '</span> <span style="color:var(--ink-2)">' + esc(h.name_en) + rangeLabel(h) + '</span>' +
+                /* The date it was set, not "today". A teacher finishing
+                   Sunday's register on the Monday is not setting it today,
+                   and a line that says so is the kind of small untruth that
+                   makes a teacher stop trusting the rest of the screen. */
+                '<div class="hwage">' +
+                  esc(T("gSetOn").split("{d}").join(i18n.fmtDate(h.set_on))) +
+                  (h.due_on ? ' \u00b7 ' +
+                    esc(T("gDueOn").split("{d}").join(i18n.fmtDate(h.due_on))) : '') +
+                  '</div>' +
+                  /* Only on his own page: a teacher marking a register does
+                     not need a link away from it, and the children's
+                     families never get outbound links at all. */
+                  (S.self ? quranLink(h) : '') +
+                '</div><div class="hwside">' + (h.source === "auto"
+                  ? '<span class="pill late"><i></i>' + (ar ? "مِنْ ↻ إِعَادَة" : "from ↻ repeat") + '</span>'
+                  : '<span class="pill mute"><i></i>' + (ar ? "أَضَافَهُ المُعَلِّم" : "set by teacher") + '</span>') +
+                /* Both buttons behind the same guard. Change sat outside it,
+                   so the coordinator's read-only view — the one that says in
+                   plain words that nothing here can be marked — still offered
+                   a working homework editor, and the server would have taken
+                   the write, because a coordinator's session is a teacher's
+                   session. A screen that promises it cannot change anything
+                   must not hand you a button that does. */
+                (S.readOnly || S.self ? '' :
+                  '<button class="btn ghost sm hw-now" data-hw="' + esc(h.homework_id) + '" title="' +
+                  esc(T("gHearNowTip")) + '">' + esc(T("gHearNow")) + '</button>' +
+                  '<button class="btn ghost sm hw-edit" data-hw="' + esc(h.homework_id) + '">' +
+                  esc(T("hwChange")) + '</button>') + '</div></div>';
+    }
+
+    html += '<div class="grp sect hwall"><div class="grph"><h2>' +
+              esc(TS("gHomework")) + '</h2>' +
+            (openN ? '<span class="n">' + openN + '</span>' : '') +
             '</div>';
-    if (!todayRev.length && !todayNew.length) {
+    if (!openN) {
       html += '<div class="card"><div class="empty">' + esc(TS("gNothingDue")) + '</div></div>';
     } else {
       /* The rule lives inside the group it applies to. The thresholds differ
@@ -1905,22 +2016,39 @@
          things that look identical. The colours are the ones round 31 gave
          the two assign buttons, so teal always means new ground and
          terracotta always means revisiting old, and neither is a grade. */
-      if (todayRev.length) {
+      /* One frame per kind, holding BOTH what is to be heard now and what
+         goes home in that kind. The order inside is the order the lesson
+         uses them. */
+      if (todayRev.length || laterRev.length) {
         html += '<div class="kindbox rev"><div class="kindlab">' +
                   esc(T("gDueGroup")) + '</div>' +
-                '<div class="note rule">' + T("ruleReview") + '</div>' +
-                '<div class="card">' + todayRev.map(function (x) { return itemRow(x, "due"); }).join("") + '</div></div>';
+                (todayRev.length ? '<div class="note rule">' + T("ruleReview") + '</div>' : '') +
+                '<div class="card">' +
+                  todayRev.map(function (x) { return itemRow(x, "due"); }).join("") +
+                  (laterRev.length
+                    ? '<div class="goeshome"><span class="gh">' +
+                      esc(T("gGoesHome").split("{d}").join(nextLabel)) + '</span></div>' +
+                      laterRev.map(laterRow).join("")
+                    : '') +
+                '</div></div>';
       }
       /* CAREFUL: "memorise" and "new_memorisation" are spelled the British way
          on purpose — they are not words here, they are a value stored in
          homework.kind and a key the SQL builds. The visible English says
          "memorization"; changing these to match it silently stops the app
          matching its own database. */
-      if (todayNew.length) {
+      if (todayNew.length || laterNew.length) {
         html += '<div class="kindbox new"><div class="kindlab">' +
                   esc(T("gNew")) + '</div>' +
-                '<div class="note rule">' + T("ruleNew") + '</div>' +
-                '<div class="card">' + todayNew.map(function (x) { return itemRow(x, "new"); }).join("") + '</div></div>';
+                (todayNew.length ? '<div class="note rule">' + T("ruleNew") + '</div>' : '') +
+                '<div class="card">' +
+                  todayNew.map(function (x) { return itemRow(x, "new"); }).join("") +
+                  (laterNew.length
+                    ? '<div class="goeshome"><span class="gh">' +
+                      esc(T("gGoesHome").split("{d}").join(nextLabel)) + '</span></div>' +
+                      laterNew.map(laterRow).join("")
+                    : '') +
+                '</div></div>';
       }
     }
     /* A passage pulled in from the spot check. It is not homework and
@@ -1935,6 +2063,68 @@
               '<div class="card">' +
               S.spot.map(function (x) { return itemRow(x, "spot"); }).join("") +
               '</div></div>';
+    }
+
+    /* What is due next class and what is still owed are now one list, so
+       the line that used to live under its own heading belongs here: it is
+       the answer to "is there anything for next week", and it has to say
+       both halves or it is the sentence that sent a parent to Tarek. */
+    if (!later.length) {
+      html += '<div class="card"><div class="empty" style="font-size:13.5px">' +
+        esc((todayRev.length + todayNew.length)
+              ? T((todayRev.length + todayNew.length) === 1
+                    ? "gNothingNextBut1" : "gNothingNextBut")
+                  .split("{d}").join(nextLabel)
+                  .split("{n}").join(todayRev.length + todayNew.length)
+              : T("gNothingNext").split("{d}").join(nextLabel)) + '</div></div>';
+    }
+
+    /* Heard today, folded away. Not a kindbox: it is not work to do, and
+       framing it like the two that are would put a third coloured border
+       round something that is finished. */
+    if (heard.length) {
+      html += '<div class="heardbox' + (S.heardOpen ? ' open' : '') + '">' +
+        '<button class="heardhead" id="heardToggle" aria-expanded="' +
+          (S.heardOpen ? 'true' : 'false') + '">' +
+          '<span class="tick" aria-hidden="true">\u2713</span>' +
+          esc(heard.length === 1 ? T("gHeard1")
+                : T("gHeardN").split("{n}").join(heard.length)) +
+          '<span class="chev">' + (S.heardOpen ? '\u2304' : '\u203a') + '</span>' +
+        '</button>' +
+        (S.heardOpen ? '<div class="card">' + heard.map(function (r) {
+          var word = r.outcome === "repeat" ? T("gAgain")
+                   : r.outcome === "average" ? T("gAverage")
+                   : r.outcome === "not_prepared" ? T("gNotReady") : T("gGood");
+          var tone = r.outcome === "repeat" ? "t-rev"
+                   : r.outcome === "average" ? "t-avg"
+                   : r.outcome === "not_prepared" ? "t-np" : "t-ok";
+          return '<div class="irow heardrow"><div class="lab">' +
+            '<span class="ar" dir="rtl">' + esc(r.name_ar) + '</span>' +
+            '<span class="tr"><span class="lat">' + esc(r.name_en) + rangeSpan(r) +
+              '</span></span></div>' +
+            '<span class="outc ' + tone + '">' + esc(word) + '</span>' +
+            (S.readOnly || S.self || !r.id ? '' :
+              '<button class="undoRec" data-rec="' + esc(r.id) + '" data-what="' +
+              esc(r.name_en) + '">\u21b6 ' + esc(T("undoMark")) + '</button>') +
+          '</div>';
+        }).join("") + '</div>' : '') +
+      '</div>';
+    }
+
+    /* The parent's view, offered where the homework is decided (EX-4)
+       rather than only from a link at the top of the page. It opens the
+       REAL family page through api_family_preview — not a second rendering
+       of it here, which would be two versions of one screen to keep in step
+       and the first one to drift. Not for an adult: there is no family
+       behind a grown man in the halaqa. */
+    if (!(S.readOnly || S.self || (d.student && d.student.is_adult) || !later.length)) {
+      html += '<button class="lnk hwpv" id="hwPv">' + esc(T("hwPreview")) + '</button>';
+    }
+
+    // The key explains the two pills on the goes-home rows. With no such
+    // rows it is explaining something that is not on the screen.
+    if (later.length) {
+      html += '<div style="height:8px"></div><div class="note">' + T("hwHint") + '</div>';
     }
     html += '</div>';
 
@@ -1991,83 +2181,7 @@
               '<div class="note" style="margin-bottom:16px">' + TS("markKey") + '</div>');
 
     // what goes home tonight
-    var hw = later;
-    html += '<div class="grp sect next"><div class="grph"><h2>' + esc(T("gNextClass")) +
-            '<span class="when">' + esc(nextLabel) + '</span></h2>' +
-            (hw.length ? '<span class="n">' + hw.length + '</span>' : '') +
-            '</div><div class="hwbox">' +
-            /* The parent's view, offered where the homework is decided (EX-4)
-               rather than only from a link at the top of the page. It opens
-               the REAL family page through api_family_preview — not a second
-               rendering of it here, which would be two versions of one
-               screen to keep in step and the first one to drift.
-               Not for an adult: there is no family behind a grown man in the
-               halaqa, and nothing for his teacher to preview. */
-            ((S.readOnly || S.self || (d.student && d.student.is_adult) || !hw.length) ? '' :
-              '<button class="lnk hwpv" id="hwPv">' + esc(T("hwPreview")) + '</button>') +
-            (hw.length ? hw.map(function (h) {
-              /* The control used to be a bare ✎, 38x26, with its only
-                 explanation in a title= tooltip — which does not exist on a
-                 phone, and a phone is the only thing this is used on. Nobody
-                 knew homework could be corrected at all. It says a word now,
-                 and it is a real tap target.
 
-                 The age line is here because this box lists every piece of
-                 OPEN homework, not just this week's: a review set five weeks
-                 ago that the child has never been heard on sits in it looking
-                 exactly like something set yesterday. */
-              return '<div class="hwrow"><div class="hwmain">' +
-                '<b class="k ' + (h.kind === "memorise" ? "new" : "rev") + '">' +
-                  (h.kind === "memorise" ? esc(ar ? "لِلْحِفْظ" : "Memorize") : esc(ar ? "لِلْمُرَاجَعَة" : "Review")) +
-                '</b> <span class="ar" style="font-family:var(--serif);font-size:18px;font-weight:700">' +
-                esc(h.name_ar) + '</span> <span style="color:var(--ink-2)">' + esc(h.name_en) + rangeLabel(h) + '</span>' +
-                /* The date it was set, not "today". A teacher finishing
-                   Sunday's register on the Monday is not setting it today,
-                   and a line that says so is the kind of small untruth that
-                   makes a teacher stop trusting the rest of the screen. */
-                '<div class="hwage">' +
-                  esc(T("gSetOn").split("{d}").join(i18n.fmtDate(h.set_on))) +
-                  (h.due_on ? ' \u00b7 ' +
-                    esc(T("gDueOn").split("{d}").join(i18n.fmtDate(h.due_on))) : '') +
-                  '</div>' +
-                  /* Only on his own page: a teacher marking a register does
-                     not need a link away from it, and the children's
-                     families never get outbound links at all. */
-                  (S.self ? quranLink(h) : '') +
-                '</div><div class="hwside">' + (h.source === "auto"
-                  ? '<span class="pill late"><i></i>' + (ar ? "مِنْ ↻ إِعَادَة" : "from ↻ repeat") + '</span>'
-                  : '<span class="pill mute"><i></i>' + (ar ? "أَضَافَهُ المُعَلِّم" : "set by teacher") + '</span>') +
-                /* Both buttons behind the same guard. Change sat outside it,
-                   so the coordinator's read-only view — the one that says in
-                   plain words that nothing here can be marked — still offered
-                   a working homework editor, and the server would have taken
-                   the write, because a coordinator's session is a teacher's
-                   session. A screen that promises it cannot change anything
-                   must not hand you a button that does. */
-                (S.readOnly || S.self ? '' :
-                  '<button class="btn ghost sm hw-now" data-hw="' + esc(h.homework_id) + '" title="' +
-                  esc(T("gHearNowTip")) + '">' + esc(T("gHearNow")) + '</button>' +
-                  '<button class="btn ghost sm hw-edit" data-hw="' + esc(h.homework_id) + '">' +
-                  esc(T("hwChange")) + '</button>') + '</div></div>';
-            }).join("")
-              : '<div style="font-size:13.5px">' +
-                /* "Nothing set yet" on a child holding three unheard items
-                   reads as "this child has nothing to do", and it is what
-                   sent a parent to Tarek asking why their son had been given
-                   nothing. Both halves are true and only saying one of them
-                   is what made it wrong. */
-                esc((todayRev.length + todayNew.length)
-                      ? T((todayRev.length + todayNew.length) === 1
-                            ? "gNothingNextBut1" : "gNothingNextBut")
-                          .split("{d}").join(nextLabel)
-                          .split("{n}").join(todayRev.length + todayNew.length)
-                      : T("gNothingNext").split("{d}").join(nextLabel)) + '</div>') +
-            '</div>' +
-            // The key explains the two pills on the rows. With no rows it is
-            // explaining something that is not on the screen.
-            (hw.length ? '<div style="height:8px"></div><div class="note">' +
-                         T("hwHint") + '</div>' : '') +
-            '</div>';
 
     // Adab for today's class. Optional, and placed after the recitation work
     // rather than among it: conduct is a judgement made at the end of a
@@ -2868,6 +2982,12 @@
 
     // A grade tapped but not yet saved survives a re-render (round 57).
     restoreHeld();
+
+    /* EX-4 · the heard-today fold. Remembered for as long as this child is
+       on screen, so a teacher who opens it to check something does not have
+       to open it again after every mark. */
+    var ht = $("heardToggle");
+    if (ht) ht.onclick = function () { S.heardOpen = !S.heardOpen; renderStudent(); };
 
     var sg = $("spotGo");
     if (sg) sg.onclick = function () {
@@ -3734,6 +3854,7 @@
     S.classes = [];
     S.student = { id: me.student_id, name: me.name };
     S.pulled = {}; S.rotAll = false; S.histStep = 0; S.held = {};
+    S.heardOpen = false;
     show("v-student");
     window.scrollTo(0, 0);
     $("stuName").textContent = me.name || "";
