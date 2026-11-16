@@ -1242,6 +1242,18 @@
      still looked finished. This says all three, names how many, and offers
      to take you to them. It writes nothing and blocks nothing: a teacher
      who has to leave at eight should not be arguing with a checklist. */
+  /* A LAST LOOK, NOT A COMMIT.
+     This writes nothing and never has: no call leaves the browser. It reads
+     what is already on the screen and names the children still missing
+     something, and each line taps through to exactly those children.
+
+     Teachers asked, in round 61, what pressing it did -- which is a fair
+     question to ask of a button called "Finish class", so the button was
+     renamed to the sheet's own title instead of being given something to do.
+     Whether a class day is finished is decided by the clock
+     (33_class_day_finished.sql); a second, teacher-pressed notion of
+     "finished" could disagree with it, and the family page's "not recorded --
+     tell the school if they were there" depends on there being one answer. */
   if ($("finishCls")) $("finishCls").onclick = function () {
     var d = S.dayData;
     if (!d || !d.session) return;

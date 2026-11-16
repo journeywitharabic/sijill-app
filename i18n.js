@@ -52,7 +52,11 @@
     // The button names the number it will touch. It used to say "all" and
     // mean it, over the top of marks the teacher had already made.
     markAllN:"Mark {n} unmarked present",
-    finishCls:"Finish class ›", finishTitle:"Before you go",
+    /* The button is named for the sheet it opens, not for an action it
+       performs. Round 61: teachers asked what pressing it did, because
+       "Finish class" promises a commit and it writes nothing at all --
+       whether a class day is over is decided by the clock. */
+    finishCls:"Before you go ›", finishTitle:"Before you go",
     finishAllDone:"Everything is recorded. Nothing is waiting.",
     finishLead:"Nothing here is blocked — this is a list, not a gate.",
     finishAtt:"{n} still need attendance", finishAtt1:"1 still needs attendance",
@@ -480,7 +484,7 @@
     whoAddHelp:"يُمْكِنُكَ التَّدْرِيسُ فَوْرًا. يُؤَكِّدُ المُنَسِّقُ اسْمَكَ لَاحِقًا.",
     markAll:"تَسْجِيلُ الجَمِيعِ حَاضِرِين", bulkHw:"+ وَاجِبٌ لِلْحَلْقَةِ كُلِّهَا",
     markAllN:"تَسْجِيلُ {n} غَيْرِ المُسَجَّلِينَ حَاضِرِين",
-    finishCls:"إِنْهَاءُ الحَلْقَة ›", finishTitle:"قَبْلَ أَنْ تَنْصَرِف",
+    finishCls:"قَبْلَ أَنْ تَنْصَرِف ›", finishTitle:"قَبْلَ أَنْ تَنْصَرِف",
     finishAllDone:"كُلُّ شَيْءٍ مُسَجَّل، وَلَا شَيْءَ مُنْتَظِر.",
     finishLead:"لَا شَيْءَ هُنَا يَمْنَعُك — هِيَ قَائِمَةٌ لَا بَوَّابَة.",
     finishAtt:"{n} لَمْ يُسَجَّلْ حُضُورُهُم", finishAtt1:"وَاحِدٌ لَمْ يُسَجَّلْ حُضُورُه",
